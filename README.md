@@ -7,9 +7,9 @@
 - Run Android: `npm run android`
 
 ## Web Dev Proxy (CORS-free)
-- `webpack.config.js` configures Webpack Dev Server to proxy any request starting with `/api` to `https://testnet.omni.apex.exchange`, preserving the `/api` prefix.
-- Example: `/api/v3/ticker?symbol=BTCUSDT` → `https://testnet.omni.apex.exchange/api/v3/ticker?symbol=BTCUSDT`.
-- This only applies in development for Expo Web; native apps are unaffected.
+- Expo web uses Metro by default in SDK 54. Use the included local proxy to avoid CORS during web dev.
+  - Start proxy: `npm run dev:proxy` (listens on `http://localhost:3001`)
+  - The app auto-targets `http://localhost:3001/api` in Metro web dev. You can override via `.env APEX_BASE_URL`.
 
 ## Environment Variables
 - Managed via `react-native-dotenv` and `src/config/appEnv.ts`.
@@ -19,10 +19,10 @@
 Create a `.env` file based on `.env.example`:
 
 ```
-# Use `/api` in web dev (optional; defaults to `/api` on web dev if unset)
-# APEX_BASE_URL=/api
+# For web dev with Metro, you can also point explicitly to the local dev proxy
+# APEX_BASE_URL=http://localhost:3001/api
 
-# Or use the real API (e.g. native, or production web)
+# For native or production, use the real API
 # APEX_BASE_URL=https://testnet.omni.apex.exchange/api
 
 APEX_NETWORK=TESTNET
@@ -35,16 +35,18 @@ DEFAULT_SYMBOL_DASH=BTC-USDT
 ```
 
 ## Behavior Summary
-- Web + development: base URL → `/api` (proxied by Webpack dev server).
+- Web + development (Metro): base URL → `http://localhost:3001/api` (local proxy), unless overridden by `.env`.
 - Native (iOS/Android): base URL → `.env APEX_BASE_URL` or default `https://testnet.omni.apex.exchange/api`.
 - Production builds: base URL → `.env APEX_BASE_URL` or default `https://testnet.omni.apex.exchange/api`.
 
 ## Troubleshooting
-- CORS error in web dev: ensure requests go to `/api/...` (the app does this automatically via `src/config/appEnv.ts`). Use `npm run web` so the proxy runs.
+- CORS error in web dev:
+  - If using Webpack web: ensure requests go to `/api/...` (the app chooses this automatically)
+  - If using Metro web: the app will call the real API origin; ensure your environment allows cross-origin requests (testnet does).
 - CORS in production web: you must point `APEX_BASE_URL` to the real API and serve through your own reverse proxy/CDN that permits your origin, or request CORS changes from the API provider.
 - Stale settings: try `expo start -c` to clear cache.
 
 ## Relevant Files
-- Webpack proxy: `webpack.config.js`
+- Dev proxy: `dev-proxy.js`
 - Env resolution: `src/config/appEnv.ts`
 - HTTP client: `src/lib/http.ts`
