@@ -3,10 +3,23 @@ import { Platform } from 'react-native';
 
 export function getEnv() {
   const defaultBase = 'https://testnet.omni.apex.exchange/api';
-  const devWebProxyBase = '/api';
   const isDev = process.env.NODE_ENV !== 'production';
   const isWeb = Platform.OS === 'web';
-  const resolvedBase = (APEX_BASE_URL || (isDev && isWeb ? devWebProxyBase : defaultBase)).replace(/\/$/, '');
+  const localProxyBase = `http://localhost:${process.env.DEV_PROXY_PORT || '3001'}/api`;
+
+  let base = APEX_BASE_URL;
+  if (isDev && isWeb) {
+    // In Metro web development, prefer the local dev proxy.
+    if (!base) {
+      base = localProxyBase;
+    } else if (base.replace(/\/$/, '') === '/api') {
+      base = localProxyBase;
+    }
+  } else {
+    base = base || defaultBase;
+  }
+
+  const resolvedBase = base.replace(/\/$/, '');
   return {
     APEX_BASE_URL: resolvedBase,
     APEX_NETWORK: APEX_NETWORK || 'TESTNET',
