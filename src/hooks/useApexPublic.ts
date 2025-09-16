@@ -13,17 +13,16 @@ export function useTicker(symbol = getEnv().DEFAULT_SYMBOL) {
   return useQuery({
     queryKey: ['ticker', symbol],
     queryFn: async () => {
-      const { data } = await httpPublic.get(`/v3/ticker`, { params: { symbol } });
-      const item = data?.data?.[0] as any;
+        const { data } = await httpPublic.get('/v3/ticker', { params: { symbol } });
+        const item = (data?.data?.[0] ?? data?.data ?? data?.result ?? data?.[0] ?? data) as any;
       const t: TickerData = {
-        symbol: item?.symbol,
-        lastPrice: item?.lastPrice,
-        markPrice: item?.markPrice,
-        indexPrice: item?.indexPrice,
+          symbol: item?.symbol ?? item?.s ?? item?.pair ?? item?.contract,
+          lastPrice: item?.lastPrice ?? item?.last ?? item?.lp ?? item?.price,
+          markPrice: item?.markPrice ?? item?.mp ?? item?.mark,
+          indexPrice: item?.indexPrice ?? item?.ip ?? item?.index,
       };
       return t;
     },
     refetchInterval: 4000,
   });
 }
-
