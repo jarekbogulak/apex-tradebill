@@ -21,6 +21,8 @@ export default function TradeBillScreen() {
   const { size } = useMemo(() => calcPositionSize({ equity, riskPct, entry, stop }), [equity, riskPct, entry, stop]);
   const sizeStr = size ? size.toFixed(6) : '0';
 
+  // No debug logs; screen reflects live values via React Query ticker
+
   async function onGo() {
     try {
       setPlacing(true);
@@ -55,7 +57,7 @@ export default function TradeBillScreen() {
       <Field label="Symbol (dash)" value={s.symbolDash} onChangeText={(v: string)=>s.set({symbolDash:v})}/>
       <Field label="Account Equity (USDT)" value={s.equity} onChangeText={(v: string)=>s.set({equity:v})}/>
       <Field label="Risk % (e.g., 0.01)" value={s.riskPct} onChangeText={(v: string)=>s.set({riskPct:v})}/>
-      <Field label="Entry Price" value={s.entry} onChangeText={(v: string)=>s.set({entry:v})}/>
+      <Field label="Entry Price" value={s.entry || tkr?.lastPrice || ''} onChangeText={(v: string)=>s.set({entry:v})}/>
       <Field label="Stop Price" value={s.stop} onChangeText={(v: string)=>s.set({stop:v})}/>
       <Field label="Target Price" value={s.target} onChangeText={(v: string)=>s.set({target:v})}/>
       <Field label="Leverage (display only)" value={s.leverage} onChangeText={(v: string)=>s.set({leverage:v})}/>
@@ -68,4 +70,3 @@ export default function TradeBillScreen() {
     </ScrollView>
   );
 }
-
