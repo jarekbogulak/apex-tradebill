@@ -1,17 +1,21 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, Button, Alert, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Field from '@/components/Field';
 import Stat from '@/components/Stat';
 import { useTradeStore } from '@/state/useTradeStore';
 import { useTicker } from '@/hooks/useApexPublic';
 import { calcPositionSize } from '@/lib/position';
 import { getWorstPrice, usePlaceOrder } from '@/hooks/useApexPrivate';
+import { useOrdersStore } from '@/state/useOrdersStore';
 
 export default function TradeBillScreen() {
   const s = useTradeStore();
   const { data: tkr } = useTicker(s.symbol);
   const [placing, setPlacing] = useState(false);
   const placeOrder = usePlaceOrder();
+  const nav = useNavigation<any>();
+  const addOrder = useOrdersStore((st) => st.add);
 
   const entry = parseFloat(s.entry || tkr?.lastPrice || '0');
   const stop = parseFloat(s.stop || '0');
@@ -25,9 +29,19 @@ export default function TradeBillScreen() {
 
   async function onGo() {
     try {
+      console.log('[TradeBill] onGo:start', {
+        symbolDash: s.symbolDash,
+        side: s.side,
+        size: sizeStr,
+        entry,
+        stop,
+      });
       setPlacing(true);
       // Use worst-price as required “market” price anchor
+      console.time('[TradeBill] getWorstPrice');
       const worst = await getWorstPrice({ symbolDash: s.symbolDash, side: s.side, size: sizeStr });
+      console.timeEnd('[TradeBill] getWorstPrice');
+      console.log('[TradeBill] worstPrice', worst);
       const res = await placeOrder.mutateAsync({
         symbolDash: s.symbolDash,
         side: s.side,
@@ -36,11 +50,43 @@ export default function TradeBillScreen() {
         price: String(worst || entry), // must be worse than index; worst-price fits
         timeInForce: 'IMMEDIATE_OR_CANCEL',
       });
-      Alert.alert('Order Sent', JSON.stringify(res, null, 2));
+      console.log('[TradeBill] order:success', {
+        orderId: res?.data?.orderId || res?.orderId || res?.id,
+        clientOrderId: res?.data?.clientOrderId || res?.clientOrderId,
+        raw: res,
+      });
+      // Save a compact record locally for the Orders screen
+      addOrder({
+        id: res?.data?.orderId || res?.orderId || res?.id,
+        clientOrderId: res?.data?.clientOrderId || res?.clientOrderId,
+        symbolDash: s.symbolDash,
+        side: s.side,
+        type: 'MARKET',
+        size: sizeStr,
+        price: String(worst || entry),
+        timeInForce: 'IMMEDIATE_OR_CANCEL',
+        createdAt: Date.now(),
+        raw: res,
+      });
+
+      Alert.alert(
+        'Order Placed',
+        `${s.side} ${sizeStr} ${s.symbolDash} submitted successfully.`,
+        [
+          { text: 'OK' },
+          { text: 'View Orders', onPress: () => nav.navigate('Orders') },
+        ]
+      );
     } catch (e: any) {
+      console.error('[TradeBill] order:error', {
+        status: e?.response?.status,
+        data: e?.response?.data,
+        message: String(e),
+      });
       Alert.alert('Order Error', e?.response?.data ? JSON.stringify(e.response.data) : String(e));
     } finally {
       setPlacing(false);
+      console.log('[TradeBill] onGo:end');
     }
   }
 

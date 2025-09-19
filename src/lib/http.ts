@@ -13,10 +13,25 @@ export const httpPrivate = axios.create({
 });
 
 httpPrivate.interceptors.request.use(async (config) => {
+  // ApeX expects APEX-TIMESTAMP in milliseconds.
   const ts = Date.now().toString();
-  const headers = await apexHeaders(ts, config.method || 'get', config.url || '', config.data);
+  const fullUrl = `${config.baseURL || ''}${config.url || ''}`;
+  const method = (config.method || 'get').toLowerCase();
+  let signingBody: any = null;
+  if (method !== 'get' && config.data) {
+    if (typeof config.data === 'string') {
+      try { signingBody = require('qs').parse(config.data); } catch { signingBody = null; }
+    } else if (typeof config.data === 'object') {
+      signingBody = config.data as any;
+    }
+  }
+  const headers = await apexHeaders(ts, method, fullUrl, signingBody);
   config.headers = { ...(config.headers || {}), ...headers } as any;
-  (config.headers as any)['Content-Type'] = 'application/x-www-form-urlencoded';
+  if (method !== 'get') {
+    (config.headers as any)['Content-Type'] = 'application/x-www-form-urlencoded';
+  }
+  if (typeof __DEV__ !== 'undefined' && __DEV__) {
+    try { console.log('[httpPrivate] signed', { ts, method, url: fullUrl, signingBody }); } catch {}
+  }
   return config;
 });
-
