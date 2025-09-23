@@ -95,3 +95,4 @@ pids
 .codex/*
 !.codex/prompts/
 !.codex/prompts/**
+!.codex/config.toml.example

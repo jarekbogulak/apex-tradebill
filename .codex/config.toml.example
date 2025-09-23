@@ -1,0 +1,22 @@
+# Codex CLI project config (example)
+# Copy this file to `.codex/config.toml` and fill in values.
+# Note: `.codex/config.toml` is git-ignored to avoid committing secrets.
+
+model = "gpt-5"
+model_reasoning_effort = "high"
+
+# Map this repo to a trust level
+[projects."/ABSOLUTE/PATH/TO/REPO"]
+trust_level = "trusted"
+
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+
+[mcp_servers.brightData]
+command = "npx"
+args = ["-y", "@brightdata/mcp"]
+# Prefer setting secrets via environment or a secrets manager.
+# If you keep them here locally, ensure `.codex/config.toml` never gets committed.
+env = { "API_TOKEN" = "REPLACE_WITH_PROVIDER_TOKEN", "PRO_MODE" = "false" }
+
