@@ -46,45 +46,50 @@
 - [ ] T001 Create project structure per implementation plan
 - [ ] T002 Initialize [language] project with [framework] dependencies
 - [ ] T003 [P] Configure linting and formatting tools
+- [ ] T004 [P] Configure CI secrets scanning and dependency audit
+  - Add baseline secret scanning and block on findings
+  - Enable vulnerability audit for dependencies
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
-- [ ] T004 [P] Contract test POST /api/users in tests/contract/test_users_post.py
-- [ ] T005 [P] Contract test GET /api/users/{id} in tests/contract/test_users_get.py
-- [ ] T006 [P] Integration test user registration in tests/integration/test_registration.py
-- [ ] T007 [P] Integration test auth flow in tests/integration/test_auth.py
+- [ ] T005 [P] Contract test POST /api/users in tests/contract/test_users_post.py
+- [ ] T006 [P] Contract test GET /api/users/{id} in tests/contract/test_users_get.py
+- [ ] T007 [P] Integration test user registration in tests/integration/test_registration.py
+- [ ] T008 [P] Integration test auth flow in tests/integration/test_auth.py
+- [ ] T009 Define performance budget tests (publish thresholds)
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
-- [ ] T008 [P] User model in src/models/user.py
-- [ ] T009 [P] UserService CRUD in src/services/user_service.py
-- [ ] T010 [P] CLI --create-user in src/cli/user_commands.py
-- [ ] T011 POST /api/users endpoint
-- [ ] T012 GET /api/users/{id} endpoint
-- [ ] T013 Input validation
-- [ ] T014 Error handling and logging
+- [ ] T010 [P] User model in src/models/user.py
+- [ ] T011 [P] UserService CRUD in src/services/user_service.py
+- [ ] T012 [P] CLI --create-user in src/cli/user_commands.py
+- [ ] T013 POST /api/users endpoint
+- [ ] T014 GET /api/users/{id} endpoint
+- [ ] T015 Input validation
+- [ ] T016 Error handling and logging
 
 ## Phase 3.4: Integration
-- [ ] T015 Connect UserService to DB
-- [ ] T016 Auth middleware
-- [ ] T017 Request/response logging
-- [ ] T018 CORS and security headers
+- [ ] T017 Connect UserService to DB
+- [ ] T018 Auth middleware
+- [ ] T019 Structured request/response logging and metrics
+- [ ] T020 CORS and security headers
+- [ ] T021 Configure crash/error reporting (non-PII)
 
 ## Phase 3.5: Polish
-- [ ] T019 [P] Unit tests for validation in tests/unit/test_validation.py
-- [ ] T020 Performance tests (<200ms)
-- [ ] T021 [P] Update docs/api.md
-- [ ] T022 Remove duplication
-- [ ] T023 Run manual-testing.md
+- [ ] T022 [P] Unit tests for validation in tests/unit/test_validation.py
+- [ ] T023 Validate performance budgets (latency, frame consistency)
+- [ ] T024 [P] Update docs/api.md
+- [ ] T025 Remove duplication
+- [ ] T026 Run manual-testing.md
 
 ## Dependencies
-- Tests (T004-T007) before implementation (T008-T014)
-- T008 blocks T009, T015
-- T016 blocks T018
-- Implementation before polish (T019-T023)
+- Tests (T005-T009) before implementation (T010-T016)
+- T010 blocks T011, T017
+- T018 blocks T020
+- Implementation before polish (T022-T026)
 
 ## Parallel Example
 ```
-# Launch T004-T007 together:
+# Launch T005-T008 together:
 Task: "Contract test POST /api/users in tests/contract/test_users_post.py"
 Task: "Contract test GET /api/users/{id} in tests/contract/test_users_get.py"
 Task: "Integration test registration in tests/integration/test_registration.py"
@@ -125,3 +130,4 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 - [ ] Parallel tasks truly independent
 - [ ] Each task specifies exact file path
 - [ ] No task modifies same file as another [P] task
+- [ ] Security/observability tasks present (secrets scan, metrics, error reporting)

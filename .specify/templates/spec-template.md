@@ -100,6 +100,11 @@ When creating this spec from a user prompt:
 - [ ] Scope is clearly bounded
 - [ ] Dependencies and assumptions identified
 
+### Constitution Alignment
+- [ ] Data integrity and risk management needs captured (if applicable)
+- [ ] Performance budgets and reliability targets specified
+- [ ] Security and secrets handling requirements included
+
 ---
 
 ## Execution Status
