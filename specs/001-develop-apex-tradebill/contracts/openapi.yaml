@@ -1,0 +1,438 @@
+openapi: 3.1.0
+info:
+  title: Apex TradeBill API
+  version: 0.1.0
+  description: >-
+    Service powering the Apex TradeBill companion app. Provides deterministic trade sizing,
+    live market data fan-out, user settings, and trade history compliant with the Apex TradeBill Constitution.
+servers:
+  - url: https://api.tradebill.apex
+    description: Production
+  - url: https://staging-api.tradebill.apex
+    description: Staging
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Symbol:
+      type: string
+      pattern: "^[A-Z]{3,5}-USDT$"
+      example: BTC-USDT
+    Direction:
+      type: string
+      enum: [long, short]
+    Timeframe:
+      type: string
+      enum: [1m, 5m, 15m, 30m, 1h, 4h]
+    TradeInput:
+      type: object
+      required:
+        - symbol
+        - direction
+        - accountSize
+        - stopPrice
+        - targetPrice
+        - riskPercent
+        - atrMultiplier
+        - useVolatilityStop
+        - timeframe
+      properties:
+        symbol:
+          $ref: '#/components/schemas/Symbol'
+        direction:
+          $ref: '#/components/schemas/Direction'
+        accountSize:
+          type: string
+          format: decimal
+          pattern: "^\\d+(.\\d{1,2})?$"
+          example: "25000.00"
+        entryPrice:
+          type: string
+          format: decimal
+          pattern: "^\\d+(.\\d{1,8})?$"
+          nullable: true
+          description: Optional when defaulting to latest market price.
+        stopPrice:
+          type: string
+          format: decimal
+          pattern: "^\\d+(.\\d{1,8})?$"
+        targetPrice:
+          type: string
+          format: decimal
+          pattern: "^\\d+(.\\d{1,8})?$"
+        riskPercent:
+          type: string
+          format: decimal
+          pattern: "^0\\.\\d{1,4}$|^1\\.0+$"
+          example: "0.02"
+        atrMultiplier:
+          type: string
+          format: decimal
+          pattern: "^\\d+(\\.\\d{1,2})?$"
+          example: "1.50"
+        useVolatilityStop:
+          type: boolean
+        timeframe:
+          $ref: '#/components/schemas/Timeframe'
+        accountEquitySource:
+          type: string
+          enum: [connected, manual]
+          default: connected
+    TradeOutput:
+      type: object
+      required:
+        - positionSize
+        - positionCost
+        - riskAmount
+        - riskToReward
+        - suggestedStop
+        - warnings
+      properties:
+        positionSize:
+          type: string
+          format: decimal
+          pattern: "^\\d+(.\\d{1,8})?$"
+        positionCost:
+          type: string
+          format: decimal
+          pattern: "^\\d+(.\\d{1,2})?$"
+        riskAmount:
+          type: string
+          format: decimal
+          pattern: "^\\d+(.\\d{1,2})?$"
+        riskToReward:
+          type: number
+          format: float
+          example: 2.5
+        suggestedStop:
+          type: string
+          format: decimal
+          pattern: "^\\d+(.\\d{1,8})?$"
+        warnings:
+          type: array
+          items:
+            type: string
+            example: MIN_LOT
+    MarketSnapshot:
+      type: object
+      required:
+        - symbol
+        - lastPrice
+        - atr13
+        - atrMultiplier
+        - stale
+        - source
+        - serverTimestamp
+      properties:
+        symbol:
+          $ref: '#/components/schemas/Symbol'
+        lastPrice:
+          type: string
+          format: decimal
+          pattern: "^\\d+(.\\d{1,8})?$"
+        bid:
+          type: string
+          nullable: true
+        ask:
+          type: string
+          nullable: true
+        atr13:
+          type: string
+          format: decimal
+        atrMultiplier:
+          type: string
+          format: decimal
+        stale:
+          type: boolean
+        source:
+          type: string
+          enum: [stream, manual]
+        serverTimestamp:
+          type: string
+          format: date-time
+    TradeCalculation:
+      type: object
+      required:
+        - id
+        - input
+        - output
+        - marketSnapshot
+        - source
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        input:
+          $ref: '#/components/schemas/TradeInput'
+        output:
+          $ref: '#/components/schemas/TradeOutput'
+        marketSnapshot:
+          $ref: '#/components/schemas/MarketSnapshot'
+        source:
+          type: string
+          enum: [live, manual]
+        createdAt:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+security:
+  - bearerAuth: []
+paths:
+  /v1/markets/{symbol}:
+    get:
+      summary: Fetch metadata for a tradable symbol.
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Symbol'
+      responses:
+        '200':
+          description: Symbol metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [symbol, tickSize, stepSize, minNotional, minQuantity, status]
+                properties:
+                  symbol:
+                    $ref: '#/components/schemas/Symbol'
+                  tickSize:
+                    type: string
+                  stepSize:
+                    type: string
+                  minNotional:
+                    type: string
+                  minQuantity:
+                    type: string
+                  status:
+                    type: string
+                    enum: [tradable, suspended]
+                  displayName:
+                    type: string
+        '404':
+          description: Symbol not found or not tradable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/trades/preview:
+    post:
+      summary: Calculate trade sizing outputs for the provided inputs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TradeInput'
+      responses:
+        '200':
+          description: Trade calculation succeeded
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [output, marketSnapshot]
+                properties:
+                  output:
+                    $ref: '#/components/schemas/TradeOutput'
+                  marketSnapshot:
+                    $ref: '#/components/schemas/MarketSnapshot'
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/trades/history:
+    get:
+      summary: Retrieve the authenticated user's recent trade calculations (30-day retention).
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          schema:
+            type: string
+            nullable: true
+      responses:
+        '200':
+          description: Paginated trade calculation history
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TradeCalculation'
+                  nextCursor:
+                    type: string
+                    nullable: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/settings:
+    get:
+      summary: Fetch the authenticated user's calculator settings.
+      responses:
+        '200':
+          description: Settings payload
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [riskPercent, atrMultiplier, dataFreshnessThresholdMs, defaultSymbol, defaultTimeframe, rememberedMultiplierOptions]
+                properties:
+                  riskPercent:
+                    type: string
+                  atrMultiplier:
+                    type: string
+                  dataFreshnessThresholdMs:
+                    type: integer
+                  defaultSymbol:
+                    $ref: '#/components/schemas/Symbol'
+                  defaultTimeframe:
+                    $ref: '#/components/schemas/Timeframe'
+                  rememberedMultiplierOptions:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      summary: Update calculator settings.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                riskPercent:
+                  type: string
+                atrMultiplier:
+                  type: string
+                dataFreshnessThresholdMs:
+                  type: integer
+                rememberedMultiplierOptions:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [riskPercent, atrMultiplier, dataFreshnessThresholdMs, defaultSymbol, defaultTimeframe, rememberedMultiplierOptions]
+                properties:
+                  riskPercent:
+                    type: string
+                  atrMultiplier:
+                    type: string
+                  dataFreshnessThresholdMs:
+                    type: integer
+                  defaultSymbol:
+                    $ref: '#/components/schemas/Symbol'
+                  defaultTimeframe:
+                    $ref: '#/components/schemas/Timeframe'
+                  rememberedMultiplierOptions:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/accounts/equity:
+    get:
+      summary: Return the latest account equity for the connected account or manual fallback.
+      responses:
+        '200':
+          description: Equity payload
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [source, equity, lastSyncedAt]
+                properties:
+                  source:
+                    type: string
+                    enum: [connected, manual]
+                  equity:
+                    type: string
+                  lastSyncedAt:
+                    type: string
+                    format: date-time
+        '404':
+          description: No connected account or manual equity set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/stream/market-data:
+    get:
+      summary: Upgrade to a WebSocket that streams market data snapshots every second.
+      parameters:
+        - name: symbols
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Symbol'
+      responses:
+        '101':
+          description: WebSocket upgrade
+      x-websocket:
+        message:
+          description: Server-to-client payload
+          payload:
+            type: object
+            required: [type, data]
+            properties:
+              type:
+                type: string
+                enum: [market.snapshot]
+              data:
+                $ref: '#/components/schemas/MarketSnapshot'
+
