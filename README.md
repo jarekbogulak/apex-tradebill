@@ -1,5 +1,7 @@
 # Codex Custom Prompts
 
+**Caution**: Please use the `/constitution`, `/specify`, and `/plan` commands in order. You cannot use input from a subsequent command in a preceding one, so ensure these commands are not mixed.
+
 User inputs for Codex custom prompts:
 - `/constitution`
 - `/specify`
