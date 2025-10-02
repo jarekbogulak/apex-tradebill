@@ -37,7 +37,7 @@ Apex TradeBill delivers fast, mobile-first trade sizing that fuses live ApeX Omn
 **Language/Version**: TypeScript 5.9 + Expo SDK 54 (React Native 0.81) client + Node.js 22 LTS service layer  
 **Primary Dependencies**: Expo 54 managed workflow, Expo Router 3, TanStack Query 5, Zustand 5, Apex Omni OpenAPI Node SDK, Fastify 5 + `ws` 8 streaming  
 **Storage**: PostgreSQL 16 for user profiles/trade history + in-process ring buffer for market ticks (Redis upgrade deferred until scaling requires it)  
-**Testing**: Jest 30 with phased suites (API/unit + RN smoke initially; contract/property/latency harnesses added after core endpoints land)  
+**Testing**: Jest 30 with phased suites (API/unit + RN smoke initially; contract/property/latency harnesses added after core endpoints land); colocate module-level tests with source, keep cross-cutting suites under `/tests/**`  
 **Target Platform**: Expo-managed app for iOS 16+, Android 13+, and responsive Expo web build targeting Chromium-compatible browsers  
 **Project Type**: mobile (Expo client + Node.js API service)  
 **Performance Goals**: Live price-to-output refresh median ≤250 ms, p95 ≤500 ms; UI ≥55 FPS for 95 % of interaction windows; reconnect within 5 s for 99 % of transient outages  
@@ -102,14 +102,21 @@ frontend/
 └── tests/
 
 # Option 3: Mobile + API (when "iOS/Android" detected)
+mobile/
+├── app/
+├── components/
+└── lib/
+
 api/
 └── [same as backend above]
 
-ios/ or android/
-└── [platform-specific structure]
+tests/
+└── contract/
+
+*Note*: Unit/component tests live beside their owning modules; `tests/` holds cross-cutting suites only.
 ```
 
-**Structure Decision**: Option 3 – Expo app under `/Users/booke/dev/nix-expo-ic/apex-tradebill/app` paired with `/Users/booke/dev/nix-expo-ic/apex-tradebill/api` service (mobile + API split), scaffolded during Phase 2 tasks
+**Structure Decision**: Option 3 – Expo app rooted at `mobile/` paired with the Fastify service at `api/` (mobile + API split), scaffolded during Phase 2 tasks
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -153,6 +160,7 @@ ios/ or android/
    - Output OpenAPI/GraphQL schema to `/contracts/`
 
 3. **Stage contract test harnesses** from contracts:
+   - Store shared suites under `tests/contract/**`; keep unit-level specs colocated with modules
    - One placeholder test file per endpoint with `it.todo` notes tied to acceptance criteria
    - Include shared helpers to load OpenAPI schemas without requiring live services
    - Mark upgrade tasks to convert todos into executing tests once endpoints exist

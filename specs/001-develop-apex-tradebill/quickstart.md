@@ -7,9 +7,9 @@
 - Optional for later phases: Docker or local PostgreSQL 16 once persistence tasks land
 
 ## Bootstrap (Stage 1 – Skeleton)
-1. `pnpm create expo@latest app --template blank-typescript` (runs inside repo root; generates `app/`).
+1. `npx create-expo-app@latest mobile --template blank-typescript` (runs inside repo root; generates `mobile/`).
 2. `pnpm init -y` inside `api/` followed by `pnpm add fastify ws typescript tsx` to scaffold the Node service stub.
-3. From repo root, create a workspace `pnpm-workspace.yaml` (Task 001) so both `app` and `api` share dependencies; then run `pnpm install`.
+3. From repo root, create a workspace `pnpm-workspace.yaml` (Task 001) so both `mobile` and `api` share dependencies; then run `pnpm install`.
 4. Copy `.env.example` → `.env` in `api/` once the environment template is authored (tasks TBD). Leave ApeX credentials empty until we wire the SDK.
 
 ## Bootstrap (Stage 2 – Live Data Wiring)
@@ -19,8 +19,8 @@
 
 ## Test-First Loop (Phased)
 1. Run `pnpm test --filter api` to execute server unit tests (initial suite mocks the ApeX client).
-2. Run `pnpm test --filter app` to execute Expo component smoke tests that render the calculator shell.
-3. Contract test harnesses in `tests/contract` expose `it.todo` entries—promote each to an executable test as corresponding endpoints reach parity.
+2. Run `pnpm test --filter mobile` to execute Expo component smoke tests that render the calculator shell.
+3. Contract test harnesses in `tests/contract` expose `it.todo` entries—promote each to an executable test as corresponding endpoints reach parity (module-level tests stay colocated next to their source).
 4. Before promoting to staging, run `pnpm lint && pnpm typecheck` plus the latency smoke script (`api/scripts/latency-smoke.ts`) once it lands in Phase 2.
 
 ## Acceptance Walkthrough (Maps to User Stories)
