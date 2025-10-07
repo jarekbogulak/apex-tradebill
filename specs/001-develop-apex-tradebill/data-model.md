@@ -52,7 +52,7 @@
   - `input: TradeInput`
   - `output: TradeOutput`
   - `syncedAt: ISO8601`
-- **Validation Rules**: Keep most recent 20 per device; mark entries dirty until server acknowledgement arrives.
+- **Validation Rules**: Keep most recent 20 per device; purge entries older than 30 days once successfully synced; mark entries dirty until server acknowledgement arrives.
 
 ## DTOs (Non-Persisted)
 - **MarketSnapshot**: `symbol`, `lastPrice`, `atr13`, `atrMultiplier`, `bid`, `ask`, `stale`, `source`, `serverTimestamp`.

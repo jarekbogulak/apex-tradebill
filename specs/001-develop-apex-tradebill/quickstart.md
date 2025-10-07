@@ -20,8 +20,9 @@
 ## Test-First Loop (Phased)
 1. Run `pnpm test --filter api` to execute server unit tests (initial suite mocks the ApeX client).
 2. Run `pnpm test --filter mobile` to execute Expo component smoke tests that render the calculator shell.
-3. Contract test harnesses in `tests/contract` expose `it.todo` entries—promote each to an executable test as corresponding endpoints reach parity (module-level tests stay colocated next to their source).
-4. Before promoting to staging, run `pnpm lint && pnpm typecheck` plus the latency smoke script (`api/scripts/latency-smoke.ts`) once it lands in Phase 2.
+3. Contract suites in `tests/contract` must ship as executable failing tests. If any scenario is temporarily deferred, mark it with `test.skip` including an accountable owner and target date, and track the follow-up in project docs (no bare `it.todo`). Module-level tests stay colocated next to their source.
+4. Property-based suites introduced in T065–T066 should run via `pnpm test --filter api -- --runInBand --property` (or equivalent script) and must pass before shipping calculator changes.
+5. Before promoting to staging, run `pnpm lint && pnpm typecheck` plus the latency smoke script (`api/scripts/latency-smoke.ts`) and the Expo FPS profiler (`tests/performance/mobile-fps.profile.ts`) once they land in Phase 2.
 
 ## Acceptance Walkthrough (Maps to User Stories)
 1. **Live sizing (stub)**: Launch Expo app pointing to the Fastify stub; confirm the calculator screen renders current mock values and updates when mock timers fire.
@@ -31,6 +32,9 @@
 5. **Stale fallback**: Simulate feed outage (pause the ApeX client); check UI shows “Stale,” reconnect backoff indicators, and manual price entry unlocks.
 6. **Equity sync**: Switch between connected equity and manual entry; confirm labeling and audit trail entries align with the constitution.
 7. **History retention**: Once PostgreSQL writes are enabled, ensure only the most recent 30 days of trade calculations appear and older entries prune in nightly jobs.
+8. **Risk visualization**: Interact with the calculator while watching the visualization panel; verify entry/stop/target markers stay in sync with numerical outputs, use accessible contrast (WCAG AA), and do not reorder.
+9. **Settings panel**: Open the settings screen, update risk %, ATR multiplier, and freshness threshold, then confirm changes persist (SecureStore + API) and appear in subsequent calculations.
+10. **Offline cache**: Disable network connectivity, complete a calculation, and confirm the DeviceCache retains the result. Re-enable connectivity and ensure the calculation syncs into history within the 30-day window.
 
 ## Shutdown
 - Stop Expo and Fastify processes.

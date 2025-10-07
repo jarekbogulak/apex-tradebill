@@ -90,6 +90,38 @@
 - [ ] T024 [P] Author integration test for trade history retention (30-day pruning)
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/integration/api/history-retention.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/quickstart.md
   - Depends on: T010
+- [ ] T065 [P] Add property-based tests covering ATR(13) calculator invariants (monotonic volatility, non-negative outputs, rounding floors)
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/services/calculations/__tests__/atrCalculator.property.test.ts
+  - Depends on: T010, T030
+- [ ] T066 [P] Add property-based tests verifying trade preview sizing respects percent-risk caps and symbol precision
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/services/trades/__tests__/tradePreview.property.test.ts
+  - Depends on: T010, T030, T031
+- [ ] T067 [P] Author integration test for risk visualization keeping entry/stop/target ratios in sync with live updates
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/integration/mobile/risk-visualization.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/quickstart.md
+  - Depends on: T010, T018, T019, T020
+- [ ] T068 [P] Author integration test for settings panel defaults, edits, and persistence
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/integration/mobile/settings-panel.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/quickstart.md
+  - Depends on: T010, T023
+- [ ] T069 [P] Add unit tests for locale-aware formatting and contrast tokens
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/utils/src/__tests__/formatting.spec.ts
+  - Depends on: T010, T006
+
+- [ ] T074 [P] Add contract/property tests enforcing ApeX symbol allowlist handling for market endpoints and configuration updates
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/markets/symbol-allowlist.contract.test.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/services/markets/__tests__/marketAllowlist.property.test.ts
+  - Depends on: T010, T011
+- [ ] T076 [P] Add rounding and precision tests covering tick size floors, cent rounding, and risk-to-reward outputs
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/utils/src/__tests__/roundingRules.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/services/trades/__tests__/previewRounding.property.test.ts
+  - Depends on: T010, T030
+- [ ] T078 [P] Add scheduler tests ensuring 1s recompute cadence and telemetry alerts when thresholds are breached
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/integration/api/recompute-cadence.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/mobile/src/features/stream/__tests__/refreshScheduler.test.ts
+  - Depends on: T010, T022
+- [ ] T080 [P] Add property tests validating price sampling selects the latest tick per window and carries forward when idle
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/realtime/__tests__/priceSampling.property.test.ts
+  - Depends on: T010, T017
+- [ ] T082 Add reliability monitoring tests covering 99.5% availability alert thresholds and reporting
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/reliability/uptime-monitor.spec.ts
+  - Depends on: T010, T062
+
 
 ## Phase 3.3: Core Implementation (after tests are failing)
 - [ ] T025 [P] Implement User model with Zod validation and repository helpers
@@ -115,10 +147,13 @@
   - Depends on: T030
 - [ ] T032 [P] Implement deterministic ATR(13) calculator module consumed by trade preview logic
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/services/calculations/atrCalculator.ts
-  - Depends on: T030
+  - Depends on: T030, T065
 - [ ] T033 [P] Implement trade preview service orchestrating validation, ATR calculator, and warnings
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/services/trades/previewService.ts
-  - Depends on: T028, T030, T031, T032
+  - Depends on: T028, T030, T031, T032, T066
+- [ ] T077 [P] Wire rounding and precision helpers into trade preview responses and shared DTO serialization
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/utils/src/rounding.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/services/trades/previewService.ts
+  - Depends on: T076, T033
 - [ ] T034 [P] Implement trade history service with pagination and retention boundaries
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/services/trades/historyService.ts
   - Depends on: T028, T031
@@ -131,6 +166,9 @@
 - [ ] T037 [P] Implement market metadata service sourcing tick/step sizing
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/services/markets/marketMetadataService.ts
   - Depends on: T031
+- [ ] T075 [P] Implement ApeX symbol allowlist enforcement and configuration surfaces for market metadata
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/services/markets/marketMetadataService.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/configs/markets/allowlist.json
+  - Depends on: T074, T037
 - [ ] T038 [P] Create Zustand store for persisted user settings with Expo SecureStore hydration
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/mobile/src/state/settingsStore.ts
   - Depends on: T009, T030
@@ -142,13 +180,25 @@
   - Depends on: T030, T011, T012, T013, T014, T015, T016, T017
 - [ ] T041 [P] Build Expo trade calculator screen binding stores, queries, and validation states
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/mobile/app/(tabs)/trade-calculator.tsx
-  - Depends on: T038, T039, T040, T018, T019, T020, T021
+  - Depends on: T038, T039, T040, T018, T019, T020, T021, T070, T072
 - [ ] T042 [P] Compose trade history list UI with pagination and retry controls
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/mobile/src/features/history/HistoryList.tsx
   - Depends on: T039, T040, T024
 - [ ] T043 [P] Create market data stream hook with stale detection and reconnect logic
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/mobile/src/features/stream/useMarketStream.ts
   - Depends on: T040, T022
+- [ ] T079 [P] Implement 1s recompute scheduler modules with telemetry hooks for client and server refresh loops
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/mobile/src/features/stream/refreshScheduler.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/realtime/refreshScheduler.ts
+  - Depends on: T078, T043, T050
+- [ ] T070 [P] Build risk visualization component with accessible contrast and live updates
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/mobile/src/features/visualization/RiskVisualization.tsx
+  - Depends on: T039, T040, T067
+- [ ] T071 [P] Build settings panel screen and navigation entry point
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/mobile/app/(tabs)/settings.tsx
+  - Depends on: T038, T039, T040, T068
+- [ ] T072 [P] Implement formatting and accessibility utilities consumed by UI components
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/utils/src/formatting.ts
+  - Depends on: T006, T069
 
 ## Phase 3.4: Endpoint Implementation (after services are ready)
 - [ ] T044 Implement Fastify route for GET /v1/markets/{symbol} with schema validation
@@ -189,12 +239,18 @@
 - [ ] T055 Wire market stream gateway plugin to Fastify lifecycle
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/plugins/marketStream.ts
   - Depends on: T050, T054
+- [ ] T081 [P] Implement price window sampling in ring buffer and stream publisher enforcing latest-tick-per-second rules
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/realtime/ringBuffer.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/routes/stream/marketData.ts
+  - Depends on: T080, T054, T055
 - [ ] T056 Add authentication middleware with JWT validation and SecureStore coordination
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/plugins/authentication.ts
   - Depends on: T002, T025, T027
-- [ ] T057 Add structured logging and lightweight metrics emission
+- [ ] T057 Add structured logging and metrics instrumentation covering latency percentiles, error rates, calculation volume, reconnect success, and crash reporting
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/plugins/observability.ts
   - Depends on: T002
+- [ ] T083 Configure uptime metrics pipeline and alerting dashboards enforcing the 99.5% availability target
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/configs/observability/uptime.yml, /Users/booke/dev/nix-expo-ic/apex-tradebill/api/src/plugins/observability.ts
+  - Depends on: T082, T057
 - [ ] T058 Implement Expo offline cache sync worker bridging DeviceCacheEntry to API history
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/mobile/src/sync/cacheSync.ts
   - Depends on: T029, T042, T024
@@ -212,6 +268,9 @@
 - [ ] T062 Add latency smoke/performance test harness verifying p95 budgets
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/performance/latency-smoke.test.ts
   - Depends on: T055, T024
+- [ ] T073 Add Expo performance profiling script capturing frame-rate compliance for calculator flows
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/performance/mobile-fps.profile.ts
+  - Depends on: T041, T070, T072
 - [ ] T063 [P] Document end-to-end setup and troubleshooting in docs/apex-tradebill.md
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/docs/apex-tradebill.md
   - Depends on: T044, T045, T046, T047, T048, T049, T050, T051, T052, T053, T054, T055, T056, T057, T058, T059
@@ -221,7 +280,7 @@
 
 ## Dependencies
 - Setup (T001–T010) must complete before any tests start
-- Contract and integration tests (T011–T024) must exist and fail before implementing models/services/routes
+- Contract and integration/property tests (T011–T024, T065–T069, T074, T076, T078, T080, T082) must exist and fail before implementing models/services/routes
 - Models (T025–T029) block services (T030–T037), which block routes (T044–T050)
 - Integration plumbing (T051–T059) requires routes and services to be in place
 - Polish (T060–T064) runs last after core functionality is wired

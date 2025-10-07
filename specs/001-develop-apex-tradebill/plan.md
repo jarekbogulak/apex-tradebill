@@ -41,7 +41,7 @@ Apex TradeBill delivers fast, mobile-first trade sizing that fuses live ApeX Omn
 **Target Platform**: Expo-managed app for iOS 16+, Android 13+, and responsive Expo web build targeting Chromium-compatible browsers  
 **Project Type**: mobile (Expo client + Node.js API service)  
 **Performance Goals**: Live price-to-output refresh median ≤250 ms, p95 ≤500 ms; UI ≥55 FPS for 95 % of interaction windows; reconnect within 5 s for 99 % of transient outages  
-**Constraints**: Enforce 2 s data freshness, deterministic ATR(13) sizing, secrets confined to secure storage, offline fallback for manual pricing, audit trail for all calculations  
+**Constraints**: Enforce 2 s data freshness, deterministic ATR(13) sizing, secrets confined to secure storage, offline fallback with cached calculations/manual pricing, audit trail for all calculations  
 **Scale/Scope**: Launch with BTC-USDT and ETH-USDT on ApeX Omni, ~100 active day traders, retain 30 days of trade snapshots with pruning  
 **Additional User Context**: No supplemental command arguments were supplied (verified before planning)
 
@@ -51,7 +51,7 @@ Apex TradeBill delivers fast, mobile-first trade sizing that fuses live ApeX Omn
 - **Financial Data Integrity** → Source streaming + REST data exclusively from the ApeX Omni SDK with signature validation, stamp every tick with server time, and persist full input/output vectors in PostgreSQL for audit replay. Planned API schema rejects stale (>2 s) payloads and surfaces explicit error codes.
 - **Risk Management Discipline** → Centralize ATR sizing, percent-risk caps, and minimum stop logic inside shared calculator modules; document deterministic formulas now and layer property-based validation once baseline sizing endpoints ship. Backend enforces caps before returning trade sizing responses.
 - **Code Quality & Simplicity** → Adopt modular TypeScript (shared `lib/calculations`, `lib/validation`) with strict ESLint/TypeScript configs, avoid speculative abstractions, and document exported calculators. Keep scope tight while enabling later extensions.
-- **Test-First & Reliability** → Maintain a TDD loop with Jest, starting from unit/component smoke tests and expanding to contract, property, and latency suites as functionality becomes available. Track latency via smoke scripts until the dedicated harness arrives.
+- **Test-First & Reliability** → Maintain a TDD loop with Jest, starting from unit/component smoke tests and expanding to contract, property, and latency suites as functionality becomes available (see T065–T066 property harness). Track latency via smoke scripts until the dedicated harness arrives.
 - **Security & Secrets Protection** → Secrets isolated in Expo SecureStore (client) and environment vaults (backend). All network calls over TLS, request validation hardened against injection, CI secrets scan enabled, no secrets in logs.
 - **Performance & Low-Latency Reliability** → Price recompute loop uses debounced 1 s scheduler and local cache; Fastify + WebSocket transport sized for <250 ms median response; reconnect backoff 1s→2s→5s implemented with telemetry.
 - **Day-Trader UX Consistency** → Single-screen layout with stable panels, locale-aware formatting, contrast-checked palette, and inline stale-data badges so users keep context during live updates.
@@ -161,8 +161,9 @@ tests/
 
 3. **Stage contract test harnesses** from contracts:
    - Store shared suites under `tests/contract/**`; keep unit-level specs colocated with modules
-   - One placeholder test file per endpoint with `it.todo` notes tied to acceptance criteria
+   - Author concrete failing contract tests per endpoint. If a scenario must remain pending, mark it with `test.skip` including an accountable owner and target date, then track remediation in project docs. Remove all bare `it.todo` placeholders.
    - Include shared helpers to load OpenAPI schemas without requiring live services
+   - Reminder: Align with constitution Test-First and Code Quality principles—no ownerless TODO markers are permitted.
    - Mark upgrade tasks to convert todos into executing tests once endpoints exist
 
 4. **Extract test scenarios** from user stories:
@@ -183,7 +184,9 @@ tests/
 **Phase 1 Design Focus Areas**:
 - Define shared TypeScript domain models (TradeInput, MarketSnapshot DTOs, TradeOutput, UserSettings) with validation boundaries.
 - Specify API surface (REST + WebSocket) for live ticks, trade calculation requests, account equity sync, and history retrieval; map each to contracts with staged test plans.
-- Produce state diagrams for risk calculator pipeline (input validation → ATR sampling → position sizing → rounding) and for data freshness handling (live → stale → reconnect).
+- Produce state diagrams for risk calculator pipeline (input validation → ATR sampling → position sizing → rounding) including property-based invariants, and for data freshness handling (live → stale → reconnect).
+- Outline risk visualization composition (accessibility, locale-aware formatting, stable layout), navigation entry for user settings management, and offline cache sync boundaries.
+- Document mobile performance instrumentation approach (Expo profiling or Hermes sampling) to validate 55 FPS budget.
 - Outline React Native view composition (Inputs panel, Outputs panel, Visualization, History) including accessibility and real-time update rules.
 - Document the phased CI/test plan: unit/component smoke now, contract/property/latency suites queued post-MVP.
 

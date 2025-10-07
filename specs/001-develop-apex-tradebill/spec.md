@@ -79,8 +79,7 @@ As a day trader, I want to quickly input a trade idea (account size, direction, 
 - Extremely high volatility: suggested stop exceeds acceptable distance; app must still compute and warn user.
 - Very small account size or very tight stop: computed position size rounds to zero or minimum lot; app must display a clear constraint message.
 - Direction mismatch: stop/target on wrong side of entry for long/short; validation must prevent calculation until corrected.
-- Data staleness: if market snapshot is older than the freshness threshold, app must prompt refresh or manual input.
-- Data staleness: if snapshot older than 2s, show “Stale” badge, attempt auto-reconnect with backoff (1s→2s→5s), and allow manual price entry.
+- Data staleness: if market snapshot is older than the freshness threshold (2 s), the app must surface a “Stale” badge, attempt auto-reconnect with 1 s→2 s→5 s backoff, prompt users to refresh, and allow clearly marked manual price entry.
 
 ## Requirements *(mandatory)*
 
@@ -97,7 +96,7 @@ As a day trader, I want to quickly input a trade idea (account size, direction, 
 - **FR-010**: System MUST persist a recent trade calculation history (inputs and outputs) for quick recall and review.
 - **FR-011**: Inputs MUST be validated for presence, ranges, and logical consistency (e.g., long: target > entry > stop; short: target < entry < stop).
 - **FR-012**: On data unavailability, the app MUST fail gracefully and allow manual price input with clear indication of non‑live data.
-- **FR-013**: System MUST present numbers with locale‑aware formatting and accessible contrast.
+- **FR-013**: System MUST present numbers with locale‑aware formatting and accessible contrast that meets WCAG 2.1 AA (≥4.5:1) and honours system font scaling up to 200%.
 - **FR-014**: System MUST provide a clear settings panel to manage defaults (risk %, multiplier, data freshness threshold).
 - **FR-015**: System MUST meet the performance and reliability targets defined in this specification.
 - **FR-016**: System MUST protect user secrets and sensitive tokens; no sensitive information appears in logs or UI.
@@ -120,6 +119,7 @@ As a day trader, I want to quickly input a trade idea (account size, direction, 
 - **FR-023**: Data freshness and fallback: mark data stale after 2 seconds without an update; display a “Stale” badge; attempt reconnects with backoff (1s→2s→5s); permit manual price entry during staleness.
 - **FR-024**: Account equity source for risk %: prefer the connected trading account’s reported equity when available; otherwise require manual account size input. Clearly indicate the source (Connected or Manual) and recompute when the source or value changes.
 - **FR-025**: Price sampling rule: when multiple prices arrive within a 1-second window, use the latest price at the refresh boundary. If no price arrives in the window, carry forward the last known price and apply FR-023 staleness behavior.
+- **FR-026**: System MUST cache the most recent trade calculations locally for offline review and sync them to server history within 30 days once connectivity resumes.
 
 ### Performance & Reliability Targets
 - Live price change to refreshed outputs: median ≤ 250 ms; 95th percentile ≤ 500 ms on the reference mid-tier mobile device and network.
@@ -130,9 +130,13 @@ As a day trader, I want to quickly input a trade idea (account size, direction, 
 ### Key Entities *(include if feature involves data)*
 - **TradeInput**: user‑provided parameters (account size, direction, entry, stop, target, risk %, multiplier, timestamp, symbol).
 - Update: Account size may be auto-populated from connected account equity when available; the interface must indicate whether the value is Connected or Manual.
-- **MarketDataSnapshot**: symbol, price, timestamp, volatility signal (with freshness metadata).
+- **MarketSnapshot**: symbol, price, timestamp, volatility signal (with freshness metadata).
 - **TradeOutput**: position size (units), position cost, risk amount, risk‑to‑reward, suggested stop.
-- **TradeRecord**: persisted combination of TradeInput + TradeOutput for history display.
+- **TradeCalculation**: persisted combination of TradeInput + TradeOutput for history display.
+- **User**: authenticated trader profile including role metadata and audit preferences.
+- **UserSettings**: configurable defaults (risk %, multiplier, data freshness threshold) with provenance (manual vs connected account).
+- **ConnectedAccount**: representation of the linked Apex Omni account, including equity snapshots and connection state for labeling.
+- **DeviceCacheEntry**: device-local cache entry capturing the last calculations and sync status for offline resilience.
 
 ---
 
@@ -151,6 +155,7 @@ As a day trader, I want to quickly input a trade idea (account size, direction, 
 - [x] Success criteria are measurable
 - [x] Scope is clearly bounded
 - [x] Dependencies and assumptions identified
+- [ ] Property-based tests defined for ATR and sizing formulas
 
 ### Constitution Alignment
 - [x] Data integrity and risk management needs captured (if applicable)
