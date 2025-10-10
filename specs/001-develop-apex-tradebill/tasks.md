@@ -16,12 +16,12 @@
 ```
 
 ## Phase 3.1: Setup
-- [ ] T001 Set up a monorepo according to the documentaion under README.md and the following URL: https://docs.expo.dev/guides/monorepos/; in particular, create pnpm workspace + root tooling scripts aligning mobile, api, and packages
+- [x] T001 Set up a monorepo according to the documentaion under README.md and the following URL: https://docs.expo.dev/guides/monorepos/; in particular, create pnpm workspace + root tooling scripts aligning mobile, api, and packages
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/pnpm-workspace.yaml, /Users/booke/dev/nix-expo-ic/apex-tradebill/package.json
-- [ ] T002 Scaffold Expo managed app shell with Default template so `mobile/` matches Expo SDK 54 expectations following the documentaion under the URL: https://docs.expo.dev/guides/monorepos/
+- [x] T002 Scaffold Expo managed app shell with Default template so `mobile/` matches Expo SDK 54 expectations following the documentaion under the URL: https://docs.expo.dev/guides/monorepos/
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/app.json, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/app/(tabs)/index.tsx
   - Depends on: None
-- [ ] T003 Initialize Fastify Node service skeleton with entry point and scripts
+- [x] T003 Initialize Fastify Node service skeleton with entry point and scripts
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/package.json, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/server.ts
   - Depends on: None
 - [ ] T004 Establish shared TypeScript config and project references across workspace
