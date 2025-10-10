@@ -116,7 +116,7 @@ tests/
 *Note*: Unit/component tests live beside their owning modules; `tests/` holds cross-cutting suites only.
 ```
 
-**Structure Decision**: Option 3 – Expo app rooted at `mobile/` paired with the Fastify service at `api/` (mobile + API split), scaffolded during Phase 2 tasks
+**Structure Decision**: Option 3 – Expo app rooted at `apps/mobile/` paired with the Fastify service at `apps/api/` (mobile + API split), scaffolded during Phase 2 tasks
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:

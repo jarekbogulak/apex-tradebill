@@ -7,7 +7,7 @@
 - Optional for later phases: Docker or local PostgreSQL 16 once persistence tasks land
 
 ## Bootstrap (Stage 1 – Skeleton)
-1. `npx create-expo-app@latest mobile --template blank-typescript` (runs inside repo root; generates `mobile/`).
+1. `npx create-expo-app@latest mobile` (runs inside repo root; generates `mobile/`).
 2. `pnpm init -y` inside `api/` followed by `pnpm add fastify ws typescript tsx` to scaffold the Node service stub.
 3. From repo root, create a workspace `pnpm-workspace.yaml` (Task 001) so both `mobile` and `api` share dependencies; then run `pnpm install`.
 4. Copy `.env.example` → `.env` in `api/` once the environment template is authored (tasks TBD). Leave ApeX credentials empty until we wire the SDK.
