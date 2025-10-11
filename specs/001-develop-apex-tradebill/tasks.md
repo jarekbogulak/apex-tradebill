@@ -39,7 +39,7 @@
 - [x] T008 Configure linting, formatting, and pnpm scripts for monorepo guardrails
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/configs/eslint/.eslintrc.cjs, /Users/booke/dev/nix-expo-ic/apex-tradebill/.prettierrc.cjs
   - Depends on: T002, T003
-- [ ] T009 Double-check (do not make any changes) Metro and Babel to ensure they transpile workspace packages for Expo
+- [x] T009 Double-check (do not make any changes) Metro and Babel to ensure they transpile workspace packages for Expo
 - [ ] T010 Author shared Jest configuration (API + mobile) with Testing Library presets
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/configs/jest/jest.config.base.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/jest.config.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/jest.config.ts
   - Depends on: T002, T003
