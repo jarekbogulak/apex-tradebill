@@ -15,7 +15,9 @@
     "paths": {
       "@mobile/*": ["apps/mobile/*"],
       "@api/*": ["apps/api/src/*"],
-      "@packages/*": ["packages/*"]
+      "@packages/*": ["packages/*"],
+      "@apex-tradebill/types": ["packages/types/src/index.ts"],
+      "@apex-tradebill/utils": ["packages/utils/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "dist"]

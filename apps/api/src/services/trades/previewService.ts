@@ -13,7 +13,7 @@ import {
   violatesMinNotional,
   violatesMinQuantity,
 } from '@apex-tradebill/utils';
-import Decimal from 'decimal.js-light';
+import Decimal from 'decimal.js-light/decimal.js';
 import { calculateAtr } from '../calculations/atrCalculator.js';
 import type {
   MarketDataPort,
@@ -38,13 +38,19 @@ const dedupeWarnings = (warnings: TradeWarningCode[]): TradeWarningCode[] => {
   return Array.from(new Set(warnings));
 };
 
-const toDecimal = (value: string | number): Decimal => new Decimal(value);
+const toDecimal = (value: string | number) => new Decimal(value);
+
+type DecimalLike = ReturnType<typeof toDecimal>;
 
 const formatAtr = (value: number): string => {
   return value.toFixed(8);
 };
 
-const isPriceOrderingValid = (input: TradeInput, entryPrice: Decimal, stopPrice: Decimal): boolean => {
+const isPriceOrderingValid = (
+  input: TradeInput,
+  entryPrice: DecimalLike,
+  stopPrice: DecimalLike,
+): boolean => {
   if (input.direction === 'long') {
     return entryPrice.gt(stopPrice);
   }
@@ -52,16 +58,16 @@ const isPriceOrderingValid = (input: TradeInput, entryPrice: Decimal, stopPrice:
   return stopPrice.gt(entryPrice);
 };
 
-const computeRewardPerUnit = (input: TradeInput, entryPrice: Decimal): Decimal => {
+const computeRewardPerUnit = (input: TradeInput, entryPrice: DecimalLike): DecimalLike => {
   const target = toDecimal(input.targetPrice);
   return input.direction === 'long' ? target.minus(entryPrice) : entryPrice.minus(target);
 };
 
 const computeSuggestedStop = (
   input: TradeInput,
-  lastPrice: Decimal,
-  atrValue: Decimal,
-): Decimal => {
+  lastPrice: DecimalLike,
+  atrValue: DecimalLike,
+): DecimalLike => {
   const multiplier = toDecimal(input.atrMultiplier);
   const displacement = atrValue.times(multiplier);
 
@@ -85,11 +91,11 @@ const collectWarnings = ({
 }: {
   input: TradeInput;
   snapshot: MarketSnapshot;
-  suggestedStop: Decimal;
-  manualStop: Decimal;
-  riskPerUnit: Decimal;
-  rewardPerUnit: Decimal;
-  positionSize: Decimal;
+  suggestedStop: DecimalLike;
+  manualStop: DecimalLike;
+  riskPerUnit: DecimalLike;
+  rewardPerUnit: DecimalLike;
+  positionSize: DecimalLike;
   metadata: { minNotional?: string | null; minQuantity?: string | null };
   rounded: TradeOutput;
 }): TradeWarningCode[] => {
@@ -265,3 +271,5 @@ export const createTradePreviewService = ({
     preview,
   };
 };
+
+export type TradePreviewService = ReturnType<typeof createTradePreviewService>;

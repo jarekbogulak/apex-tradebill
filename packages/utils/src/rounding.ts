@@ -1,11 +1,14 @@
-import Decimal from 'decimal.js-light';
+import Decimal from 'decimal.js-light/decimal.js';
 
 Decimal.set({
   precision: 24,
   rounding: Decimal.ROUND_HALF_UP,
 });
 
-export type DecimalValue = Decimal | number | string;
+const toDecimal = (value: number | string) => new Decimal(value);
+
+type DecimalLike = ReturnType<typeof toDecimal>;
+export type DecimalValue = DecimalLike | number | string;
 
 const DEFAULT_PRICE_TICK = '0.01';
 const DEFAULT_QUANTITY_STEP = '0.000001';
@@ -15,8 +18,8 @@ const countFractionDigits = (value: string): number => {
   return fraction.length;
 };
 
-const toDecimal = (value: DecimalValue): Decimal => {
-  return new Decimal(value);
+const castToDecimal = (value: DecimalValue): DecimalLike => {
+  return value instanceof Decimal ? value : new Decimal(value);
 };
 
 export interface PrecisionRules {
@@ -28,34 +31,37 @@ export interface PrecisionRules {
 
 export const floorToStepSize = (value: DecimalValue, stepSize?: string | null): string => {
   const normalizedStep = stepSize && stepSize !== '0' ? stepSize : DEFAULT_QUANTITY_STEP;
-  const step = toDecimal(normalizedStep);
+  const step = castToDecimal(normalizedStep);
   if (step.lte(0)) {
     throw new Error('Step size must be positive');
   }
 
-  const ratio = toDecimal(value).div(step);
+  const ratio = castToDecimal(value).div(step);
   const floored = ratio.toDecimalPlaces(0, Decimal.ROUND_FLOOR).mul(step);
   return floored.toFixed(countFractionDigits(normalizedStep));
 };
 
 export const roundPriceToTick = (value: DecimalValue, tickSize?: string | null): string => {
   const normalizedTick = tickSize && tickSize !== '0' ? tickSize : DEFAULT_PRICE_TICK;
-  const tick = toDecimal(normalizedTick);
+  const tick = castToDecimal(normalizedTick);
   if (tick.lte(0)) {
     throw new Error('Tick size must be positive');
   }
 
   const digits = countFractionDigits(normalizedTick);
-  const rounded = toDecimal(value).div(tick).toDecimalPlaces(0, Decimal.ROUND_HALF_UP).mul(tick);
+  const rounded = castToDecimal(value)
+    .div(tick)
+    .toDecimalPlaces(0, Decimal.ROUND_HALF_UP)
+    .mul(tick);
   return rounded.toFixed(digits);
 };
 
 export const roundCurrency = (value: DecimalValue, fractionDigits = 2): string => {
-  return toDecimal(value).toFixed(fractionDigits, Decimal.ROUND_HALF_UP);
+  return castToDecimal(value).toFixed(fractionDigits, Decimal.ROUND_HALF_UP);
 };
 
 export const formatRiskToReward = (value: DecimalValue, fractionDigits = 2): number => {
-  return Number(toDecimal(value).toFixed(fractionDigits, Decimal.ROUND_HALF_UP));
+  return Number(castToDecimal(value).toFixed(fractionDigits, Decimal.ROUND_HALF_UP));
 };
 
 export const violatesMinQuantity = (
@@ -66,7 +72,7 @@ export const violatesMinQuantity = (
     return false;
   }
 
-  return toDecimal(quantity).lt(minQuantity);
+  return castToDecimal(quantity).lt(minQuantity);
 };
 
 export const violatesMinNotional = (
@@ -77,7 +83,7 @@ export const violatesMinNotional = (
     return false;
   }
 
-  return toDecimal(positionCost).lt(minNotional);
+  return castToDecimal(positionCost).lt(minNotional);
 };
 
 export interface TradeAmounts {

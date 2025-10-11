@@ -37,3 +37,5 @@ export const createTradeHistoryService = ({
     list,
   };
 };
+
+export type TradeHistoryService = ReturnType<typeof createTradeHistoryService>;

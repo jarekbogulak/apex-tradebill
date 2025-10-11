@@ -1,5 +1,5 @@
 import type { Symbol } from '@apex-tradebill/types';
-import allowlistConfig from '../../../../../configs/markets/allowlist.json';
+import allowlistConfig from '../../../../../configs/markets/allowlist.json' with { type: 'json' };
 import type { MarketMetadataPort, SymbolMetadata } from '../../domain/ports/tradebillPorts.js';
 
 type AllowlistConfig = {

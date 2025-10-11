@@ -21,9 +21,11 @@
     "@apex-tradebill/utils": "workspace:*",
     "decimal.js-light": "^2.5.1",
     "fastify": "^5.0.0",
+    "ws": "^8.18.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/ws": "^8.5.12",
     "@testing-library/jest-dom": "^6.4.5",
     "@types/jest": "^29.5.12",
     "@types/node": "^22.0.0",

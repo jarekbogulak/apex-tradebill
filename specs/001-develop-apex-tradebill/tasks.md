@@ -198,25 +198,25 @@
   - Depends on: T006, T069
 
 ## Phase 3.4: Endpoint Implementation (after services are ready)
-- [ ] T044 Implement Fastify route for GET /v1/markets/{symbol} with schema validation
+- [x] T044 Implement Fastify route for GET /v1/markets/{symbol} with schema validation
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/routes/markets/getSymbol.ts
   - Depends on: T037, T011
-- [ ] T045 Implement Fastify route for POST /v1/trades/preview producing TradeOutput payload
+- [x] T045 Implement Fastify route for POST /v1/trades/preview producing TradeOutput payload
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/routes/trades/postPreview.ts
   - Depends on: T033, T012
-- [ ] T046 Implement Fastify route for GET /v1/trades/history with cursor pagination
+- [x] T046 Implement Fastify route for GET /v1/trades/history with cursor pagination
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/routes/trades/getHistory.ts
   - Depends on: T034, T013
-- [ ] T047 Implement Fastify route for GET /v1/settings returning persisted defaults
+- [x] T047 Implement Fastify route for GET /v1/settings returning persisted defaults
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/routes/settings/getSettings.ts
   - Depends on: T035, T014
-- [ ] T048 Implement Fastify route for PATCH /v1/settings applying partial updates
+- [x] T048 Implement Fastify route for PATCH /v1/settings applying partial updates
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/routes/settings/patchSettings.ts
   - Depends on: T035, T015
-- [ ] T049 Implement Fastify route for GET /v1/accounts/equity normalizing sources
+- [x] T049 Implement Fastify route for GET /v1/accounts/equity normalizing sources
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/routes/accounts/getEquity.ts
   - Depends on: T036, T016
-- [ ] T050 Implement WebSocket upgrade handler for /v1/stream/market-data publishing snapshots
+- [x] T050 Implement WebSocket upgrade handler for /v1/stream/market-data publishing snapshots
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/routes/stream/marketData.ts
   - Depends on: T033, T043, T017
 
