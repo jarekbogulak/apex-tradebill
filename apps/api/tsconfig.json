@@ -5,16 +5,9 @@
     "rootDir": "src",
     "module": "ESNext",
     "moduleResolution": "NodeNext",
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "dist",
-    "node_modules"
-  ],
+  "include": ["src/**/*.ts"],
+  "exclude": ["dist", "node_modules"],
   "references": []
 }

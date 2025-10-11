@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url';
 export const buildServer = (): FastifyInstance => {
   const app = Fastify({
     logger: {
-      level: process.env.LOG_LEVEL ?? 'info'
-    }
+      level: process.env.LOG_LEVEL ?? 'info',
+    },
   });
 
   app.get('/health', async () => {
