@@ -17,7 +17,11 @@
     "node": ">=22"
   },
   "dependencies": {
-    "fastify": "^5.0.0"
+    "@apex-tradebill/types": "workspace:*",
+    "@apex-tradebill/utils": "workspace:*",
+    "decimal.js-light": "^2.5.1",
+    "fastify": "^5.0.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.5",
