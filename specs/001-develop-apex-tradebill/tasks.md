@@ -45,16 +45,16 @@
   - Depends on: T002, T003
 
 ## Phase 3.2: Tests First (TDD)
-- [ ] T011 [P] Scaffold contract test for GET /v1/markets/{symbol} validating schema from contracts/openapi.yaml
+- [x] T011 [P] Scaffold contract test for GET /v1/markets/{symbol} validating schema from contracts/openapi.yaml
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/markets/get-markets.contract.test.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/contracts/openapi.yaml
   - Depends on: T010
-- [ ] T012 [P] Scaffold contract test for POST /v1/trades/preview covering happy path and validation errors
+- [x] T012 [P] Scaffold contract test for POST /v1/trades/preview covering happy path and validation errors
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/trades/post-preview.contract.test.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/contracts/openapi.yaml
   - Depends on: T010
-- [ ] T013 [P] Scaffold contract test for GET /v1/trades/history enforcing pagination contract
+- [x] T013 [P] Scaffold contract test for GET /v1/trades/history enforcing pagination contract
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/trades/get-history.contract.test.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/contracts/openapi.yaml
   - Depends on: T010
-- [ ] T014 [P] Scaffold contract test for GET /v1/settings validating defaults payload
+- [x] T014 [P] Scaffold contract test for GET /v1/settings validating defaults payload
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/settings/get-settings.contract.test.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/contracts/openapi.yaml
   - Depends on: T010
 - [ ] T015 [P] Scaffold contract test for PATCH /v1/settings covering allowed mutations and validation errors
