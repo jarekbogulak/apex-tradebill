@@ -11,12 +11,25 @@
     "dev:mobile": "pnpm --filter mobile start",
     "dev:api": "pnpm --filter @apex-tradebill/api dev",
     "build": "pnpm -r build",
-    "lint": "pnpm -r lint --if-present",
+    "lint": "cross-env ESLINT_USE_FLAT_CONFIG=0 eslint --config configs/eslint/.eslintrc.cjs --ext .ts,.tsx,.js .",
+    "lint:fix": "cross-env ESLINT_USE_FLAT_CONFIG=0 eslint --config configs/eslint/.eslintrc.cjs --ext .ts,.tsx,.js . --fix",
+    "format": "prettier --config .prettierrc.cjs --write \"**/*.{cjs,js,ts,tsx,jsx,json,md}\"",
+    "format:check": "prettier --config .prettierrc.cjs --check \"**/*.{cjs,js,ts,tsx,jsx,json,md}\"",
     "typecheck": "pnpm -r typecheck --if-present",
     "test": "pnpm -r test --if-present"
   },
   "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "@typescript-eslint/eslint-plugin": "^8.12.2",
+    "@typescript-eslint/parser": "^8.12.2",
     "@types/react": "^19.0.4",
+    "cross-env": "^7.0.3",
+    "eslint": "^9.13.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-native": "^5.0.0",
+    "prettier": "^3.3.3",
     "react": "^19.1.0",
     "react-native": "^0.81.4"
   }

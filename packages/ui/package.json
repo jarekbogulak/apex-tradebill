@@ -7,7 +7,7 @@
   "types": "src/index.tsx",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "eslint --config ../../configs/eslint/.eslintrc.cjs --ext .ts,.tsx .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "engines": {
@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@types/react": "^19.0.4",
+    "eslint": "^9.13.0",
     "react": "^19.1.0",
     "react-native": "^0.81.4",
     "typescript": "^5.9.0"

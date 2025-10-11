@@ -7,13 +7,14 @@
   "types": "src/index.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint --config ../../configs/eslint/.eslintrc.cjs --ext .ts .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "engines": {
     "node": ">=22"
   },
   "devDependencies": {
+    "eslint": "^9.13.0",
     "typescript": "^5.9.0"
   }
 }
