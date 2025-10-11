@@ -24,7 +24,7 @@
 - [x] T003 Initialize Fastify Node service skeleton with entry point and scripts
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/package.json, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/server.ts
   - Depends on: None
-- [ ] T004 Establish shared TypeScript config and project references across workspace
+- [x] T004 Establish shared TypeScript config and project references across workspace
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tsconfig.base.json, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/tsconfig.json, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/tsconfig.json
   - Depends on: T002, T003
 - [ ] T005 [P] Bootstrap `packages/types` workspace module for shared DTOs and contracts

@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "strict": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "paths": {
+      "@mobile/*": ["apps/mobile/*"],
+      "@api/*": ["apps/api/src/*"],
+      "@packages/*": ["packages/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}
