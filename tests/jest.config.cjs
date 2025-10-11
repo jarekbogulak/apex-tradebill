@@ -5,12 +5,16 @@ const { createBaseJestConfig } = require('../configs/jest/jest.config.base.cjs')
 /** @type {JestConfig} */
 const config = createBaseJestConfig({
   displayName: {
-    name: 'contracts',
+    name: 'workspace-tests',
     color: 'blue',
   },
   preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
-  testMatch: ['<rootDir>/tests/contract/**/*.contract.test.ts'],
+  testMatch: [
+    '<rootDir>/tests/contract/**/*.contract.test.ts',
+    '<rootDir>/tests/integration/**/*.spec.ts',
+    '<rootDir>/tests/reliability/**/*.spec.ts',
+  ],
   extensionsToTreatAsEsm: ['.ts'],
   transform: {
     '^.+\\.(ts|tsx)$': [

@@ -6,6 +6,6 @@
     "types": ["node", "jest"],
     "noEmit": true
   },
-  "include": ["contract/**/*.ts"],
+  "include": ["contract/**/*.ts", "integration/**/*.ts", "reliability/**/*.ts"],
   "exclude": ["node_modules"]
 }

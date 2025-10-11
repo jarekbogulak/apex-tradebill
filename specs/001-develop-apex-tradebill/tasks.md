@@ -66,56 +66,56 @@
 - [x] T017 [P] Scaffold contract test for WebSocket /v1/stream/market-data handshake and payload schema
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/stream/market-data.contract.test.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/contracts/openapi.yaml
   - Depends on: T010
-- [ ] T018 [P] Author integration test for "Live sizing (stub)" quickstart flow
+- [x] T018 [P] Author integration test for "Live sizing (stub)" quickstart flow
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/integration/mobile/live-sizing-stub.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/quickstart.md
   - Depends on: T010
-- [ ] T019 [P] Author integration test for "Live sizing (real feed)" resilience scenario
+- [x] T019 [P] Author integration test for "Live sizing (real feed)" resilience scenario
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/integration/mobile/live-sizing-realfeed.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/quickstart.md
   - Depends on: T010
-- [ ] T020 [P] Author integration test for volatility multiplier presets updating outputs
+- [x] T020 [P] Author integration test for volatility multiplier presets updating outputs
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/integration/mobile/volatility-multiplier.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/quickstart.md
   - Depends on: T010
-- [ ] T021 [P] Author integration test for validation error UX on invalid stop/target inputs
+- [x] T021 [P] Author integration test for validation error UX on invalid stop/target inputs
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/integration/mobile/validation-errors.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/quickstart.md
   - Depends on: T010
-- [ ] T022 [P] Author integration test for stale fallback and reconnect backoff signals
+- [x] T022 [P] Author integration test for stale fallback and reconnect backoff signals
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/integration/mobile/stale-fallback.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/quickstart.md
   - Depends on: T010
-- [ ] T023 [P] Author integration test for equity sync between connected and manual sources
+- [x] T023 [P] Author integration test for equity sync between connected and manual sources
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/integration/mobile/equity-sync.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/quickstart.md
   - Depends on: T010
-- [ ] T024 [P] Author integration test for trade history retention (30-day pruning)
+- [x] T024 [P] Author integration test for trade history retention (30-day pruning)
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/integration/api/history-retention.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/quickstart.md
   - Depends on: T010
-- [ ] T065 [P] Add property-based tests covering ATR(13) calculator invariants (monotonic volatility, non-negative outputs, rounding floors)
+- [x] T065 [P] Add property-based tests covering ATR(13) calculator invariants (monotonic volatility, non-negative outputs, rounding floors)
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/calculations/__tests__/atrCalculator.property.test.ts
   - Depends on: T010, T030
-- [ ] T066 [P] Add property-based tests verifying trade preview sizing respects percent-risk caps and symbol precision
+- [x] T066 [P] Add property-based tests verifying trade preview sizing respects percent-risk caps and symbol precision
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/trades/__tests__/tradePreview.property.test.ts
   - Depends on: T010, T030, T031
-- [ ] T067 [P] Author integration test for risk visualization keeping entry/stop/target ratios in sync with live updates
+- [x] T067 [P] Author integration test for risk visualization keeping entry/stop/target ratios in sync with live updates
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/integration/mobile/risk-visualization.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/quickstart.md
   - Depends on: T010, T018, T019, T020
-- [ ] T068 [P] Author integration test for settings panel defaults, edits, and persistence
+- [x] T068 [P] Author integration test for settings panel defaults, edits, and persistence
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/integration/mobile/settings-panel.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/quickstart.md
   - Depends on: T010, T023
-- [ ] T069 [P] Add unit tests for locale-aware formatting and contrast tokens
+- [x] T069 [P] Add unit tests for locale-aware formatting and contrast tokens
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/utils/src/__tests__/formatting.spec.ts
   - Depends on: T010, T006
 
-- [ ] T074 [P] Add contract/property tests enforcing ApeX symbol allowlist handling for market endpoints and configuration updates
+- [x] T074 [P] Add contract/property tests enforcing ApeX symbol allowlist handling for market endpoints and configuration updates
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/markets/symbol-allowlist.contract.test.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/markets/__tests__/marketAllowlist.property.test.ts
   - Depends on: T010, T011
-- [ ] T076 [P] Add rounding and precision tests covering tick size floors, cent rounding, and risk-to-reward outputs
+- [x] T076 [P] Add rounding and precision tests covering tick size floors, cent rounding, and risk-to-reward outputs
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/utils/src/__tests__/roundingRules.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/trades/__tests__/previewRounding.property.test.ts
   - Depends on: T010, T030
-- [ ] T078 [P] Add scheduler tests ensuring 1s recompute cadence and telemetry alerts when thresholds are breached
+- [x] T078 [P] Add scheduler tests ensuring 1s recompute cadence and telemetry alerts when thresholds are breached
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/integration/api/recompute-cadence.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/features/stream/__tests__/refreshScheduler.test.ts
   - Depends on: T010, T022
-- [ ] T080 [P] Add property tests validating price sampling selects the latest tick per window and carries forward when idle
+- [x] T080 [P] Add property tests validating price sampling selects the latest tick per window and carries forward when idle
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/realtime/__tests__/priceSampling.property.test.ts
   - Depends on: T010, T017
-- [ ] T082 Add reliability monitoring tests covering 99.5% availability alert thresholds and reporting
+- [x] T082 Add reliability monitoring tests covering 99.5% availability alert thresholds and reporting
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/reliability/uptime-monitor.spec.ts
   - Depends on: T010, T062
 
