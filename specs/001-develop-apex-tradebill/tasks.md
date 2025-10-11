@@ -57,13 +57,13 @@
 - [x] T014 [P] Scaffold contract test for GET /v1/settings validating defaults payload
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/settings/get-settings.contract.test.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/contracts/openapi.yaml
   - Depends on: T010
-- [ ] T015 [P] Scaffold contract test for PATCH /v1/settings covering allowed mutations and validation errors
+- [x] T015 [P] Scaffold contract test for PATCH /v1/settings covering allowed mutations and validation errors
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/settings/patch-settings.contract.test.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/contracts/openapi.yaml
   - Depends on: T010
-- [ ] T016 [P] Scaffold contract test for GET /v1/accounts/equity covering connected vs manual responses
+- [x] T016 [P] Scaffold contract test for GET /v1/accounts/equity covering connected vs manual responses
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/accounts/get-equity.contract.test.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/contracts/openapi.yaml
   - Depends on: T010
-- [ ] T017 [P] Scaffold contract test for WebSocket /v1/stream/market-data handshake and payload schema
+- [x] T017 [P] Scaffold contract test for WebSocket /v1/stream/market-data handshake and payload schema
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/stream/market-data.contract.test.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/contracts/openapi.yaml
   - Depends on: T010
 - [ ] T018 [P] Author integration test for "Live sizing (stub)" quickstart flow
