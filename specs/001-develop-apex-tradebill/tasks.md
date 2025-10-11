@@ -27,13 +27,13 @@
 - [x] T004 Establish shared TypeScript config and project references across workspace
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tsconfig.base.json, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/tsconfig.json, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/tsconfig.json
   - Depends on: T002, T003
-- [ ] T005 [P] Bootstrap `packages/types` workspace module for shared DTOs and contracts
+- [x] T005 [P] Bootstrap `packages/types` workspace module for shared DTOs and contracts
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/types/package.json, /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/types/src/index.ts
   - Depends on: T002, T003
-- [ ] T006 [P] Bootstrap `packages/utils` workspace module for isomorphic helpers
+- [x] T006 [P] Bootstrap `packages/utils` workspace module for isomorphic helpers
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/utils/package.json, /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/utils/src/index.ts
   - Depends on: T002, T003
-- [ ] T007 [P] Bootstrap `packages/ui` workspace module for shared Expo components
+- [x] T007 [P] Bootstrap `packages/ui` workspace module for shared Expo components
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/ui/package.json, /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/ui/src/index.tsx
   - Depends on: T002, T003
 - [ ] T008 Configure linting, formatting, and pnpm scripts for monorepo guardrails

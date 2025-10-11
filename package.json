@@ -14,5 +14,10 @@
     "lint": "pnpm -r lint --if-present",
     "typecheck": "pnpm -r typecheck --if-present",
     "test": "pnpm -r test --if-present"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.4",
+    "react": "^19.1.0",
+    "react-native": "^0.81.4"
   }
 }
