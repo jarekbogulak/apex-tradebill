@@ -36,7 +36,7 @@
 - [x] T007 [P] Bootstrap `packages/ui` workspace module for shared Expo components
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/ui/package.json, /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/ui/src/index.tsx
   - Depends on: T002, T003
-- [ ] T008 Configure linting, formatting, and pnpm scripts for monorepo guardrails
+- [x] T008 Configure linting, formatting, and pnpm scripts for monorepo guardrails
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/configs/eslint/.eslintrc.cjs, /Users/booke/dev/nix-expo-ic/apex-tradebill/.prettierrc.cjs
   - Depends on: T002, T003
 - [ ] T009 Double-check (do not make any changes) Metro and Babel to ensure they transpile workspace packages for Expo
