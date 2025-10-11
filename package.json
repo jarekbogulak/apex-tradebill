@@ -22,6 +22,7 @@
     "@eslint/js": "^9.13.0",
     "@typescript-eslint/eslint-plugin": "^8.12.2",
     "@typescript-eslint/parser": "^8.12.2",
+    "@jest/types": "^29.6.3",
     "@types/react": "^19.0.4",
     "cross-env": "^7.0.3",
     "eslint": "^9.13.0",
@@ -31,6 +32,7 @@
     "eslint-plugin-react-native": "^5.0.0",
     "prettier": "^3.3.3",
     "react": "^19.1.0",
-    "react-native": "^0.81.4"
+    "react-native": "^0.81.4",
+    "ts-node": "^10.9.2"
   }
 }
