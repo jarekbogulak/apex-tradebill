@@ -60,7 +60,7 @@
 - **TradeOutput**: `positionSize`, `positionCost`, `riskAmount`, `riskToReward`, `suggestedStop`, `warningCodes`.
 
 ## Ephemeral Calculator State
-- **RingBuffer**: per-symbol array of the most recent ticks needed for ATR (kept in memory, not stored in Postgres). Resets on process restart and warm-starts from the latest bar snapshot.
+- **RingBuffer**: per-symbol array of the most recent ticks needed for ATR (kept in memory, not stored in the Supabase PostgreSQL database). Resets on process restart and warm-starts from the latest bar snapshot.
 - **Freshness FSM**: `live → stale → reconnecting → live`; manual price entry sets `manual` flag until stream resumes. Logged for audit but not persisted as a table.
 
 ---

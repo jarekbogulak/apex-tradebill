@@ -36,7 +36,7 @@ Apex TradeBill delivers fast, mobile-first trade sizing that fuses live ApeX Omn
 ## Technical Context
 **Language/Version**: TypeScript 5.9 + Expo SDK 54 (React Native 0.81) client + Node.js 22 LTS service layer  
 **Primary Dependencies**: Expo 54 managed workflow, Expo Router 3, TanStack Query 5, Zustand 5, Apex Omni OpenAPI Node SDK, Fastify 5 + `ws` 8 streaming  
-**Storage**: PostgreSQL 16 for user profiles/trade history + in-process ring buffer for market ticks (Redis upgrade deferred until scaling requires it)  
+**Storage**: Supabase-managed (or self-hosted) PostgreSQL 16 for user profiles/trade history + in-process ring buffer for market ticks (Redis upgrade deferred until scaling requires it). We commit to standard SQL features only to preserve portability.  
 **Testing**: Jest 30 with phased suites (API/unit + RN smoke initially; contract/property/latency harnesses added after core endpoints land); colocate module-level tests with source, keep cross-cutting suites under `/tests/**`  
 **Target Platform**: Expo-managed app for iOS 16+, Android 13+, and responsive Expo web build targeting Chromium-compatible browsers  
 **Project Type**: mobile (Expo client + Node.js API service)  
@@ -48,7 +48,7 @@ Apex TradeBill delivers fast, mobile-first trade sizing that fuses live ApeX Omn
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- **Financial Data Integrity** → Source streaming + REST data exclusively from the ApeX Omni SDK with signature validation, stamp every tick with server time, and persist full input/output vectors in PostgreSQL for audit replay. Planned API schema rejects stale (>2 s) payloads and surfaces explicit error codes.
+- **Financial Data Integrity** → Source streaming + REST data exclusively from the ApeX Omni SDK with signature validation, stamp every tick with server time, and persist full input/output vectors in Supabase-hosted PostgreSQL for audit replay. We avoid Supabase-only extensions so data can migrate to vanilla Postgres if necessary. Planned API schema rejects stale (>2 s) payloads and surfaces explicit error codes.
 - **Risk Management Discipline** → Centralize ATR sizing, percent-risk caps, and minimum stop logic inside shared calculator modules; document deterministic formulas now and layer property-based validation once baseline sizing endpoints ship. Backend enforces caps before returning trade sizing responses.
 - **Code Quality & Simplicity** → Adopt modular TypeScript (shared `lib/calculations`, `lib/validation`) with strict ESLint/TypeScript configs, avoid speculative abstractions, and document exported calculators. Keep scope tight while enabling later extensions.
 - **Test-First & Reliability** → Maintain a TDD loop with Jest, starting from unit/component smoke tests and expanding to contract, property, and latency suites as functionality becomes available (see T065–T066 property harness). Track latency via smoke scripts until the dedicated harness arrives.
@@ -142,7 +142,7 @@ tests/
 **Planned Research Topics**:
 - Confirm Apex Omni OpenAPI SDK support for streaming price data, account equity retrieval, and authenticated signatures in a Node.js 22 runtime.
 - Determine tick buffering + ATR(13) calculation strategy that meets the 1 s recompute cadence while keeping calculations deterministic and reproducible.
-- Evaluate persistence approach (PostgreSQL vs. on-device storage) for 30-day trade history with audit trails and offline support; decide on Redis involvement for tick buffers.
+- Validate Supabase PostgreSQL configuration (managed vs. self-hosted) and on-device storage trade-offs for 30-day trade history with audit trails and offline support; decide on Redis involvement for tick buffers.
 - Identify Expo-compatible strategies for secure credential storage, stale-data indicators, and background price refresh patterns without draining battery.
 - Outline telemetry stack (structured logs, metrics) that satisfies constitution performance and reliability gates within managed Expo + Node deployment.
 

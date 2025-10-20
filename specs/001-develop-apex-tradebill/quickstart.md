@@ -4,7 +4,7 @@
 - Node.js 22.x and pnpm 9 installed on the workstation
 - Expo CLI tooling available (`npx expo start --version` > 6)
 - Xcode (iOS 16+ simulator) or Android Studio (Android 13+ emulator) for Expo testing
-- Optional for later phases: Docker or local PostgreSQL 16 once persistence tasks land
+- Optional for later phases: Supabase project (hosted or self-hosted PostgreSQL 16) once persistence tasks land
 
 ## Bootstrap (Stage 1 – Skeleton)
 1. `npx create-expo-app@latest mobile` (runs inside repo root; generates `mobile/`).
@@ -31,7 +31,7 @@
 4. **Validation**: Enter invalid stop/target (e.g., stop above entry on long) and ensure calculation is blocked with explicit error labels.
 5. **Stale fallback**: Simulate feed outage (pause the ApeX client); check UI shows “Stale,” reconnect backoff indicators, and manual price entry unlocks.
 6. **Equity sync**: Switch between connected equity and manual entry; confirm labeling and audit trail entries align with the constitution.
-7. **History retention**: Once PostgreSQL writes are enabled, ensure only the most recent 30 days of trade calculations appear and older entries prune in nightly jobs.
+7. **History retention**: Once Supabase database writes are enabled, ensure only the most recent 30 days of trade calculations appear and older entries prune in nightly jobs.
 8. **Risk visualization**: Interact with the calculator while watching the visualization panel; verify entry/stop/target markers stay in sync with numerical outputs, use accessible contrast (WCAG AA), and do not reorder.
 9. **Settings panel**: Open the settings screen, update risk %, ATR multiplier, and freshness threshold, then confirm changes persist (SecureStore + API) and appear in subsequent calculations.
 10. **Offline cache**: Disable network connectivity, complete a calculation, and confirm the DeviceCache retains the result. Re-enable connectivity and ensure the calculation syncs into history within the 30-day window.
@@ -39,4 +39,4 @@
 ## Shutdown
 - Stop Expo and Fastify processes.
 - Remove or encrypt any temporary ApeX credentials used during testing.
-- If PostgreSQL is running locally, stop the container or service.
+- If a local Supabase/PostgreSQL instance is running, stop the container or service.

@@ -15,11 +15,11 @@
   - *Redis streams from day one*: deferred to avoid managing external infrastructure before traffic justifies it.
 
 ## 3. Persistence & Offline Strategy
-- **Decision**: PostgreSQL 16 remains the system of record for users, settings, and trade calculation history (30-day retention enforced nightly). The Expo app caches the 20 most recent calculations locally via `expo-sqlite` for offline recall; caches sync bi-directionally when connectivity returns.
-- **Rationale**: PostgreSQL provides relational integrity and audit trails demanded by the constitution. A thin offline cache lets traders reference recent numbers during temporary outages without risking divergence from the canonical history.
+- **Decision**: Supabase-backed PostgreSQL (managed or self-hosted) remains the system of record for users, settings, and trade calculation history (30-day retention enforced nightly). The Expo app caches the 20 most recent calculations locally via `expo-sqlite` for offline recall; caches sync bi-directionally when connectivity returns.
+- **Rationale**: Supabase delivers standard PostgreSQL with optional self-hosting, so we gain managed operations without sacrificing portability. By limiting ourselves to ANSI SQL and avoiding Supabase-specific APIs, we preserve the auditability and deterministic replay required by the constitution while keeping an exit path to vanilla Postgres if needed.
 - **Alternatives Considered**:
   - *Purely local storage*: rejected because it cannot satisfy auditability, multi-device expectations, or future analytics.
-  - *Document store (e.g., MongoDB)*: rejected since relational joins (users ↔ trade history ↔ market snapshots) are straightforward and Postgres provides stronger transactional guarantees.
+  - *Document store (e.g., MongoDB)*: rejected since relational joins (users ↔ trade history ↔ market snapshots) are straightforward and Postgres-compatible engines provide stronger transactional guarantees.
 
 ## 4. Expo Security & Data Freshness Handling
 - **Decision**: Secrets (refresh tokens, account linkage) live inside Expo SecureStore; volatile session keys stay in memory only. The app maintains a one-second scheduler that consumes the backend’s live tick stream; if no event arrives within two seconds it flips the UI into “Stale,” initiates reconnect backoff (1 s → 2 s → 5 s), and prompts for manual price entry.

@@ -221,7 +221,7 @@
   - Depends on: T033, T043, T017
 
 ## Phase 3.5: Integration
-- [ ] T051 Configure PostgreSQL connection pool and migration scaffolding for core entities
+- [ ] T051 Configure Supabase PostgreSQL connection pool and migration scaffolding for core entities (standard SQL only)
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/infra/database/pool.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/configs/db/migrations/README.md
   - Depends on: T025, T026, T027, T028, T034
 - [ ] T052 Implement nightly trade history retention job enforcing 30-day window
