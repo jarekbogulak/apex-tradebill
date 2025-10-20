@@ -121,79 +121,79 @@
 
 
 ## Phase 3.3: Core Implementation (after tests are failing)
-- [ ] T025 [P] Implement User model with Zod validation and repository helpers
+- [x] T025 [P] Implement User model with Zod validation and repository helpers
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/domain/user/user.entity.ts
   - Depends on: T011, T012, T013, T014, T015, T016, T017, T018, T019, T020, T021, T022, T023, T024
-- [ ] T026 [P] Implement UserSettings model including defaults and constraints
+- [x] T026 [P] Implement UserSettings model including defaults and constraints
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/domain/user-settings/user-settings.entity.ts
   - Depends on: T011, T012, T013, T014, T015, T016, T017, T018, T019, T020, T021, T022, T023, T024
-- [ ] T027 [P] Implement ConnectedAccount model with status transition enforcement
+- [x] T027 [P] Implement ConnectedAccount model with status transition enforcement
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/domain/connected-account/connected-account.entity.ts
   - Depends on: T011, T012, T013, T014, T015, T016, T017, T018, T019, T020, T021, T022, T023, T024
-- [ ] T028 [P] Implement TradeCalculation model persisting JSONB input/output payloads
+- [x] T028 [P] Implement TradeCalculation model persisting JSONB input/output payloads
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/domain/trade-calculation/trade-calculation.entity.ts
   - Depends on: T011, T012, T013, T014, T015, T016, T017, T018, T019, T020, T021, T022, T023, T024
-- [ ] T029 [P] Implement DeviceCacheEntry storage for Expo offline cache maintenance
+- [x] T029 [P] Implement DeviceCacheEntry storage for Expo offline cache maintenance
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/storage/device-cache-entry.ts
   - Depends on: T011, T012, T013, T014, T015, T016, T017, T018, T019, T020, T021, T022, T023, T024
-- [ ] T030 [P] Define shared TradeInput/TradeOutput/MarketSnapshot DTOs exported from types package
+- [x] T030 [P] Define shared TradeInput/TradeOutput/MarketSnapshot DTOs exported from types package
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/types/src/trading.ts
   - Depends on: T005, T011, T012, T013, T014, T015, T016, T017, T018, T019, T020, T021, T022, T023, T024
-- [ ] T031 [P] Define domain ports for market data, equity, and settings interactions
+- [x] T031 [P] Define domain ports for market data, equity, and settings interactions
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/domain/ports/tradebillPorts.ts
   - Depends on: T030
-- [ ] T032 [P] Implement deterministic ATR(13) calculator module consumed by trade preview logic
+- [x] T032 [P] Implement deterministic ATR(13) calculator module consumed by trade preview logic
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/calculations/atrCalculator.ts
   - Depends on: T030, T065
-- [ ] T033 [P] Implement trade preview service orchestrating validation, ATR calculator, and warnings
+- [x] T033 [P] Implement trade preview service orchestrating validation, ATR calculator, and warnings
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/trades/previewService.ts
   - Depends on: T028, T030, T031, T032, T066
-- [ ] T077 [P] Wire rounding and precision helpers into trade preview responses and shared DTO serialization
+- [x] T077 [P] Wire rounding and precision helpers into trade preview responses and shared DTO serialization
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/utils/src/rounding.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/trades/previewService.ts
   - Depends on: T076, T033
-- [ ] T034 [P] Implement trade history service with pagination and retention boundaries
+- [x] T034 [P] Implement trade history service with pagination and retention boundaries
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/trades/historyService.ts
   - Depends on: T028, T031
-- [ ] T035 [P] Implement settings service enforcing bounds from data-model
+- [x] T035 [P] Implement settings service enforcing bounds from data-model
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/settings/settingsService.ts
   - Depends on: T025, T026, T031
-- [ ] T036 [P] Implement account equity service covering connected and manual flows
+- [x] T036 [P] Implement account equity service covering connected and manual flows
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/accounts/equityService.ts
   - Depends on: T027, T031
-- [ ] T037 [P] Implement market metadata service sourcing tick/step sizing
+- [x] T037 [P] Implement market metadata service sourcing tick/step sizing
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/markets/marketMetadataService.ts
   - Depends on: T031
-- [ ] T075 [P] Implement ApeX symbol allowlist enforcement and configuration surfaces for market metadata
+- [x] T075 [P] Implement ApeX symbol allowlist enforcement and configuration surfaces for market metadata
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/markets/marketMetadataService.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/configs/markets/allowlist.json
   - Depends on: T074, T037
-- [ ] T038 [P] Create Zustand store for persisted user settings with Expo SecureStore hydration
+- [x] T038 [P] Create Zustand store for persisted user settings with Expo SecureStore hydration
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/state/settingsStore.ts
   - Depends on: T009, T030
-- [ ] T039 [P] Create Zustand store for trade calculator inputs/outputs and selectors
+- [x] T039 [P] Create Zustand store for trade calculator inputs/outputs and selectors
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/state/tradeCalculatorStore.ts
   - Depends on: T030
-- [ ] T040 [P] Author shared API client utilities for Fastify endpoints with TanStack Query integration
+- [x] T040 [P] Author shared API client utilities for Fastify endpoints with TanStack Query integration
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/services/apiClient.ts
   - Depends on: T030, T011, T012, T013, T014, T015, T016, T017
-- [ ] T041 [P] Build Expo trade calculator screen binding stores, queries, and validation states
+- [x] T041 [P] Build Expo trade calculator screen binding stores, queries, and validation states
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/app/(tabs)/trade-calculator.tsx
   - Depends on: T038, T039, T040, T018, T019, T020, T021, T070, T072
-- [ ] T042 [P] Compose trade history list UI with pagination and retry controls
+- [x] T042 [P] Compose trade history list UI with pagination and retry controls
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/features/history/HistoryList.tsx
   - Depends on: T039, T040, T024
-- [ ] T043 [P] Create market data stream hook with stale detection and reconnect logic
+- [x] T043 [P] Create market data stream hook with stale detection and reconnect logic
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/features/stream/useMarketStream.ts
   - Depends on: T040, T022
-- [ ] T079 [P] Implement 1s recompute scheduler modules with telemetry hooks for client and server refresh loops
+- [x] T079 [P] Implement 1s recompute scheduler modules with telemetry hooks for client and server refresh loops
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/features/stream/refreshScheduler.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/realtime/refreshScheduler.ts
   - Depends on: T078, T043, T050
-- [ ] T070 [P] Build risk visualization component with accessible contrast and live updates
+- [x] T070 [P] Build risk visualization component with accessible contrast and live updates
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/features/visualization/RiskVisualization.tsx
   - Depends on: T039, T040, T067
-- [ ] T071 [P] Build settings panel screen and navigation entry point
+- [x] T071 [P] Build settings panel screen and navigation entry point
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/app/(tabs)/settings.tsx
   - Depends on: T038, T039, T040, T068
-- [ ] T072 [P] Implement formatting and accessibility utilities consumed by UI components
+- [x] T072 [P] Implement formatting and accessibility utilities consumed by UI components
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/utils/src/formatting.ts
   - Depends on: T006, T069
 
