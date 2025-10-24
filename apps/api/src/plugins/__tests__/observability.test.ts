@@ -73,7 +73,7 @@ describe('observabilityPlugin', () => {
     const baseUnhandled = process.listeners('unhandledRejection').length;
 
     const app = fastify({ logger: false });
-    await observabilityPlugin(app);
+    await observabilityPlugin(app, {});
     await app.ready();
 
     expect(process.listeners('uncaughtException')).toHaveLength(baseUncaught + 1);

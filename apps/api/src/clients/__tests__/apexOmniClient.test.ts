@@ -166,7 +166,10 @@ describe('createApeXOmniClient', () => {
     const onOpen = jest.fn();
     const onMessage = jest.fn();
     const onError = jest.fn();
-    const onClose = jest.fn();
+    const onClose = jest.fn((code: number, reason: Buffer | string | undefined) => {
+      void code;
+      void reason;
+    });
 
     const client = createApeXOmniClient({
       apiKey: 'key',
@@ -204,12 +207,17 @@ describe('createApeXOmniClient', () => {
     handler({ foo: 'bar' });
     expect(onMessage).toHaveBeenCalledWith({ foo: 'bar' });
 
-    const callbacks = (capturedWsConfig?.callbacks ?? {}) as Record<string, () => void>;
+    const callbacks = (capturedWsConfig?.callbacks ?? {}) as {
+      onPublicConnect?: () => void;
+      onPublicDisconnect?: () => void;
+      onError?: (channel: string, error: unknown) => void;
+      onMaxReconnectReached?: () => void;
+    };
     callbacks.onPublicConnect?.();
     expect(onOpen).toHaveBeenCalled();
 
     callbacks.onPublicDisconnect?.();
-    expect(onClose).toHaveBeenCalledWith(1000, expect.any(Buffer));
+    expect(onClose as jest.Mock).toHaveBeenCalledWith(1000, expect.any(Buffer));
 
     callbacks.onError?.('public', new Error('ws failed'));
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: 'ws failed' }));
