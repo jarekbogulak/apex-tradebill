@@ -20,3 +20,7 @@ if (typeof global.TextDecoderStream === 'undefined') {
   class MockTextDecoderStream extends global.TransformStream {}
   global.TextDecoderStream = MockTextDecoderStream;
 }
+
+if (typeof global.__fbBatchedBridgeConfig === 'undefined') {
+  global.__fbBatchedBridgeConfig = {};
+}

@@ -8,6 +8,7 @@ const workspaceRoot = path.resolve(__dirname, '..', '..');
 const baseConfig = {
   rootDir: workspaceRoot,
   clearMocks: true,
+  watchman: false,
   testMatch: ['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[tj]s?(x)'],
   testPathIgnorePatterns: ['/node_modules/', '/dist/', '/build/', '/.expo/'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
@@ -15,6 +16,8 @@ const baseConfig = {
     '^@mobile/(.*)$': '<rootDir>/apps/mobile/$1',
     '^@api/(.*)$': '<rootDir>/apps/api/src/$1',
     '^@packages/(.*)$': '<rootDir>/packages/$1',
+    '^@apex-tradebill/types$': '<rootDir>/packages/types/src/index.ts',
+    '^@apex-tradebill/utils$': '<rootDir>/packages/utils/src/index.ts',
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
 };

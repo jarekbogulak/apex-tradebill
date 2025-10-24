@@ -3,15 +3,20 @@ import type { FastifyBaseLogger, FastifyPluginAsync } from 'fastify';
 import type { IncomingMessage } from 'node:http';
 import { WebSocketServer, type WebSocket } from 'ws';
 import type { MarketDataPort, MarketMetadataPort } from '../../domain/ports/tradebillPorts.js';
+import type { RingBuffer } from '../../realtime/ringBuffer.js';
+import type { SampledTick } from '../../realtime/windowSampler.js';
 import { createErrorResponse } from '../http.js';
 
 interface MarketDataStreamRouteOptions {
   marketData: MarketDataPort;
   metadata: MarketMetadataPort;
+  ringBuffer?: RingBuffer;
   intervalMs?: number;
+  samplingWindowMs?: number;
 }
 
 const DEFAULT_INTERVAL_MS = 1000;
+const DEFAULT_SAMPLING_WINDOW_MS = 1000;
 
 const parseSymbols = async (
   metadata: MarketMetadataPort,
@@ -38,14 +43,69 @@ const parseSymbols = async (
   return Array.from(new Set(resolved));
 };
 
+const resolveSnapshot = async (
+  marketData: MarketDataPort,
+  ringBuffer: RingBuffer | undefined,
+  symbol: Symbol,
+): Promise<ReturnType<MarketDataPort['getLatestSnapshot']>> => {
+  if (ringBuffer) {
+    const snapshot = ringBuffer.getSnapshot(symbol);
+    if (snapshot) {
+      return snapshot;
+    }
+  }
+  return marketData.getLatestSnapshot(symbol);
+};
+
+interface SymbolStreamState {
+  windowEnd?: number;
+  stale?: boolean;
+}
+
 const sendSnapshots = async (
   ws: WebSocket,
   marketData: MarketDataPort,
+  ringBuffer: RingBuffer | undefined,
   symbols: Symbol[],
+  symbolStates: Map<Symbol, SymbolStreamState>,
+  samplingWindowMs: number,
   log: FastifyBaseLogger,
 ) => {
   try {
-    const snapshots = await Promise.all(symbols.map((symbol) => marketData.getLatestSnapshot(symbol)));
+    const snapshots = await Promise.all(
+      symbols.map(async (symbol) => {
+        const state = symbolStates.get(symbol) ?? {};
+        let latestSample: SampledTick | undefined;
+
+        if (ringBuffer) {
+          const samples = ringBuffer.sampleTicks(symbol, samplingWindowMs);
+          latestSample = samples[samples.length - 1];
+        }
+
+        const snapshot = await resolveSnapshot(marketData, ringBuffer, symbol);
+        if (!snapshot) {
+          return null;
+        }
+
+        const nextWindowEnd = latestSample?.windowEnd ?? state.windowEnd;
+        const shouldSend =
+          latestSample == null ||
+          latestSample.windowEnd !== state.windowEnd ||
+          snapshot.stale !== state.stale;
+
+        if (!shouldSend) {
+          return null;
+        }
+
+        symbolStates.set(symbol, {
+          windowEnd: nextWindowEnd,
+          stale: snapshot.stale,
+        });
+
+        return snapshot;
+      }),
+    );
+
     for (const snapshot of snapshots) {
       if (!snapshot) {
         continue;
@@ -78,7 +138,7 @@ const extractSymbolsFromRequest = async (
 
 export const marketDataStreamRoute: FastifyPluginAsync<MarketDataStreamRouteOptions> = async (
   app,
-  { marketData, metadata, intervalMs = DEFAULT_INTERVAL_MS },
+  { marketData, metadata, ringBuffer, intervalMs = DEFAULT_INTERVAL_MS, samplingWindowMs = DEFAULT_SAMPLING_WINDOW_MS },
 ) => {
   const wss = new WebSocketServer({ noServer: true });
 
@@ -90,12 +150,21 @@ export const marketDataStreamRoute: FastifyPluginAsync<MarketDataStreamRouteOpti
     }
 
     let closed = false;
+    const symbolStates = new Map<Symbol, SymbolStreamState>();
 
     const publish = async () => {
       if (closed) {
         return;
       }
-      await sendSnapshots(socket, marketData, symbols, app.log);
+      await sendSnapshots(
+        socket,
+        marketData,
+        ringBuffer,
+        symbols,
+        symbolStates,
+        samplingWindowMs,
+        app.log,
+      );
     };
 
     await publish();

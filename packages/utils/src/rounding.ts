@@ -1,14 +1,6 @@
-import Decimal from 'decimal.js-light/decimal.js';
-
-Decimal.set({
-  precision: 24,
-  rounding: Decimal.ROUND_HALF_UP,
-});
-
-const toDecimal = (value: number | string) => new Decimal(value);
-
-type DecimalLike = ReturnType<typeof toDecimal>;
-export type DecimalValue = DecimalLike | number | string;
+import { Decimal, toDecimal } from './decimal.ts';
+import type { DecimalValue } from './decimal.ts';
+export type { DecimalValue } from './decimal.ts';
 
 const DEFAULT_PRICE_TICK = '0.01';
 const DEFAULT_QUANTITY_STEP = '0.000001';
@@ -18,9 +10,7 @@ const countFractionDigits = (value: string): number => {
   return fraction.length;
 };
 
-const castToDecimal = (value: DecimalValue): DecimalLike => {
-  return value instanceof Decimal ? value : new Decimal(value);
-};
+const castToDecimal = toDecimal;
 
 export interface PrecisionRules {
   priceTickSize?: string | null;

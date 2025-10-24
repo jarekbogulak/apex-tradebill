@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 
 import { HistoryList } from '@/src/features/history/HistoryList';
+import StaleBanner from '@/src/features/stream/StaleBanner';
 import { useMarketStream } from '@/src/features/stream/useMarketStream';
 import { createRefreshScheduler } from '@/src/features/stream/refreshScheduler';
 import { RiskVisualization } from '@/src/features/visualization/RiskVisualization';
@@ -24,8 +25,10 @@ import {
 } from '@/src/state/tradeCalculatorStore';
 import { selectFreshnessThreshold, selectRiskConfig, useSettingsStore } from '@/src/state/settingsStore';
 import { createApiClient } from '@/src/services/apiClient';
+import { createCacheSyncWorker } from '@/src/sync/cacheSync';
 
 const apiClient = createApiClient();
+const cacheSyncWorker = createCacheSyncWorker();
 
 export default function TradeCalculatorScreen() {
   const input = useTradeCalculatorStore(selectCalculatorInput);
@@ -57,6 +60,11 @@ export default function TradeCalculatorScreen() {
     refreshScheduler.start();
     return () => refreshScheduler.stop();
   }, [refreshScheduler]);
+
+  useEffect(() => {
+    cacheSyncWorker.start();
+    return () => cacheSyncWorker.stop();
+  }, []);
 
   const marketStream = useMarketStream({
     symbols: [input.symbol],
@@ -141,6 +149,13 @@ export default function TradeCalculatorScreen() {
         <Text style={styles.priceLabel}>Last Price</Text>
         <Text style={styles.priceValue}>{marketStream.snapshot?.lastPrice ?? '—'}</Text>
       </View>
+
+      <StaleBanner
+        status={marketStream.status}
+        reconnectAttempts={marketStream.reconnectAttempts}
+        lastUpdatedAt={marketStream.lastUpdatedAt}
+        onReconnect={marketStream.reconnect}
+      />
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Inputs</Text>

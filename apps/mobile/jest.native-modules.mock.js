@@ -13,5 +13,6 @@ NativeModules.NativeUnimoduleProxy = {
 
 NativeModules.UIManager = {};
 NativeModules.Linking = {};
+NativeModules.SourceCode = { scriptURL: 'http://localhost' };
 
 module.exports = NativeModules;

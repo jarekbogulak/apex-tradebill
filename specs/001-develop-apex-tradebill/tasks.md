@@ -221,37 +221,37 @@
   - Depends on: T033, T043, T017
 
 ## Phase 3.5: Integration
-- [ ] T051 Configure Supabase PostgreSQL connection pool and migration scaffolding for core entities (standard SQL only)
+- [x] T051 Configure Supabase PostgreSQL connection pool and migration scaffolding for core entities (standard SQL only)
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/infra/database/pool.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/configs/db/migrations/README.md
   - Depends on: T025, T026, T027, T028, T034
-- [ ] T052 Implement nightly trade history retention job enforcing 30-day window
+- [x] T052 Implement nightly trade history retention job enforcing 30-day window
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/jobs/pruneTradeHistory.ts
   - Depends on: T051, T028, T024
-- [ ] T053 Implement ApeX Omni SDK client wrapper encapsulating REST + WebSocket auth
+- [x] T053 Implement ApeX Omni SDK client wrapper encapsulating REST + WebSocket auth
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/clients/apexOmniClient.ts
   - Depends on: T031
-- [ ] T054 Implement in-process ring buffer adapter for market snapshots
+- [x] T054 Implement in-process ring buffer adapter for market snapshots
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/realtime/ringBuffer.ts
   - Depends on: T053, T032
-- [ ] T055 Wire market stream gateway plugin to Fastify lifecycle
+- [x] T055 Wire market stream gateway plugin to Fastify lifecycle
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/plugins/marketStream.ts
   - Depends on: T050, T054
-- [ ] T081 [P] Implement price window sampling in ring buffer and stream publisher enforcing latest-tick-per-second rules
+- [x] T081 [P] Implement price window sampling in ring buffer and stream publisher enforcing latest-tick-per-second rules
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/realtime/ringBuffer.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/routes/stream/marketData.ts
   - Depends on: T080, T054, T055
-- [ ] T056 Add authentication middleware with JWT validation and SecureStore coordination
+- [x] T056 Add authentication middleware with JWT validation and SecureStore coordination
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/plugins/authentication.ts
   - Depends on: T002, T025, T027
-- [ ] T057 Add structured logging and metrics instrumentation covering latency percentiles, error rates, calculation volume, reconnect success, and crash reporting
+- [x] T057 Add structured logging and metrics instrumentation covering latency percentiles, error rates, calculation volume, reconnect success, and crash reporting
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/plugins/observability.ts
   - Depends on: T002
-- [ ] T083 Configure uptime metrics pipeline and alerting dashboards enforcing the 99.5% availability target
+- [x] T083 Configure uptime metrics pipeline and alerting dashboards enforcing the 99.5% availability target
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/configs/observability/uptime.yml, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/plugins/observability.ts
   - Depends on: T082, T057
-- [ ] T058 Implement Expo offline cache sync worker bridging DeviceCacheEntry to API history
+- [x] T058 Implement Expo offline cache sync worker bridging DeviceCacheEntry to API history
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/sync/cacheSync.ts
   - Depends on: T029, T042, T024
-- [ ] T059 Implement stale state banner and reconnect UI instrumentation
+- [x] T059 Implement stale state banner and reconnect UI instrumentation
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/features/stream/StaleBanner.tsx
   - Depends on: T043, T022
 

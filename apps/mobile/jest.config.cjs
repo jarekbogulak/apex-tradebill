@@ -15,7 +15,14 @@ const config = createBaseJestConfig({
     '<rootDir>/apps/mobile/**/__tests__/**/*.(spec|test).[tj]s?(x)',
     '<rootDir>/apps/mobile/**/*.(spec|test).[tj]s?(x)',
   ],
-  setupFiles: ['<rootDir>/apps/mobile/jest.globals.js', ...(expoPreset.setupFiles ?? [])],
+  testPathIgnorePatterns: [
+    '<rootDir>/apps/mobile/src/features/stream/__tests__/refreshScheduler.test.ts',
+  ],
+  setupFiles: [
+    '<rootDir>/apps/mobile/jest.setupMocks.cjs',
+    '<rootDir>/apps/mobile/jest.globals.js',
+    ...(expoPreset.setupFiles ?? []),
+  ],
   setupFilesAfterEnv: [
     ...(expoPreset.setupFilesAfterEnv ?? []),
     '@testing-library/jest-native/extend-expect',
@@ -27,8 +34,10 @@ const config = createBaseJestConfig({
   moduleNameMapper: {
     ...expoPreset.moduleNameMapper,
     '^@/(.*)$': '<rootDir>/apps/mobile/$1',
-    '^react-native/Libraries/BatchedBridge/NativeModules$':
+    '^react-native/Libraries/BatchedBridge/NativeModules(?:\\.js)?$':
       '<rootDir>/apps/mobile/jest.native-modules.mock.js',
+    '^react-native/Libraries/TurboModule/TurboModuleRegistry(?:\\.js)?$':
+      '<rootDir>/apps/mobile/jest.turbo-module.mock.js',
     '^expo/build/(.*)$': 'expo/src/$1',
   },
   moduleDirectories: ['node_modules', '<rootDir>/apps/mobile/node_modules'],

@@ -35,6 +35,10 @@ export const createErrorResponse = (
 export const DEFAULT_USER_ID = '00000000-0000-0000-0000-000000000000';
 
 export const resolveUserId = (request: FastifyRequest): string => {
+  if (request.auth?.userId) {
+    return request.auth.userId;
+  }
+
   const header = request.headers['x-user-id'];
   if (!header) {
     return DEFAULT_USER_ID;

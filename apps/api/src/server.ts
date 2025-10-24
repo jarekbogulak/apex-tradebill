@@ -1,14 +1,12 @@
 import Fastify, { type FastifyInstance } from 'fastify';
-import {
-  type MarketSnapshot,
-  type Symbol as TradingSymbol,
-} from '@apex-tradebill/types';
+import { type MarketSnapshot, type Symbol as TradingSymbol } from '@apex-tradebill/types';
 import { fileURLToPath } from 'node:url';
 import { createMarketMetadataService } from './services/markets/marketMetadataService.js';
 import {
   createInMemoryTradeCalculationRepository,
   type TradeCalculationRepository,
 } from './domain/trade-calculation/trade-calculation.entity.js';
+import { createPostgresTradeCalculationRepository } from './domain/trade-calculation/trade-calculation.repository.pg.js';
 import { createTradePreviewService } from './services/trades/previewService.js';
 import { createTradeHistoryService } from './services/trades/historyService.js';
 import { createSettingsService } from './services/settings/settingsService.js';
@@ -23,11 +21,30 @@ import type {
 import getSymbolRoute from './routes/markets/getSymbol.js';
 import postPreviewRoute from './routes/trades/postPreview.js';
 import getHistoryRoute from './routes/trades/getHistory.js';
+import postHistoryImportRoute from './routes/trades/postHistoryImport.js';
 import getSettingsRoute from './routes/settings/getSettings.js';
 import patchSettingsRoute from './routes/settings/patchSettings.js';
 import getEquityRoute from './routes/accounts/getEquity.js';
 import marketDataStreamRoute from './routes/stream/marketData.js';
 import { DEFAULT_USER_ID } from './routes/http.js';
+import { createApeXOmniClient } from './clients/apexOmniClient.js';
+import { createRingBuffer } from './realtime/ringBuffer.js';
+import marketStreamPlugin from './plugins/marketStream.js';
+import authenticationPlugin from './plugins/authentication.js';
+import observabilityPlugin from './plugins/observability.js';
+import { createRingBufferMarketDataPort } from './infra/marketData/ringBufferAdapter.js';
+import type { RingBuffer } from './realtime/ringBuffer.js';
+import {
+  closeSharedDatabasePool,
+  getSharedDatabasePool,
+  runPendingMigrations,
+  type DatabasePool,
+} from './infra/database/pool.js';
+import {
+  createPruneTradeHistoryJob,
+  type PruneTradeHistoryJobLogger,
+  type ScheduledJobHandle,
+} from './jobs/pruneTradeHistory.js';
 
 const BASE_PRICES: Record<TradingSymbol, number> = {
   'BTC-USDT': 65_000,
@@ -141,9 +158,118 @@ const createInMemoryEquityPort = (): AccountEquityPort => {
   };
 };
 
-const createServices = (marketMetadata: MarketMetadataPort) => {
-  const tradeCalculations: TradeCalculationRepository = createInMemoryTradeCalculationRepository();
-  const marketData: MarketDataPort = createInMemoryMarketDataPort();
+interface ApexCredentials {
+  apiKey: string;
+  apiSecret: string;
+  passphrase?: string;
+  restUrl?: string;
+  wsUrl?: string;
+}
+
+const getApexCredentials = (): ApexCredentials | null => {
+  const apiKey = process.env.APEX_OMNI_API_KEY;
+  const apiSecret = process.env.APEX_OMNI_API_SECRET;
+  if (!apiKey || !apiSecret) {
+    return null;
+  }
+
+  return {
+    apiKey,
+    apiSecret,
+    passphrase: process.env.APEX_OMNI_API_PASSPHRASE,
+    restUrl: process.env.APEX_OMNI_REST_URL,
+    wsUrl: process.env.APEX_OMNI_WS_URL,
+  };
+};
+
+interface MarketInfrastructure {
+  marketData: MarketDataPort;
+  ringBuffer?: RingBuffer;
+}
+
+const createMarketInfrastructure = async (
+  app: FastifyInstance,
+  marketMetadata: MarketMetadataPort,
+): Promise<MarketInfrastructure> => {
+  const credentials = getApexCredentials();
+  if (!credentials) {
+    app.log.warn('ApeX Omni credentials missing – using in-memory market data');
+    return {
+      marketData: createInMemoryMarketDataPort(),
+    };
+  }
+
+  const ringBuffer = createRingBuffer();
+  const client = createApeXOmniClient({
+    apiKey: credentials.apiKey,
+    apiSecret: credentials.apiSecret,
+    passphrase: credentials.passphrase,
+    restBaseUrl: credentials.restUrl,
+    wsBaseUrl: credentials.wsUrl,
+  });
+
+  const allowlisted = await marketMetadata.listAllowlistedSymbols();
+  const symbols = allowlisted.length > 0 ? allowlisted : (Object.keys(BASE_PRICES) as TradingSymbol[]);
+
+  await app.register(marketStreamPlugin, {
+    client,
+    ringBuffer,
+    symbols,
+  });
+
+  const marketData = createRingBufferMarketDataPort({
+    ringBuffer,
+    client,
+  });
+
+  return {
+    marketData,
+    ringBuffer,
+  };
+};
+
+interface ResolvedRepository {
+  repository: TradeCalculationRepository;
+  pool: DatabasePool | null;
+}
+
+const resolveTradeCalculationRepository = async (
+  app: FastifyInstance,
+): Promise<ResolvedRepository> => {
+  try {
+    const pool = await getSharedDatabasePool();
+    await runPendingMigrations(pool);
+    app.log.info('database.connected');
+
+    app.addHook('onClose', async () => {
+      await closeSharedDatabasePool();
+    });
+
+    return {
+      repository: createPostgresTradeCalculationRepository(pool),
+      pool,
+    };
+  } catch (error) {
+    app.log.warn(
+      { err: error },
+      'database.connection_failed_using_in_memory_repository',
+    );
+    return {
+      repository: createInMemoryTradeCalculationRepository(),
+      pool: null,
+    };
+  }
+};
+
+const createServices = ({
+  marketMetadata,
+  marketData,
+  tradeCalculations,
+}: {
+  marketMetadata: MarketMetadataPort;
+  marketData: MarketDataPort;
+  tradeCalculations: TradeCalculationRepository;
+}) => {
   const previewService = createTradePreviewService({
     marketData,
     metadata: marketMetadata,
@@ -169,6 +295,7 @@ const createServices = (marketMetadata: MarketMetadataPort) => {
     historyService,
     settingsService,
     equityService,
+    tradeCalculations,
   };
 };
 
@@ -183,8 +310,67 @@ export const buildServer = async (): Promise<FastifyInstance> => {
     return { status: 'ok' };
   });
 
+  const jwtSecret = process.env.APEX_TRADEBILL_JWT_SECRET ?? process.env.JWT_SECRET;
+  const allowGuest =
+    jwtSecret == null || (process.env.APEX_TRADEBILL_AUTH_ALLOW_GUEST ?? 'true') === 'true';
+
+  await app.register(authenticationPlugin, {
+    secret: jwtSecret ?? 'development-secret',
+    issuer: process.env.APEX_TRADEBILL_JWT_ISSUER,
+    audience: process.env.APEX_TRADEBILL_JWT_AUDIENCE,
+    allowGuest,
+  });
+
+  await app.register(observabilityPlugin);
+
   const marketMetadataService = createMarketMetadataService();
-  const services = createServices(marketMetadataService);
+  const infrastructure = await createMarketInfrastructure(app, marketMetadataService);
+  const { repository: tradeCalculationRepository, pool: tradeCalculationPool } =
+    await resolveTradeCalculationRepository(app);
+  const services = createServices({
+    marketMetadata: marketMetadataService,
+    marketData: infrastructure.marketData,
+    tradeCalculations: tradeCalculationRepository,
+  });
+
+  if (tradeCalculationPool) {
+    const logger: PruneTradeHistoryJobLogger = {
+      info(message, context) {
+        if (context) {
+          app.log.info(context, message);
+        } else {
+          app.log.info(message);
+        }
+      },
+      error(message, context) {
+        if (context) {
+          app.log.error(context, message);
+        } else {
+          app.log.error(message);
+        }
+      },
+    };
+
+    const pruneJob = createPruneTradeHistoryJob(tradeCalculationPool, { logger });
+    let pruneJobHandle: ScheduledJobHandle | null = null;
+
+    try {
+      const result = await pruneJob.run();
+      app.log.info(
+        { removed: result.removed, cutoffIso: result.cutoffIso },
+        'trade_history.prune_startup_run',
+      );
+    } catch (error) {
+      app.log.error({ err: error }, 'trade_history.prune_startup_failed');
+    }
+
+    pruneJobHandle = pruneJob.schedule();
+
+    app.addHook('onClose', (_instance, done) => {
+      pruneJobHandle?.cancel();
+      done();
+    });
+  }
 
   await app.register(getSymbolRoute, {
     metadata: marketMetadataService,
@@ -192,6 +378,10 @@ export const buildServer = async (): Promise<FastifyInstance> => {
 
   await app.register(postPreviewRoute, {
     previewService: services.previewService,
+  });
+
+  await app.register(postHistoryImportRoute, {
+    tradeCalculations: services.tradeCalculations,
   });
 
   await app.register(getHistoryRoute, {
@@ -213,6 +403,7 @@ export const buildServer = async (): Promise<FastifyInstance> => {
   await app.register(marketDataStreamRoute, {
     marketData: services.marketData,
     metadata: marketMetadataService,
+    ringBuffer: infrastructure.ringBuffer,
   });
 
   return app;

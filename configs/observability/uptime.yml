@@ -1,0 +1,55 @@
+service: apex-tradebill-api
+slo:
+  target_availability: 0.995
+  evaluation_windows:
+    - name: rolling_1h
+      duration: 3600
+    - name: rolling_24h
+      duration: 86400
+  metrics:
+    request_counter: http_requests_total
+    outage_counter: uptime_outages_total
+    latency_histogram: http_request_duration_ms
+checks:
+  polling_interval_seconds: 60
+  success_threshold_ms: 500
+  failure_statuses:
+    - 500
+    - 502
+    - 503
+    - 504
+alerting:
+  - name: uptime_slo_warning
+    description: Availability dipped below 99.7% within the last hour
+    condition:
+      window: rolling_1h
+      availability_lt: 0.997
+    routing: pagerduty:trading-companion-warning
+  - name: uptime_slo_critical
+    description: Availability dipped below the 99.5% SLO within the last 24 hours
+    condition:
+      window: rolling_24h
+      availability_lt: 0.995
+    routing: pagerduty:trading-companion-critical
+  - name: outage_runway
+    description: Three consecutive failed uptime checks (>= 3 minutes)
+    condition:
+      consecutive_failures: 3
+    routing: slack:#apex-tradebill-ops
+dashboards:
+  latency_percentiles:
+    - metric: http_request_duration_ms
+      percentiles: [50, 95, 99]
+  availability_breakdown:
+    - metric: uptime_checks_total
+      group_by: [route, status]
+  error_rate:
+    - metric: http_errors_total
+      group_by: [route, method]
+runbook:
+  oncall_rotation: trading-companion
+  remediation:
+    - Verify Supabase connectivity and ApeX Omni streaming health.
+    - Check Fastify logs for authentication failures or upstream timeouts.
+    - If outage persists beyond five minutes, fail over to maintenance banner and notify stakeholders.
+
