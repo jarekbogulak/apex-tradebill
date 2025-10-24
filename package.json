@@ -7,8 +7,8 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm --filter mobile start",
-    "dev:mobile": "pnpm --filter mobile start",
+    "dev": "pnpm --filter @apex-tradebill/mobile start",
+    "dev:mobile": "pnpm --filter @apex-tradebill/mobile start",
     "dev:api": "pnpm --filter @apex-tradebill/api dev",
     "build": "pnpm -r build",
     "lint": "cross-env ESLINT_USE_FLAT_CONFIG=0 eslint --config configs/eslint/.eslintrc.cjs --ext .ts,.tsx,.js .",
@@ -16,7 +16,10 @@
     "format": "prettier --config .prettierrc.cjs --write \"**/*.{cjs,js,ts,tsx,jsx,json,md}\"",
     "format:check": "prettier --config .prettierrc.cjs --check \"**/*.{cjs,js,ts,tsx,jsx,json,md}\"",
     "typecheck": "pnpm -r typecheck --if-present",
-    "test": "pnpm -r test --if-present"
+    "test": "pnpm -r test --if-present",
+    "test:all": "pnpm -r test --if-present",
+    "test:api": "pnpm --filter @apex-tradebill/api test",
+    "test:mobile": "pnpm --filter @apex-tradebill/mobile test"
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.26.0",
