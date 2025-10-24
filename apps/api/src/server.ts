@@ -310,14 +310,14 @@ export const buildServer = async (): Promise<FastifyInstance> => {
     return { status: 'ok' };
   });
 
-  const jwtSecret = process.env.APEX_TRADEBILL_JWT_SECRET ?? process.env.JWT_SECRET;
+  const jwtSecret = process.env.JWT_SECRET;
   const allowGuest =
     jwtSecret == null || (process.env.APEX_TRADEBILL_AUTH_ALLOW_GUEST ?? 'true') === 'true';
 
   await app.register(authenticationPlugin, {
     secret: jwtSecret ?? 'development-secret',
-    issuer: process.env.APEX_TRADEBILL_JWT_ISSUER,
-    audience: process.env.APEX_TRADEBILL_JWT_AUDIENCE,
+    issuer: process.env.JWT_ISSUER,
+    audience: process.env.JWT_AUDIENCE,
     allowGuest,
   });
 
