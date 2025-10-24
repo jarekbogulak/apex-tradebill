@@ -3,6 +3,15 @@ module.exports = {
     if (name === 'SourceCode') {
       return { scriptURL: 'http://localhost' };
     }
+    if (name === 'PlatformConstants') {
+      return {
+        forceTouchAvailable: false,
+        interfaceIdiom: 'phone',
+        isTesting: true,
+        osVersion: 'test',
+        systemName: 'test',
+      };
+    }
     return {};
   },
   getEnforcing(name) {

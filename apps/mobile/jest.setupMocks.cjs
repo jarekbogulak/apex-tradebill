@@ -19,3 +19,43 @@ const turboModuleMock = {
 };
 
 jest.mock('react-native/Libraries/TurboModule/TurboModuleRegistry', () => turboModuleMock);
+
+jest.mock('react-native/src/private/specs_DEPRECATED/modules/NativeSourceCode', () => ({
+  getConstants() {
+    return { scriptURL: 'http://localhost' };
+  },
+}));
+
+jest.mock('react-native/Libraries/Utilities/NativePlatformConstantsIOS', () => ({
+  getConstants() {
+    return {
+      forceTouchAvailable: false,
+      interfaceIdiom: 'phone',
+      osVersion: 'test',
+      systemName: 'test',
+      isTesting: true,
+    };
+  },
+}));
+
+jest.mock('react-native/Libraries/Utilities/NativeDeviceInfo', () => ({
+  getConstants() {
+    return {
+      Dimensions: {
+        window: { width: 375, height: 812, scale: 2, fontScale: 2 },
+        screen: { width: 375, height: 812, scale: 2, fontScale: 2 },
+      },
+    };
+  },
+}));
+
+jest.mock('react-native/Libraries/ReactNative/UIManager', () => ({
+  getViewManagerConfig() {
+    return {};
+  },
+  createView() {},
+  updateView() {},
+  setChildren() {},
+}));
+
+jest.mock('expo', () => ({}));

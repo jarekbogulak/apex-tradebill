@@ -1,4 +1,4 @@
-import allowlistConfig from '../../../configs/markets/allowlist.json' assert { type: 'json' };
+import allowlistConfig from '../../../configs/markets/allowlist.json';
 
 describe('GET /v1/markets/{symbol} allowlist enforcement', () => {
   test('allowlist contains launch symbols', () => {

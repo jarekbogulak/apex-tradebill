@@ -24,6 +24,7 @@ const config = createBaseJestConfig({
         tsconfig: '<rootDir>/tests/tsconfig.json',
         diagnostics: {
           warnOnly: process.env.CI !== 'true',
+          ignoreCodes: [151002],
         },
       },
     ],

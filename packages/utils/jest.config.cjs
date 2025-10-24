@@ -8,19 +8,17 @@ const config = createBaseJestConfig({
     name: 'utils',
     color: 'blue',
   },
-  preset: 'ts-jest/presets/default-esm',
+  preset: 'ts-jest',
   testEnvironment: 'node',
   testMatch: [
     '<rootDir>/packages/utils/**/__tests__/**/*.(spec|test).[tj]s?(x)',
     '<rootDir>/packages/utils/**/*.(spec|test).[tj]s?(x)',
   ],
-  extensionsToTreatAsEsm: ['.ts'],
   transform: {
     '^.+\\.(ts|tsx)$': [
       'ts-jest',
       {
-        useESM: true,
-        tsconfig: '<rootDir>/packages/utils/tsconfig.json',
+        tsconfig: '<rootDir>/packages/utils/tsconfig.jest.json',
         diagnostics: {
           warnOnly: process.env.CI !== 'true',
         },
