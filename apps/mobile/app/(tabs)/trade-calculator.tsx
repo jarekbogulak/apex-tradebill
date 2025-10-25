@@ -1,7 +1,7 @@
-import type { TradeInput } from '@apex-tradebill/types';
+import type { MarketSnapshot, TradeInput } from '@apex-tradebill/types';
 import { formatCurrency, formatPercent } from '@apex-tradebill/utils';
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -17,6 +17,7 @@ import { HistoryList } from '@/src/features/history/HistoryList';
 import StaleBanner from '@/src/features/stream/StaleBanner';
 import { useMarketStream } from '@/src/features/stream/useMarketStream';
 import { createRefreshScheduler } from '@/src/features/stream/refreshScheduler';
+import type { RefreshScheduler } from '@/src/features/stream/refreshScheduler';
 import { RiskVisualization } from '@/src/features/visualization/RiskVisualization';
 import {
   selectCalculatorInput,
@@ -45,36 +46,47 @@ export default function TradeCalculatorScreen() {
   const defaultTimeframe = useSettingsStore((state) => state.defaultTimeframe);
   const defaultSymbol = useSettingsStore((state) => state.defaultSymbol);
   const freshnessThreshold = useSettingsStore(selectFreshnessThreshold);
+  const shouldAutofillEntryPrice = input.useVolatilityStop && !input.entryPrice;
+  const shouldAutofillEntryPriceRef = useRef(shouldAutofillEntryPrice);
+  const refreshSchedulerRef = useRef<RefreshScheduler | null>(null);
 
-  const refreshScheduler = useMemo(
-    () =>
-      createRefreshScheduler({
-        telemetry: {
-          onLagDetected: () => setStatus('error', 'Refresh loop lag detected'),
-        },
-      }),
-    [setStatus],
-  );
+  if (!refreshSchedulerRef.current) {
+    refreshSchedulerRef.current = createRefreshScheduler({
+      telemetry: {
+        onLagDetected: () => setStatus('error', 'Refresh loop lag detected'),
+      },
+    });
+  }
 
   useEffect(() => {
-    refreshScheduler.start();
-    return () => refreshScheduler.stop();
-  }, [refreshScheduler]);
+    const scheduler = refreshSchedulerRef.current;
+    scheduler?.start();
+    return () => scheduler?.stop();
+  }, []);
 
   useEffect(() => {
     cacheSyncWorker.start();
     return () => cacheSyncWorker.stop();
   }, []);
 
+  useEffect(() => {
+    shouldAutofillEntryPriceRef.current = shouldAutofillEntryPrice;
+  }, [shouldAutofillEntryPrice]);
+
+  const handleSnapshot = useCallback(
+    (snapshot: MarketSnapshot) => {
+      if (shouldAutofillEntryPriceRef.current) {
+        setInput({ entryPrice: snapshot.lastPrice });
+      }
+      refreshSchedulerRef.current?.recordHeartbeat();
+    },
+    [setInput],
+  );
+
   const marketStream = useMarketStream({
     symbols: [input.symbol],
     staleThresholdMs: freshnessThreshold,
-    onSnapshot: (snapshot) => {
-      if (input.useVolatilityStop && !input.entryPrice) {
-        setInput({ entryPrice: snapshot.lastPrice });
-      }
-      refreshScheduler.recordHeartbeat();
-    },
+    onSnapshot: handleSnapshot,
   });
 
   const historyQuery = useInfiniteQuery({

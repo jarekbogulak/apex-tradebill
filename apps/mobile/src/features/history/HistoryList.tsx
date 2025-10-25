@@ -1,5 +1,6 @@
 import type { TradeCalculation } from '@apex-tradebill/types';
 import { formatCurrency } from '@apex-tradebill/utils';
+import { useMemo } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 export interface HistoryListProps {
@@ -12,9 +13,17 @@ export interface HistoryListProps {
 const keyExtractor = (item: TradeCalculation) => item.id;
 
 export const HistoryList = ({ items, loading = false, onRefresh, onLoadMore }: HistoryListProps) => {
+  const data = useMemo(
+    () =>
+      items.filter((item) => {
+        return Boolean(item && item.input && item.output);
+      }),
+    [items],
+  );
+
   return (
     <FlatList
-      data={items}
+      data={data}
       keyExtractor={keyExtractor}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefresh ?? (() => undefined)} />}
       onEndReachedThreshold={0.75}

@@ -1,11 +1,15 @@
 import type { UserSettings } from '../../domain/user-settings/user-settings.entity.js';
 
 export const formatDecimalString = (value: number, fractionDigits: number): string => {
-  return value
-    .toFixed(fractionDigits)
-    .replace(/(\.\d*?)(0+)$/, (_, decimals: string, zeroes: string) =>
-      decimals.slice(0, decimals.length - zeroes.length),
-    )
+  const fixed = value.toFixed(fractionDigits);
+
+  if (!fixed.includes('.')) {
+    return fixed;
+  }
+
+  return fixed
+    .replace(/(\.\d*?[1-9])0+$/, '$1')
+    .replace(/\.0+$/, '')
     .replace(/\.$/, '');
 };
 
