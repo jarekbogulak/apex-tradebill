@@ -1,5 +1,5 @@
 import type { MarketSnapshot, Symbol } from '@apex-tradebill/types';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { env } from '../../config/env';
 
 const DEFAULT_STALE_THRESHOLD_MS = 2000;
@@ -41,6 +41,18 @@ export const useMarketStream = ({
   const wsRef = useRef<MarketWebSocket | null>(null);
   const staleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const wsBaseUrl = useMemo(() => {
+    const base = env.api.wsBaseUrl || env.api.baseUrl.replace(/^http/, 'ws');
+    return base.replace(/\/+$/, '');
+  }, []);
+
+  const symbolQuery = useMemo(() => {
+    if (!symbols || symbols.length === 0) {
+      return '';
+    }
+    return Array.from(new Set(symbols)).join(',');
+  }, [symbols?.join(',')]);
+
   const clearStaleTimer = () => {
     if (staleTimerRef.current) {
       clearTimeout(staleTimerRef.current);
@@ -75,9 +87,9 @@ export const useMarketStream = ({
 
       closeSocket();
 
-      const query = symbols && symbols.length > 0 ? `?symbols=${symbols.join(',')}` : '';
+      const query = symbolQuery ? `?symbols=${symbolQuery}` : '';
       const socket = new WebSocket(
-        `${env.api.wsBaseUrl}/v1/stream/market-data${query}`,
+        `${wsBaseUrl}/v1/stream/market-data${query}`,
       ) as MarketWebSocket;
       wsRef.current = socket;
 
@@ -135,7 +147,7 @@ export const useMarketStream = ({
         }
       };
     },
-    [closeSocket, enabled, onSnapshot, scheduleStaleCheck, symbols],
+    [closeSocket, enabled, onSnapshot, scheduleStaleCheck, symbolQuery, wsBaseUrl],
   );
 
   useEffect(() => {
