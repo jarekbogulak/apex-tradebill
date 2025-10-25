@@ -1,50 +1,66 @@
-# Welcome to your Expo app 👋
+# Apex TradeBill Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Managed Expo 54 client for the TradeBill stack. We use a typed `app.config.ts` and env files to keep local, preview, and production builds in sync.
 
-## Get started
+## Prerequisites
 
-1. Install dependencies
+- Node.js 22 (managed via corepack)
+- pnpm 9 (`corepack enable pnpm`)
+- Xcode / Android Studio when running native simulators
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Install workspace dependencies from the repository root:
 
 ```bash
-npm run reset-project
+corepack pnpm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Environment configuration
 
-## Learn more
+`app.config.ts` loads environment variables from the closest matching file:
 
-To learn more about developing your project with Expo, look at the following resources:
+1. `.env`
+2. `.env.<environment>`
+3. `.env.local`
+4. `.env.<environment>.local`
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Copy the template and adjust values for your profile:
 
-## Join the community
+```bash
+cp apps/mobile/.env.example apps/mobile/.env.development
+```
 
-Join our community of developers creating universal apps.
+Key variables:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `EXPO_PUBLIC_APP_ENV` – `development` | `preview` | `production`; influences which `.env.*` file is read.
+- `EXPO_PUBLIC_API_URL` – base URL for the TradeBill API (defaults to `http://127.0.0.1:4000`).
+- `EXPO_PUBLIC_API_WS_URL` – optional override for WebSocket connections; falls back to `EXPO_PUBLIC_API_URL`.
+- `EXPO_PUBLIC_APEX_ENVIRONMENT` – `prod` (default) or `testnet`. When unset the mobile build inherits `APEX_OMNI_ENVIRONMENT` from the API env, so you can share a single toggle or override per-client when needed.
+- `EXPO_PUBLIC_APEX_*` – optional overrides for REST/WebSocket endpoints. We default to the same prod/testnet URLs defined for the API service (see `apps/api/.env.example`), so only set these when you need an alternate cluster. Credentials stay server-side.
+
+The resolved config is exposed at runtime via `env` (`src/config/env.ts`).
+
+## Running the app
+
+From the repo root:
+
+```bash
+pnpm dev:mobile
+```
+
+Useful variants:
+
+- `pnpm --filter @apex-tradebill/mobile start --clear` – clear Metro cache.
+- `pnpm --filter @apex-tradebill/mobile start --android` / `--ios` / `--web` – boot directly into a platform target.
+
+## Build profiles and EAS
+
+- `EAS_BUILD_PROFILE`, `EXPO_RELEASE_CHANNEL`, and `EXPO_PUBLIC_APP_ENV` are surfaced through `extra.eas` for runtime introspection.
+- Add secure values (API tokens, Sentry DSNs, etc.) through EAS Secrets or your CI environment. Only `EXPO_PUBLIC_*` keys end up in the JavaScript bundle.
+
+## Testing
+
+```bash
+pnpm --filter @apex-tradebill/mobile test
+```
+
+Jest loads a lightweight `expo-constants` mock with deterministic `env` values for fast unit tests.

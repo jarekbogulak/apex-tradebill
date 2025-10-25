@@ -1,5 +1,6 @@
 import type { MarketSnapshot, Symbol } from '@apex-tradebill/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { env } from '../../config/env';
 
 const DEFAULT_STALE_THRESHOLD_MS = 2000;
 const WS_RETRY_DELAYS = [1000, 2000, 5000];
@@ -23,8 +24,6 @@ interface MarketStreamState {
 type MarketWebSocket = Omit<WebSocket, 'ping'> & {
   ping?: () => void;
 };
-
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 export const useMarketStream = ({
   symbols,
@@ -78,7 +77,7 @@ export const useMarketStream = ({
 
       const query = symbols && symbols.length > 0 ? `?symbols=${symbols.join(',')}` : '';
       const socket = new WebSocket(
-        `${API_BASE_URL.replace('http', 'ws')}/v1/stream/market-data${query}`,
+        `${env.api.wsBaseUrl}/v1/stream/market-data${query}`,
       ) as MarketWebSocket;
       wsRef.current = socket;
 

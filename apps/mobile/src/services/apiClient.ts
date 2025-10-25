@@ -6,6 +6,7 @@ import type {
   TradeWarningCode,
 } from '@apex-tradebill/types';
 import { QueryClient } from '@tanstack/react-query';
+import { env } from '../config/env';
 
 export interface TradePreviewResponse {
   output: TradeOutput;
@@ -41,8 +42,6 @@ export interface ApiClient {
   getEquity(): Promise<EquityResponse>;
 }
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
-
 const createHeaders = () => ({
   'Content-Type': 'application/json',
 });
@@ -55,7 +54,7 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
   return response.json() as Promise<T>;
 };
 
-export const createApiClient = (baseUrl: string = API_BASE_URL): ApiClient => {
+export const createApiClient = (baseUrl: string = env.api.baseUrl): ApiClient => {
   return {
     async previewTrade(input) {
       const response = await fetch(`${baseUrl}/v1/trades/preview`, {

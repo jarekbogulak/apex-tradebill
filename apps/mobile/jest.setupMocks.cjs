@@ -59,3 +59,38 @@ jest.mock('react-native/Libraries/ReactNative/UIManager', () => ({
 }));
 
 jest.mock('expo', () => ({}));
+
+jest.mock('expo-constants', () => ({
+  __esModule: true,
+  default: {
+    expoConfig: {
+      extra: {
+        environment: 'development',
+        eas: {
+          buildProfile: null,
+          releaseChannel: null,
+        },
+        api: {
+          baseUrl: 'http://localhost:4000',
+          wsBaseUrl: 'ws://localhost:4000',
+        },
+        apexOmni: {
+          environment: 'prod',
+          restUrl: 'https://api.pro.apex.exchange',
+          wsUrl: 'wss://stream.pro.apex.exchange',
+          endpoints: {
+            prod: {
+              restUrl: 'https://api.pro.apex.exchange',
+              wsUrl: 'wss://stream.pro.apex.exchange',
+            },
+            testnet: {
+              restUrl: 'https://testnet.omni.apex.exchange/api',
+              wsUrl: 'wss://testnet.omni.apex.exchange/ws/v1',
+            },
+          },
+        },
+      },
+    },
+    manifest: null,
+  },
+}));

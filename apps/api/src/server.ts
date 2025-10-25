@@ -45,6 +45,7 @@ import {
   type PruneTradeHistoryJobLogger,
   type ScheduledJobHandle,
 } from './jobs/pruneTradeHistory.js';
+import { resolveApeXCredentials } from './config/apexConfig.js';
 
 const BASE_PRICES: Record<TradingSymbol, number> = {
   'BTC-USDT': 65_000,
@@ -158,30 +159,6 @@ const createInMemoryEquityPort = (): AccountEquityPort => {
   };
 };
 
-interface ApexCredentials {
-  apiKey: string;
-  apiSecret: string;
-  passphrase?: string;
-  restUrl?: string;
-  wsUrl?: string;
-}
-
-const getApexCredentials = (): ApexCredentials | null => {
-  const apiKey = process.env.APEX_OMNI_API_KEY;
-  const apiSecret = process.env.APEX_OMNI_API_SECRET;
-  if (!apiKey || !apiSecret) {
-    return null;
-  }
-
-  return {
-    apiKey,
-    apiSecret,
-    passphrase: process.env.APEX_OMNI_API_PASSPHRASE,
-    restUrl: process.env.APEX_OMNI_REST_URL,
-    wsUrl: process.env.APEX_OMNI_WS_URL,
-  };
-};
-
 interface MarketInfrastructure {
   marketData: MarketDataPort;
   ringBuffer?: RingBuffer;
@@ -191,7 +168,7 @@ const createMarketInfrastructure = async (
   app: FastifyInstance,
   marketMetadata: MarketMetadataPort,
 ): Promise<MarketInfrastructure> => {
-  const credentials = getApexCredentials();
+  const credentials = resolveApeXCredentials();
   if (!credentials) {
     app.log.warn('ApeX Omni credentials missing – using in-memory market data');
     return {
@@ -204,6 +181,7 @@ const createMarketInfrastructure = async (
     apiKey: credentials.apiKey,
     apiSecret: credentials.apiSecret,
     passphrase: credentials.passphrase,
+    environment: credentials.environment,
     restBaseUrl: credentials.restUrl,
     wsBaseUrl: credentials.wsUrl,
   });

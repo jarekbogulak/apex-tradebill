@@ -6,8 +6,8 @@ import {
   toTradeCalculation,
   type DeviceCacheEntry,
 } from '../storage/device-cache-entry.ts';
+import { env } from '../config/env';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export interface CacheSyncHeadersProvider {
@@ -69,7 +69,7 @@ const extractSyncedIds = (response: unknown): string[] => {
 };
 
 export const createCacheSyncWorker = ({
-  apiBaseUrl = API_BASE_URL,
+  apiBaseUrl = env.api.baseUrl,
   intervalMs = 60_000,
   maxBatchSize = 10,
   now = () => new Date(),
