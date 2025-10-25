@@ -20,6 +20,10 @@ interface MarketStreamState {
   reconnectAttempts: number;
 }
 
+type MarketWebSocket = Omit<WebSocket, 'ping'> & {
+  ping?: () => void;
+};
+
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 export const useMarketStream = ({
@@ -35,7 +39,7 @@ export const useMarketStream = ({
     reconnectAttempts: 0,
   });
 
-  const wsRef = useRef<WebSocket | null>(null);
+  const wsRef = useRef<MarketWebSocket | null>(null);
   const staleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearStaleTimer = () => {
@@ -73,7 +77,9 @@ export const useMarketStream = ({
       closeSocket();
 
       const query = symbols && symbols.length > 0 ? `?symbols=${symbols.join(',')}` : '';
-      const socket = new WebSocket(`${API_BASE_URL.replace('http', 'ws')}/v1/stream/market-data${query}`);
+      const socket = new WebSocket(
+        `${API_BASE_URL.replace('http', 'ws')}/v1/stream/market-data${query}`,
+      ) as MarketWebSocket;
       wsRef.current = socket;
 
       setState((current) => ({
