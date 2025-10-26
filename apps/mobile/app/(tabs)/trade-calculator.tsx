@@ -2,7 +2,6 @@ import type { MarketSnapshot, TradeInput } from '@apex-tradebill/types';
 import { formatCurrency, formatPercent } from '@apex-tradebill/utils';
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { shallow } from 'zustand/shallow';
 import {
   ActivityIndicator,
   Pressable,
@@ -30,10 +29,10 @@ const cacheSyncWorker = createCacheSyncWorker();
 
 export default function TradeCalculatorScreen() {
   const input = useTradeCalculatorStore(selectCalculatorInput);
-  const output = useTradeCalculatorStore((state) => state.output, shallow);
-  const warnings = useTradeCalculatorStore((state) => state.warnings, shallow);
-  const lastUpdatedAt = useTradeCalculatorStore((state) => state.lastUpdatedAt);
-  const snapshot = useTradeCalculatorStore((state) => state.snapshot);
+    const output = useTradeCalculatorStore().output;
+    const warnings = useTradeCalculatorStore().warnings;
+    const lastUpdatedAt = useTradeCalculatorStore().lastUpdatedAt;
+    const snapshot = useTradeCalculatorStore().snapshot;
   const status = useTradeCalculatorStore(selectCalculatorStatus);
   const setInput = useTradeCalculatorStore((state) => state.setInput);
   const setOutput = useTradeCalculatorStore((state) => state.setOutput);
@@ -97,11 +96,16 @@ export default function TradeCalculatorScreen() {
 
   const historyQuery = useInfiniteQuery({
     queryKey: ['tradeHistory'],
-    queryFn: ({ pageParam }) => apiClient.getTradeHistory({ cursor: pageParam ?? undefined }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+      queryFn: ({ pageParam }) =>
+          apiClient.getTradeHistory({
+              cursor: typeof pageParam === 'string' ? pageParam : undefined,
+          }),
+      getNextPageParam: (lastPage: any) => lastPage?.nextCursor ?? undefined,
+      initialPageParam: undefined,
   });
 
-  const historyItems = historyQuery.data?.pages.flatMap((page) => page.items) ?? [];
+    const historyItems =
+        historyQuery.data?.pages.flatMap((page: any) => page?.items ?? []) ?? [];
 
   const { riskPercent: inputRisk, atrMultiplier: inputAtr, timeframe: inputTimeframe, symbol: inputSymbol } = input;
 
