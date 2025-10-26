@@ -17,7 +17,8 @@ describe('createRingBuffer', () => {
   it('ingests ticks and computes ATR once enough candles exist', () => {
     const ringBuffer = createRingBuffer({
       atrPeriod: 2,
-      candleWindowMs: 1_000,
+      atrTimeframe: '1m',
+      aggregateTimeframes: ['1m'],
       staleThresholdMs: 10_000,
     });
 
@@ -26,7 +27,7 @@ describe('createRingBuffer', () => {
       bid: 99.5,
       ask: 100.5,
       atrMultiplier: 1.25,
-      timestamp: 1_000,
+      timestamp: 60_000,
     });
 
     mockCalculateAtr.mockReturnValueOnce({ value: 7.654321 });
@@ -35,7 +36,7 @@ describe('createRingBuffer', () => {
       price: 110,
       bid: 109,
       ask: 111,
-      timestamp: 2_000,
+      timestamp: 120_000,
     });
 
     expect(snapshot).toMatchObject({

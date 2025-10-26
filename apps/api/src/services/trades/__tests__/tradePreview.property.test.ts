@@ -88,6 +88,7 @@ describe('Trade preview property suite', () => {
     expect(result.output.riskAmount).toBe('200.00');
     expect(Number(result.output.positionSize)).toBeLessThanOrEqual(20);
     expect(result.output.warnings).not.toContain('INSUFFICIENT_EQUITY');
+    expect(result.output.atr13).toBe(result.marketSnapshot.atr13);
 
     const history = await repository.listRecent(PRIMARY_USER_ID, 10);
     expect(history.items).toHaveLength(1);

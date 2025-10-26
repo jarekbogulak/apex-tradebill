@@ -231,8 +231,11 @@ export const createTradePreviewService = ({
       },
     );
 
+    const atrValueString = formatAtr(atrResult.value);
+
     const parsedOutput = TradeOutputSchema.parse({
       ...rounded,
+      atr13: atrValueString,
       warnings: [],
     });
 
@@ -258,7 +261,7 @@ export const createTradePreviewService = ({
 
     const marketSnapshot: MarketSnapshot = {
       ...snapshot,
-      atr13: formatAtr(atrResult.value),
+      atr13: atrValueString,
       atrMultiplier: input.atrMultiplier,
     };
 

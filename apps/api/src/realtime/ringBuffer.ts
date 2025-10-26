@@ -1,4 +1,4 @@
-import type { MarketSnapshot, Symbol } from '@apex-tradebill/types';
+import type { MarketSnapshot, Symbol, Timeframe } from '@apex-tradebill/types';
 import type { MarketCandle } from '../domain/ports/tradebillPorts.js';
 import { calculateAtr } from '../services/calculations/atrCalculator.js';
 import { sampleLatestPerWindow, type PriceTick, type SampledTick } from './windowSampler.js';
@@ -15,14 +15,15 @@ export interface RingBufferOptions {
   maxTicks?: number;
   maxCandles?: number;
   staleThresholdMs?: number;
-  candleWindowMs?: number;
   atrPeriod?: number;
+  atrTimeframe?: Timeframe;
+  aggregateTimeframes?: Timeframe[];
   defaultAtrMultiplier?: string;
 }
 
 interface SymbolState {
   ticks: PriceTick[];
-  candles: MarketCandle[];
+  candlesByTimeframe: Partial<Record<Timeframe, MarketCandle[]>>;
   snapshot: MarketSnapshot | null;
   atrMultiplier: string;
   lastUpdatedAt: number;
@@ -31,9 +32,19 @@ interface SymbolState {
 const DEFAULT_MAX_TICKS = 2048;
 const DEFAULT_MAX_CANDLES = 1024;
 const DEFAULT_STALE_THRESHOLD_MS = 2000;
-const DEFAULT_CANDLE_WINDOW_MS = 1000;
 const DEFAULT_ATR_PERIOD = 13;
 const DEFAULT_ATR_MULTIPLIER = '1.50';
+const DEFAULT_ATR_TIMEFRAME: Timeframe = '15m';
+const DEFAULT_AGGREGATE_TIMEFRAMES: Timeframe[] = ['1m', '5m', '15m'];
+
+const TIMEFRAME_WINDOW_MS: Record<Timeframe, number> = {
+  '1m': 60_000,
+  '5m': 5 * 60_000,
+  '15m': 15 * 60_000,
+  '30m': 30 * 60_000,
+  '1h': 60 * 60_000,
+  '4h': 4 * 60 * 60_000,
+};
 
 const toNumber = (value: number | string | null | undefined): number | null => {
   if (value == null) {
@@ -56,6 +67,13 @@ const clampArray = <T>(items: T[], max: number): void => {
   items.splice(0, items.length - max);
 };
 
+const resolveAggregateTimeframes = (
+  options: RingBufferOptions,
+): Timeframe[] => {
+  const requested = options.aggregateTimeframes ?? DEFAULT_AGGREGATE_TIMEFRAMES;
+  return requested.filter((timeframe) => timeframe in TIMEFRAME_WINDOW_MS);
+};
+
 const ensureState = (
   symbol: Symbol,
   store: Map<Symbol, SymbolState>,
@@ -68,51 +86,67 @@ const ensureState = (
 
   state = {
     ticks: [],
-    candles: [],
+    candlesByTimeframe: {},
     snapshot: null,
     atrMultiplier: options.defaultAtrMultiplier ?? DEFAULT_ATR_MULTIPLIER,
     lastUpdatedAt: 0,
   };
+
+  for (const timeframe of resolveAggregateTimeframes(options)) {
+    state.candlesByTimeframe[timeframe] = [];
+  }
 
   store.set(symbol, state);
   return state;
 };
 
 const updateCandles = (
-  candleWindowMs: number,
+  aggregateTimeframes: Timeframe[],
   state: SymbolState,
   timestampMs: number,
   price: number,
+  maxCandles: number,
 ): void => {
-  const windowStart = Math.floor(timestampMs / candleWindowMs) * candleWindowMs;
-  const windowEnd = windowStart + candleWindowMs;
-  const ISO_TIMESTAMP = new Date(windowEnd).toISOString();
+  for (const timeframe of aggregateTimeframes) {
+    const windowMs = TIMEFRAME_WINDOW_MS[timeframe];
+    if (!windowMs) {
+      continue;
+    }
 
-  const candles = state.candles;
-  const last = candles[candles.length - 1];
+    const windowStart = Math.floor(timestampMs / windowMs) * windowMs;
+    const windowEnd = windowStart + windowMs;
+    const timestampIso = new Date(windowEnd).toISOString();
 
-  const high = price;
-  const low = price;
+    let candles = state.candlesByTimeframe[timeframe];
+    if (!candles) {
+      candles = [];
+      state.candlesByTimeframe[timeframe] = candles;
+    }
 
-  if (!last || new Date(last.timestamp).getTime() !== windowEnd) {
-    candles.push({
-      timestamp: ISO_TIMESTAMP,
-      high,
-      low,
-      close: price,
-    });
-  } else {
-    last.high = Math.max(last.high, high);
-    last.low = Math.min(last.low, low);
-    last.close = price;
+    const last = candles[candles.length - 1];
+    if (!last || new Date(last.timestamp).getTime() !== windowEnd) {
+      candles.push({
+        timestamp: timestampIso,
+        high: price,
+        low: price,
+        close: price,
+      });
+    } else {
+      last.high = Math.max(last.high, price);
+      last.low = Math.min(last.low, price);
+      last.close = price;
+    }
+
+    clampArray(candles, maxCandles);
   }
 };
 
-const computeAtr = (candles: MarketCandle[], period: number): number | null => {
-  if (candles.length < period) {
+const computeAtr = (candles: MarketCandle[] | undefined, period: number): number | null => {
+  if (!candles || candles.length < period) {
     return null;
   }
-  const subset = candles.slice(-period);
+
+  const subset = candles.slice(-(period + 1));
   try {
     const result = calculateAtr(subset, period);
     return result.value;
@@ -124,7 +158,7 @@ const computeAtr = (candles: MarketCandle[], period: number): number | null => {
 export interface RingBuffer {
   ingest(symbol: Symbol, tick: MarketTickInput): MarketSnapshot;
   getSnapshot(symbol: Symbol): MarketSnapshot | null;
-  getRecentCandles(symbol: Symbol, lookback: number): MarketCandle[];
+  getRecentCandles(symbol: Symbol, timeframe: Timeframe, lookback: number): MarketCandle[];
   getTicks(symbol: Symbol): PriceTick[];
   sampleTicks(symbol: Symbol, windowMs: number): SampledTick[];
   markStale(symbol: Symbol): void;
@@ -136,8 +170,9 @@ export const createRingBuffer = (options: RingBufferOptions = {}): RingBuffer =>
   const maxTicks = options.maxTicks ?? DEFAULT_MAX_TICKS;
   const maxCandles = options.maxCandles ?? DEFAULT_MAX_CANDLES;
   const staleThresholdMs = options.staleThresholdMs ?? DEFAULT_STALE_THRESHOLD_MS;
-  const candleWindowMs = options.candleWindowMs ?? DEFAULT_CANDLE_WINDOW_MS;
   const atrPeriod = options.atrPeriod ?? DEFAULT_ATR_PERIOD;
+  const atrTimeframe = options.atrTimeframe ?? DEFAULT_ATR_TIMEFRAME;
+  const aggregateTimeframes = resolveAggregateTimeframes(options);
 
   const ingest = (symbol: Symbol, tick: MarketTickInput): MarketSnapshot => {
     const state = ensureState(symbol, store, options);
@@ -148,10 +183,10 @@ export const createRingBuffer = (options: RingBufferOptions = {}): RingBuffer =>
     state.ticks.push({ timestamp: timestampMs, price });
     clampArray(state.ticks, maxTicks);
 
-    updateCandles(candleWindowMs, state, timestampMs, price);
-    clampArray(state.candles, maxCandles);
+    updateCandles(aggregateTimeframes, state, timestampMs, price, maxCandles);
 
-    const atr = computeAtr(state.candles, atrPeriod);
+    const atrCandles = state.candlesByTimeframe[atrTimeframe];
+    const atr = computeAtr(atrCandles, atrPeriod);
     const bid = toNumber(tick.bid);
     const ask = toNumber(tick.ask);
     if (tick.atrMultiplier != null) {
@@ -187,12 +222,20 @@ export const createRingBuffer = (options: RingBufferOptions = {}): RingBuffer =>
     };
   };
 
-  const getRecentCandles = (symbol: Symbol, lookback: number): MarketCandle[] => {
+  const getRecentCandles = (
+    symbol: Symbol,
+    timeframe: Timeframe,
+    lookback: number,
+  ): MarketCandle[] => {
     const state = store.get(symbol);
     if (!state) {
       return [];
     }
-    return state.candles.slice(-lookback);
+    const series = state.candlesByTimeframe[timeframe];
+    if (!series?.length) {
+      return [];
+    }
+    return series.slice(-lookback);
   };
 
   const getTicks = (symbol: Symbol): PriceTick[] => {
@@ -232,4 +275,3 @@ export const createRingBuffer = (options: RingBufferOptions = {}): RingBuffer =>
     getTrackedSymbols,
   };
 };
-

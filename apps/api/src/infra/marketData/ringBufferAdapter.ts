@@ -53,7 +53,7 @@ export const createRingBufferMarketDataPort = ({
     timeframe: Timeframe,
     lookback: number,
   ): Promise<MarketCandle[]> => {
-    const fromBuffer = ringBuffer.getRecentCandles(symbol, lookback);
+    const fromBuffer = ringBuffer.getRecentCandles(symbol, timeframe, lookback);
     if (fromBuffer.length >= lookback) {
       return fromBuffer.slice(-lookback);
     }
@@ -67,4 +67,3 @@ export const createRingBufferMarketDataPort = ({
     getRecentCandles,
   };
 };
-

@@ -26,6 +26,7 @@ const buildCalculation = (overrides: Partial<Parameters<typeof createTradeCalcul
       riskAmount: '100.00',
       riskToReward: 4,
       suggestedStop: '95.00',
+      atr13: '10.00000000',
       warnings: [],
     },
     marketSnapshot: {

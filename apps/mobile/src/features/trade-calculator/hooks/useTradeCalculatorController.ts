@@ -376,7 +376,7 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
     const visualizationStop = input.useVolatilityStop
       ? output?.suggestedStop ?? ''
       : input.stopPrice ?? '';
-    const atrValue = snapshot?.atr13 ?? null;
+    const atrValue = output?.atr13 ?? snapshot?.atr13 ?? null;
     const marketPlaceholder = marketStream.snapshot?.lastPrice ?? 'Market';
 
     return {
@@ -385,7 +385,13 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
       atrValue,
       marketPlaceholder,
     };
-  }, [input.stopPrice, input.useVolatilityStop, marketStream.snapshot?.lastPrice, output, snapshot?.atr13]);
+  }, [
+    input.stopPrice,
+    input.useVolatilityStop,
+    marketStream.snapshot?.lastPrice,
+    output,
+    snapshot?.atr13,
+  ]);
 
   const hasOutput = Boolean(output);
   const shouldShowErrorBanner = Boolean(hasOutput && status === 'error' && errorMessage);

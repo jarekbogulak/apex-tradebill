@@ -69,9 +69,17 @@ export const initializeDeviceCache = async (): Promise<void> => {
 };
 
 export const saveDeviceCacheEntry = async (entry: DeviceCacheEntry): Promise<void> => {
+  const normalizedEntry: DeviceCacheEntry = {
+    ...entry,
+    output: {
+      ...entry.output,
+      atr13: entry.output.atr13 ?? '0.00000000',
+    },
+  };
+
   const db = openDatabase();
   if (!db) {
-    inMemoryStore.unshift(entry);
+    inMemoryStore.unshift(normalizedEntry);
     if (inMemoryStore.length > MAX_ENTRIES) {
       inMemoryStore.length = MAX_ENTRIES;
     }
@@ -85,12 +93,12 @@ export const saveDeviceCacheEntry = async (entry: DeviceCacheEntry): Promise<voi
       sql: `INSERT OR REPLACE INTO ${TABLE_NAME} (id, input, output, created_at, synced_at, dirty)
         VALUES (?, ?, ?, ?, ?, ?);`,
       args: [
-        entry.id,
-        JSON.stringify(entry.input),
-        JSON.stringify(entry.output),
-        entry.createdAt,
-        entry.syncedAt,
-        entry.dirty ? 1 : 0,
+        normalizedEntry.id,
+        JSON.stringify(normalizedEntry.input),
+        JSON.stringify(normalizedEntry.output),
+        normalizedEntry.createdAt,
+        normalizedEntry.syncedAt,
+        normalizedEntry.dirty ? 1 : 0,
       ],
     },
     {
@@ -102,14 +110,26 @@ export const saveDeviceCacheEntry = async (entry: DeviceCacheEntry): Promise<voi
   ]);
 };
 
-const mapRowToEntry = (row: Record<string, unknown>): DeviceCacheEntry => ({
-  id: String(row.id),
-  input: JSON.parse(String(row.input)) as TradeInput,
-  output: JSON.parse(String(row.output)) as TradeOutput,
-  createdAt: String(row.created_at),
-  syncedAt: (row.synced_at as string | null) ?? null,
-  dirty: Boolean(row.dirty),
-});
+const mapRowToEntry = (row: Record<string, unknown>): DeviceCacheEntry => {
+  const input = JSON.parse(String(row.input)) as TradeInput;
+  const rawOutput = JSON.parse(String(row.output)) as TradeOutput & {
+    atr13?: string;
+  };
+
+  const output: TradeOutput = {
+    ...rawOutput,
+    atr13: rawOutput.atr13 ?? '0.00000000',
+  };
+
+  return {
+    id: String(row.id),
+    input,
+    output,
+    createdAt: String(row.created_at),
+    syncedAt: (row.synced_at as string | null) ?? null,
+    dirty: Boolean(row.dirty),
+  };
+};
 
 export const listDeviceCacheEntries = async (limit = MAX_ENTRIES): Promise<DeviceCacheEntry[]> => {
   const db = openDatabase();

@@ -147,6 +147,7 @@ export const TradeOutputSchema = z.object({
     (value) => Number(value) > 0,
     'Suggested stop must be positive',
   ),
+  atr13: priceStringSchema,
   warnings: z.array(TradeWarningCodeSchema).default([]),
 });
 export type TradeOutput = z.infer<typeof TradeOutputSchema>;

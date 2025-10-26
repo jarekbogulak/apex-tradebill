@@ -1,3 +1,4 @@
+import type { Timeframe } from '@apex-tradebill/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -6,6 +7,7 @@ import { useSettingsStore } from '@/src/state/settingsStore';
 import { createApiClient } from '@/src/services/apiClient';
 
 const apiClient = createApiClient();
+const TIMEFRAME_OPTIONS: Timeframe[] = ['1m', '5m', '15m'];
 
 export default function SettingsScreen() {
   const queryClient = useQueryClient();
@@ -55,6 +57,7 @@ export default function SettingsScreen() {
       riskPercent: settings.riskPercent,
       atrMultiplier: settings.atrMultiplier,
       dataFreshnessThresholdMs: settings.dataFreshnessThresholdMs,
+      defaultTimeframe: settings.defaultTimeframe,
       rememberedMultiplierOptions: settings.rememberedMultiplierOptions,
     });
   };
@@ -79,6 +82,30 @@ export default function SettingsScreen() {
           onChangeText={(value) => setSettings({ atrMultiplier: value })}
           style={styles.input}
         />
+      </View>
+      <View style={styles.field}>
+        <Text style={styles.label}>Default Timeframe</Text>
+        <View style={styles.timeframeGroup}>
+          {TIMEFRAME_OPTIONS.map((option) => {
+            const isActive = settings.defaultTimeframe === option;
+            return (
+              <Pressable
+                key={option}
+                onPress={() => setSettings({ defaultTimeframe: option })}
+                style={[styles.timeframeOption, isActive && styles.timeframeOptionActive]}
+              >
+                <Text
+                  style={[
+                    styles.timeframeOptionLabel,
+                    isActive && styles.timeframeOptionLabelActive,
+                  ]}
+                >
+                  {option.toUpperCase()}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
       <View style={styles.field}>
         <Text style={styles.label}>Freshness Threshold (ms)</Text>
@@ -136,6 +163,31 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 16,
     color: '#0F172A',
+  },
+  timeframeGroup: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  timeframeOption: {
+    flexGrow: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#CBD5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timeframeOptionActive: {
+    backgroundColor: '#0284C7',
+    borderColor: '#0284C7',
+  },
+  timeframeOptionLabel: {
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  timeframeOptionLabelActive: {
+    color: '#FFFFFF',
   },
   button: {
     backgroundColor: '#0284C7',

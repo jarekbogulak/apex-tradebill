@@ -63,6 +63,7 @@ export const postPreviewRoute: FastifyPluginAsync<PostPreviewRouteOptions> = asy
                   'riskAmount',
                   'riskToReward',
                   'suggestedStop',
+                  'atr13',
                   'warnings',
                 ],
                 properties: {
@@ -71,6 +72,7 @@ export const postPreviewRoute: FastifyPluginAsync<PostPreviewRouteOptions> = asy
                   riskAmount: { type: 'string' },
                   riskToReward: { type: 'number' },
                   suggestedStop: { type: 'string' },
+                  atr13: { type: 'string' },
                   warnings: {
                     type: 'array',
                     items: { type: 'string' },

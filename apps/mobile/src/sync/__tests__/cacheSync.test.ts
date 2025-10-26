@@ -62,6 +62,7 @@ const buildEntry = () => ({
     riskAmount: '20.00',
     riskToReward: 2,
     suggestedStop: '95.00',
+    atr13: '0.00000000',
     warnings: [],
   },
   createdAt: '2025-01-01T00:00:00.000Z',
