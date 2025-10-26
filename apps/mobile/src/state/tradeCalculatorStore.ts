@@ -1,4 +1,10 @@
-import type { TradeOutput, TradeWarningCode, Direction, Timeframe } from '@apex-tradebill/types';
+import type {
+  TradeOutput,
+  TradeWarningCode,
+  Direction,
+  Timeframe,
+  MarketSnapshot,
+} from '@apex-tradebill/types';
 import { create } from 'zustand';
 
 export type TradeCalculatorStatus = 'idle' | 'loading' | 'success' | 'error';
@@ -8,7 +14,7 @@ export interface TradeCalculatorInputState {
   direction: Direction;
   accountSize: string;
   entryPrice: string | null;
-  stopPrice: string;
+  stopPrice: string | null;
   targetPrice: string;
   riskPercent: string;
   atrMultiplier: string;
@@ -20,13 +26,21 @@ export interface TradeCalculatorInputState {
 export interface TradeCalculatorState {
   input: TradeCalculatorInputState;
   output: TradeOutput | null;
+  snapshot: MarketSnapshot | null;
   warnings: TradeWarningCode[];
   status: TradeCalculatorStatus;
   error: string | null;
   lastUpdatedAt: string | null;
+  hasManualEntry: boolean;
   setInput: (patch: Partial<TradeCalculatorInputState>) => void;
-  setOutput: (output: TradeOutput, warnings: TradeWarningCode[], timestamp: string) => void;
+  setOutput: (
+    output: TradeOutput,
+    snapshot: MarketSnapshot,
+    warnings: TradeWarningCode[],
+    timestamp: string,
+  ) => void;
   setStatus: (status: TradeCalculatorStatus, error?: string | null) => void;
+  setHasManualEntry: (hasManualEntry: boolean) => void;
   reset: () => void;
 }
 
@@ -35,7 +49,7 @@ const INITIAL_INPUT: TradeCalculatorInputState = {
   direction: 'long',
   accountSize: '0.00',
   entryPrice: null,
-  stopPrice: '0.00',
+  stopPrice: null,
   targetPrice: '0.00',
   riskPercent: '0.02',
   atrMultiplier: '1.50',
@@ -47,10 +61,12 @@ const INITIAL_INPUT: TradeCalculatorInputState = {
 export const useTradeCalculatorStore = create<TradeCalculatorState>((set) => ({
   input: INITIAL_INPUT,
   output: null,
+  snapshot: null,
   warnings: [],
   status: 'idle',
   error: null,
   lastUpdatedAt: null,
+  hasManualEntry: false,
   setInput: (patch) => {
     set((state) => ({
       ...state,
@@ -60,10 +76,11 @@ export const useTradeCalculatorStore = create<TradeCalculatorState>((set) => ({
       },
     }));
   },
-  setOutput: (output, warnings, timestamp) => {
+  setOutput: (output, snapshot, warnings, timestamp) => {
     set((state) => ({
       ...state,
       output,
+      snapshot,
       warnings,
       status: 'success',
       error: null,
@@ -77,14 +94,22 @@ export const useTradeCalculatorStore = create<TradeCalculatorState>((set) => ({
       error,
     }));
   },
+  setHasManualEntry: (hasManualEntry) => {
+    set((state) => ({
+      ...state,
+      hasManualEntry,
+    }));
+  },
   reset: () => {
     set({
       input: INITIAL_INPUT,
       output: null,
+      snapshot: null,
       warnings: [],
       status: 'idle',
       error: null,
       lastUpdatedAt: null,
+      hasManualEntry: false,
     });
   },
 }));
@@ -95,4 +120,5 @@ export const selectCalculatorOutput = (state: TradeCalculatorState) => ({
   output: state.output,
   warnings: state.warnings,
   lastUpdatedAt: state.lastUpdatedAt,
+  snapshot: state.snapshot,
 });

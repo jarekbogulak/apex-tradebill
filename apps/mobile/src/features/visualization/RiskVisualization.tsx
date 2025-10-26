@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 export interface RiskVisualizationProps {
   direction: Direction;
   entryPrice: string | null;
-  stopPrice: string;
+  stopPrice: string | null;
   targetPrice: string;
 }
 
@@ -14,15 +14,22 @@ const clamp = (value: number) => Math.min(100, Math.max(0, value));
 export const RiskVisualization = memo(
   ({ direction, entryPrice, stopPrice, targetPrice }: RiskVisualizationProps) => {
     const points = useMemo(() => {
-      const entry = Number(entryPrice ?? 0);
-      const stop = Number(stopPrice);
-      const target = Number(targetPrice);
-      const values = [entry, stop, target].filter((value) => Number.isFinite(value));
+      const toNumeric = (value: string | null | undefined) => {
+        if (value == null || `${value}`.trim().length === 0) {
+          return NaN;
+        }
+        return Number(value);
+      };
 
-      if (values.length === 0) {
+      const entry = toNumeric(entryPrice);
+      const stop = toNumeric(stopPrice);
+      const target = toNumeric(targetPrice);
+
+      if (![entry, stop, target].every((value) => Number.isFinite(value))) {
         return null;
       }
 
+      const values = [entry, stop, target];
       const min = Math.min(...values);
       const max = Math.max(...values);
       const span = max - min || 1;

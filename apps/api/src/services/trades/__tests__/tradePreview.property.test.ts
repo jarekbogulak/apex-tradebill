@@ -150,4 +150,31 @@ describe('Trade preview property suite', () => {
     expect(result.output.warnings).toContain('MIN_NOTIONAL');
     expect(result.output.warnings).toContain('VOLATILITY_STOP_GREATER');
   });
+
+  test('supports volatility stop without manual input', async () => {
+    const repository = createInMemoryTradeCalculationRepository();
+    const service = createTradePreviewService({
+      marketData: baseMarketData,
+      metadata: baseMetadata,
+      tradeCalculations: repository,
+    });
+
+    const result = await service.preview(PRIMARY_USER_ID, {
+      symbol: 'BTC-USDT',
+      direction: 'long',
+      accountSize: '15000.00',
+      entryPrice: null,
+      stopPrice: null,
+      targetPrice: '26000.00',
+      riskPercent: '0.02',
+      atrMultiplier: '1.50',
+      useVolatilityStop: true,
+      timeframe: '15m',
+      accountEquitySource: 'connected',
+    });
+
+    expect(result.output.suggestedStop).toBeDefined();
+    expect(result.output.warnings).not.toContain('VOLATILITY_STOP_GREATER');
+    expect(result.output.positionSize).not.toBe('0.0000');
+  });
 });

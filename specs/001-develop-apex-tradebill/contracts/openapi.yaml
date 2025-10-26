@@ -33,7 +33,6 @@ components:
         - symbol
         - direction
         - accountSize
-        - stopPrice
         - targetPrice
         - riskPercent
         - atrMultiplier
@@ -59,6 +58,8 @@ components:
           type: string
           format: decimal
           pattern: "^\\d+(.\\d{1,8})?$"
+          nullable: true
+          description: Optional when a volatility-derived stop is in effect.
         targetPrice:
           type: string
           format: decimal
@@ -435,4 +436,3 @@ paths:
                 enum: [market.snapshot]
               data:
                 $ref: '#/components/schemas/MarketSnapshot'
-

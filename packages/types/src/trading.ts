@@ -71,7 +71,10 @@ export const TradeInputSchema = z
       'Account size must be greater than zero',
     ),
     entryPrice: priceStringSchema.nullable().optional(),
-    stopPrice: priceStringSchema.refine((value) => Number(value) > 0, 'Stop price must be positive'),
+    stopPrice: priceStringSchema
+      .refine((value) => Number(value) > 0, 'Stop price must be positive')
+      .nullable()
+      .optional(),
     targetPrice: priceStringSchema.refine(
       (value) => Number(value) > 0,
       'Target price must be positive',
@@ -89,27 +92,41 @@ export const TradeInputSchema = z
     accountEquitySource: AccountEquitySourceSchema.default('connected'),
     createdAt: z.string().datetime().optional(),
   })
-  .refine(
-    (value) => {
-      if (value.entryPrice == null) {
-        return true;
-      }
+  .superRefine((value, ctx) => {
+    const hasManualStop = value.stopPrice != null;
 
-      const entry = Number(value.entryPrice);
-      const stop = Number(value.stopPrice);
-      const target = Number(value.targetPrice);
+    if (!value.useVolatilityStop && !hasManualStop) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['stopPrice'],
+        message: 'Stop price is required unless volatility stop is enabled',
+      });
+      return;
+    }
 
-      if (value.direction === 'long') {
-        return target > entry && entry > stop;
-      }
+    if (value.entryPrice == null || value.targetPrice == null) {
+      return;
+    }
 
-      return target < entry && entry < stop;
-    },
-    {
-      message: 'Price ordering is inconsistent with trade direction',
-      path: ['direction'],
-    },
-  );
+    if (!hasManualStop) {
+      return;
+    }
+
+    const entry = Number(value.entryPrice);
+    const stop = Number(value.stopPrice);
+    const target = Number(value.targetPrice);
+
+    const isLong = value.direction === 'long';
+    const isOrdered = isLong ? target > entry && entry > stop : target < entry && entry < stop;
+
+    if (!isOrdered) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['direction'],
+        message: 'Price ordering is inconsistent with trade direction',
+      });
+    }
+  });
 export type TradeInput = z.infer<typeof TradeInputSchema>;
 
 export const TradeOutputSchema = z.object({

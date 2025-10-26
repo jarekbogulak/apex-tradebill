@@ -2,6 +2,7 @@ import type { OpenAPIV3_1 } from 'openapi-types';
 import {
   expectArraySchema,
   expectSchemaHasRequired,
+  getComponentSchemaOrThrow,
   getJsonSchemaFromResponseOrThrow,
   getOperationOrThrow,
   getResponseObjectOrThrow,
@@ -68,5 +69,19 @@ describe('POST /v1/trades/preview', () => {
     expect(media?.schema && '$ref' in media.schema ? media.schema.$ref : null).toBe(
       '#/components/schemas/ErrorResponse',
     );
+  });
+
+  test('documents stop price as optional when volatility stop is enabled', () => {
+    const tradeInputSchema = getComponentSchemaOrThrow('TradeInput');
+    expect(tradeInputSchema.required ?? []).not.toContain('stopPrice');
+
+    const properties = tradeInputSchema.properties ?? {};
+    const stopSchema = properties.stopPrice;
+
+    if (isSchemaObject(stopSchema)) {
+      expect(stopSchema.nullable).toBe(true);
+    } else {
+      throw new Error('Expected stopPrice property to be defined inline for schema validation');
+    }
   });
 });

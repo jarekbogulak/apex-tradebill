@@ -1,7 +1,8 @@
 import type { MarketSnapshot, TradeInput } from '@apex-tradebill/types';
 import { formatCurrency, formatPercent } from '@apex-tradebill/utils';
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { shallow } from 'zustand/shallow';
 import {
   ActivityIndicator,
   Pressable,
@@ -19,11 +20,7 @@ import { useMarketStream } from '@/src/features/stream/useMarketStream';
 import { createRefreshScheduler } from '@/src/features/stream/refreshScheduler';
 import type { RefreshScheduler } from '@/src/features/stream/refreshScheduler';
 import { RiskVisualization } from '@/src/features/visualization/RiskVisualization';
-import {
-  selectCalculatorInput,
-  selectCalculatorStatus,
-  useTradeCalculatorStore,
-} from '@/src/state/tradeCalculatorStore';
+import { selectCalculatorInput, selectCalculatorStatus, useTradeCalculatorStore } from '@/src/state/tradeCalculatorStore';
 import { selectFreshnessThreshold, selectRiskConfig, useSettingsStore } from '@/src/state/settingsStore';
 import { createApiClient } from '@/src/services/apiClient';
 import { createCacheSyncWorker } from '@/src/sync/cacheSync';
@@ -33,27 +30,35 @@ const cacheSyncWorker = createCacheSyncWorker();
 
 export default function TradeCalculatorScreen() {
   const input = useTradeCalculatorStore(selectCalculatorInput);
-  const output = useTradeCalculatorStore((state) => state.output);
-  const warnings = useTradeCalculatorStore((state) => state.warnings);
+  const output = useTradeCalculatorStore((state) => state.output, shallow);
+  const warnings = useTradeCalculatorStore((state) => state.warnings, shallow);
   const lastUpdatedAt = useTradeCalculatorStore((state) => state.lastUpdatedAt);
+  const snapshot = useTradeCalculatorStore((state) => state.snapshot);
   const status = useTradeCalculatorStore(selectCalculatorStatus);
   const setInput = useTradeCalculatorStore((state) => state.setInput);
   const setOutput = useTradeCalculatorStore((state) => state.setOutput);
   const setStatus = useTradeCalculatorStore((state) => state.setStatus);
+  const hasManualEntry = useTradeCalculatorStore((state) => state.hasManualEntry);
+  const setHasManualEntry = useTradeCalculatorStore((state) => state.setHasManualEntry);
   const riskKey = useSettingsStore(selectRiskConfig);
   const settingsRiskPercent = riskKey.split(':')[0];
   const settingsAtrMultiplier = riskKey.split(':')[1];
   const defaultTimeframe = useSettingsStore((state) => state.defaultTimeframe);
   const defaultSymbol = useSettingsStore((state) => state.defaultSymbol);
   const freshnessThreshold = useSettingsStore(selectFreshnessThreshold);
-  const shouldAutofillEntryPrice = input.useVolatilityStop && !input.entryPrice;
-  const shouldAutofillEntryPriceRef = useRef(shouldAutofillEntryPrice);
+  const latestPriceRef = useRef<string | null>(null);
+  const requestSourceRef = useRef<'manual' | 'live'>('manual');
+  const livePreviewActiveRef = useRef(false);
+  const livePreviewTickRef = useRef<() => void>(() => undefined);
+  const isEntryFocusedRef = useRef(false);
+  const hasManualEntryRef = useRef(hasManualEntry);
   const refreshSchedulerRef = useRef<RefreshScheduler | null>(null);
 
   if (!refreshSchedulerRef.current) {
     refreshSchedulerRef.current = createRefreshScheduler({
       telemetry: {
         onLagDetected: () => setStatus('error', 'Refresh loop lag detected'),
+        onTick: () => livePreviewTickRef.current(),
       },
     });
   }
@@ -70,13 +75,14 @@ export default function TradeCalculatorScreen() {
   }, []);
 
   useEffect(() => {
-    shouldAutofillEntryPriceRef.current = shouldAutofillEntryPrice;
-  }, [shouldAutofillEntryPrice]);
+    hasManualEntryRef.current = hasManualEntry;
+  }, [hasManualEntry]);
 
   const handleSnapshot = useCallback(
-    (snapshot: MarketSnapshot) => {
-      if (shouldAutofillEntryPriceRef.current) {
-        setInput({ entryPrice: snapshot.lastPrice });
+    (incoming: MarketSnapshot) => {
+      latestPriceRef.current = incoming.lastPrice;
+      if (!hasManualEntryRef.current && !isEntryFocusedRef.current) {
+        setInput({ entryPrice: incoming.lastPrice });
       }
       refreshSchedulerRef.current?.recordHeartbeat();
     },
@@ -128,26 +134,107 @@ export default function TradeCalculatorScreen() {
   const previewMutation = useMutation({
     mutationFn: (payload: TradeInput) => apiClient.previewTrade(payload),
     onMutate: () => {
-      setStatus('loading');
+      if (requestSourceRef.current === 'manual') {
+        setStatus('loading');
+      }
     },
     onSuccess: (data) => {
-      setOutput(data.output, data.warnings, new Date().toISOString());
+      setOutput(data.output, data.marketSnapshot, data.warnings, new Date().toISOString());
       setStatus('success');
+      livePreviewActiveRef.current = true;
     },
     onError: (error: Error) => {
       setStatus('error', error.message);
     },
   });
 
+  const requestPreview = useCallback(
+    (source: 'manual' | 'live') => {
+      if (source === 'live' && (!livePreviewActiveRef.current || previewMutation.isPending)) {
+        return;
+      }
+
+      if (previewMutation.isPending && source === 'manual') {
+        return;
+      }
+
+      const normalize = (value: string | null | undefined) => {
+        if (value == null) {
+          return null;
+        }
+        const trimmed = value.trim();
+        return trimmed.length > 0 ? trimmed : null;
+      };
+
+      const normalizedStop = normalize(input.stopPrice);
+      const normalizedEntry = normalize(input.entryPrice);
+
+      if (!input.useVolatilityStop && normalizedStop == null) {
+        if (source === 'live') {
+          livePreviewActiveRef.current = false;
+        }
+        setStatus('error', 'Stop price is required when volatility stop is disabled');
+        return;
+      }
+
+      requestSourceRef.current = source;
+
+      previewMutation.mutate({
+        ...input,
+        entryPrice: normalizedEntry,
+        stopPrice: normalizedStop,
+        riskPercent: settingsRiskPercent,
+        atrMultiplier: settingsAtrMultiplier,
+      });
+    },
+    [input, previewMutation, settingsAtrMultiplier, settingsRiskPercent, setStatus],
+  );
+
+  useEffect(() => {
+    livePreviewTickRef.current = () => {
+      requestPreview('live');
+    };
+  }, [requestPreview]);
+
   const handleCalculate = () => {
-    previewMutation.mutate({
-      ...input,
-      riskPercent: settingsRiskPercent,
-      atrMultiplier: settingsAtrMultiplier,
-    });
+    requestPreview('manual');
   };
 
-  const isLoading = status === 'loading' || previewMutation.isPending;
+  const isLoading = status === 'loading';
+
+  const formatPriceValue = useCallback((value: string | null | undefined) => {
+    if (value == null) {
+      return '—';
+    }
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) {
+      return value;
+    }
+    return numeric.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }, []);
+
+  const riskRewardStyle = useMemo(() => {
+    if (!output) {
+      return styles.metricNeutral;
+    }
+    if (output.riskToReward > 1.5) {
+      return styles.metricPositive;
+    }
+    if (output.riskToReward < 1.2) {
+      return styles.metricNegative;
+    }
+    return styles.metricNeutral;
+  }, [output]);
+
+  const riskRewardDisplay = output ? formatPercent(output.riskToReward) : '—';
+  const effectiveStop = input.useVolatilityStop ? output?.suggestedStop ?? null : input.stopPrice;
+  const atrDisplay = snapshot ? formatPriceValue(snapshot.atr13) : '—';
+  const visualizationStop = input.useVolatilityStop
+    ? output?.suggestedStop ?? ''
+    : input.stopPrice ?? '';
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -186,17 +273,44 @@ export default function TradeCalculatorScreen() {
             value={input.entryPrice ?? ''}
             keyboardType="decimal-pad"
             placeholder={marketStream.snapshot?.lastPrice ?? 'Market'}
-            onChangeText={(value) => setInput({ entryPrice: value })}
+            onFocus={() => {
+              isEntryFocusedRef.current = true;
+            }}
+            onBlur={() => {
+              isEntryFocusedRef.current = false;
+              if (!useTradeCalculatorStore.getState().hasManualEntry) {
+                setInput({ entryPrice: latestPriceRef.current });
+              }
+            }}
+            onChangeText={(value) => {
+              if (value.trim().length === 0) {
+                hasManualEntryRef.current = false;
+                setHasManualEntry(false);
+                setInput({ entryPrice: null });
+              } else {
+                hasManualEntryRef.current = true;
+                setHasManualEntry(true);
+                setInput({ entryPrice: value });
+              }
+            }}
             style={styles.input}
           />
         </View>
         <View style={styles.fieldRow}>
           <Text style={styles.label}>Stop Price</Text>
           <TextInput
-            value={input.stopPrice}
+            value={input.stopPrice ?? ''}
             keyboardType="decimal-pad"
-            onChangeText={(value) => setInput({ stopPrice: value })}
-            style={styles.input}
+            editable={!input.useVolatilityStop}
+            placeholder={input.useVolatilityStop ? 'ATR auto-stop' : undefined}
+            onChangeText={(value) => {
+              if (value.trim().length === 0) {
+                setInput({ stopPrice: null });
+              } else {
+                setInput({ stopPrice: value });
+              }
+            }}
+            style={[styles.input, input.useVolatilityStop && styles.inputDisabled]}
           />
         </View>
         <View style={styles.fieldRow}>
@@ -212,7 +326,18 @@ export default function TradeCalculatorScreen() {
           <Text style={styles.label}>Use Volatility Stop</Text>
           <Switch
             value={input.useVolatilityStop}
-            onValueChange={(value) => setInput({ useVolatilityStop: value })}
+            onValueChange={(value) => {
+              if (value) {
+                setInput({ useVolatilityStop: true, stopPrice: null });
+              } else {
+                const fallbackStop =
+                  output?.suggestedStop ??
+                  input.stopPrice ??
+                  latestPriceRef.current ??
+                  '0.00';
+                setInput({ useVolatilityStop: false, stopPrice: fallbackStop });
+              }
+            }}
           />
         </View>
         <View style={styles.switchRow}>
@@ -242,30 +367,44 @@ export default function TradeCalculatorScreen() {
 
       {output ? (
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Outputs</Text>
-          <View style={styles.rowBetween}>
-            <Text style={styles.outputLabel}>Position Size</Text>
-            <Text style={styles.outputValue}>{Number(output.positionSize).toFixed(4)}</Text>
+          <View style={styles.tradeBillHeader}>
+            <Text style={styles.sectionTitle}>Trade Bill</Text>
+            <Text style={styles.timestampLabel}>Updated {lastUpdatedAt ? new Date(lastUpdatedAt).toLocaleTimeString() : '—'}</Text>
           </View>
-          <View style={styles.rowBetween}>
-            <Text style={styles.outputLabel}>Position Cost</Text>
-            <Text style={styles.outputValue}>{formatCurrency(output.positionCost)}</Text>
+          <View style={styles.metricRow}>
+            <View style={styles.metricCard}>
+              <Text style={styles.metricLabel}>Risk / Reward</Text>
+              <Text style={[styles.metricValue, riskRewardStyle]}>{riskRewardDisplay}</Text>
+            </View>
+            <View style={styles.metricCard}>
+              <Text style={styles.metricLabel}>Position Cost</Text>
+              <Text style={[styles.metricValue, styles.metricAccent]}>{formatCurrency(output.positionCost)}</Text>
+            </View>
           </View>
-          <View style={styles.rowBetween}>
-            <Text style={styles.outputLabel}>Risk Amount</Text>
-            <Text style={styles.outputValue}>{formatCurrency(output.riskAmount)}</Text>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Position Size</Text>
+            <Text style={styles.detailValue}>{Number(output.positionSize).toFixed(4)}</Text>
           </View>
-          <View style={styles.rowBetween}>
-            <Text style={styles.outputLabel}>Risk / Reward</Text>
-            <Text style={styles.outputValue}>{formatPercent(output.riskToReward)}</Text>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Risk Amount</Text>
+            <Text style={styles.detailValue}>{formatCurrency(output.riskAmount)}</Text>
           </View>
-          <View style={styles.rowBetween}>
-            <Text style={styles.outputLabel}>Risk Percent</Text>
-            <Text style={styles.outputValue}>{formatPercent(Number(settingsRiskPercent))}</Text>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Risk Percent</Text>
+            <Text style={styles.detailValue}>{formatPercent(Number(settingsRiskPercent))}</Text>
           </View>
-          <Text style={styles.timestampLabel}>
-            Updated {lastUpdatedAt ? new Date(lastUpdatedAt).toLocaleTimeString() : '—'}
-          </Text>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Stop Price</Text>
+            <Text style={styles.detailValue}>{formatPriceValue(effectiveStop)}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Target Price</Text>
+            <Text style={styles.detailValue}>{formatPriceValue(input.targetPrice)}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>ATR (13)</Text>
+            <Text style={styles.detailValue}>{atrDisplay}</Text>
+          </View>
           {warnings.length > 0 ? (
             <View style={styles.warningContainer}>
               {warnings.map((warning) => (
@@ -278,7 +417,7 @@ export default function TradeCalculatorScreen() {
           <RiskVisualization
             direction={input.direction}
             entryPrice={input.entryPrice}
-            stopPrice={input.stopPrice}
+            stopPrice={visualizationStop}
             targetPrice={input.targetPrice}
           />
         </View>
@@ -353,6 +492,60 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#0F172A',
   },
+  tradeBillHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+  },
+  metricRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  metricCard: {
+    flex: 1,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  metricLabel: {
+    fontSize: 12,
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  metricValue: {
+    marginTop: 4,
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  metricAccent: {
+    color: '#0284C7',
+  },
+  metricPositive: {
+    color: '#16A34A',
+  },
+  metricNeutral: {
+    color: '#F97316',
+  },
+  metricNegative: {
+    color: '#DC2626',
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  detailLabel: {
+    color: '#475569',
+    fontSize: 14,
+  },
+  detailValue: {
+    color: '#0F172A',
+    fontWeight: '600',
+    fontSize: 14,
+  },
   fieldRow: {
     gap: 4,
   },
@@ -368,6 +561,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 16,
     color: '#0F172A',
+  },
+  inputDisabled: {
+    backgroundColor: '#E2E8F0',
+    color: '#94A3B8',
   },
   switchRow: {
     flexDirection: 'row',

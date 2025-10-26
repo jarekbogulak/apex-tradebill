@@ -92,7 +92,7 @@ const collectWarnings = ({
   input: TradeInput;
   snapshot: MarketSnapshot;
   suggestedStop: DecimalLike;
-  manualStop: DecimalLike;
+  manualStop: DecimalLike | null;
   riskPerUnit: DecimalLike;
   rewardPerUnit: DecimalLike;
   positionSize: DecimalLike;
@@ -117,13 +117,19 @@ const collectWarnings = ({
     warnings.push('INSUFFICIENT_EQUITY');
   }
 
-  const manualStopComparison =
-    input.direction === 'long'
-      ? manualStop.gt(suggestedStop)
-      : manualStop.lt(suggestedStop);
+  if (input.useVolatilityStop && manualStop) {
+    const manualStopComparison =
+      input.direction === 'long'
+        ? manualStop.gt(suggestedStop)
+        : manualStop.lt(suggestedStop);
 
-  if (input.useVolatilityStop && manualStopComparison) {
-    warnings.push('VOLATILITY_STOP_GREATER');
+    if (manualStopComparison) {
+      warnings.push('VOLATILITY_STOP_GREATER');
+    }
+  }
+
+  if (!input.useVolatilityStop && manualStop == null) {
+    warnings.push('STOP_OUTSIDE_RANGE');
   }
 
   if (violatesMinQuantity(rounded.positionSize, metadata.minQuantity ?? null)) {
@@ -171,8 +177,14 @@ export const createTradePreviewService = ({
 
     const entryPrice = input.entryPrice ? toDecimal(input.entryPrice) : toDecimal(snapshot.lastPrice);
     const suggestedStop = computeSuggestedStop(input, entryPrice, atrValue);
-    const manualStop = toDecimal(input.stopPrice);
-    const effectiveStop = input.useVolatilityStop ? suggestedStop : manualStop;
+    const manualStop = input.stopPrice ? toDecimal(input.stopPrice) : null;
+
+    if (!input.useVolatilityStop && manualStop == null) {
+      throw new Error('Stop price is required when volatility stop is disabled');
+    }
+
+    const effectiveStop =
+      input.useVolatilityStop || manualStop == null ? suggestedStop : manualStop;
 
     if (!isPriceOrderingValid(input, entryPrice, effectiveStop)) {
       throw new Error('Stop price is inconsistent with trade direction');
