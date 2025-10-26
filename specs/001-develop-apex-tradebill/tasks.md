@@ -57,6 +57,12 @@
 - [x] T014 [P] Scaffold contract test for GET /v1/settings validating defaults payload
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/settings/get-settings.contract.test.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/contracts/openapi.yaml
   - Depends on: T010
+- [ ] T084 [P] Author contract scenarios for POST /v1/trades/preview covering volatility-stop optional inputs and ATR echoes
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/trades/post-preview.contract.test.ts
+  - Depends on: T012, T030, T033
+- [ ] T085 Define mobile acceptance tests for entry auto-follow, manual override, and trade bill emphasis states
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/app/(tabs)/__tests__/trade-calculator.test.tsx, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/state/__tests__/tradeCalculatorStore.test.ts
+  - Depends on: T041, T061, T072
 - [x] T015 [P] Scaffold contract test for PATCH /v1/settings covering allowed mutations and validation errors
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/settings/patch-settings.contract.test.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/contracts/openapi.yaml
   - Depends on: T010
@@ -255,11 +261,20 @@
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/features/stream/StaleBanner.tsx
   - Depends on: T043, T022
 
+- [ ] T086 [P] Implement volatility-stop optional handling across DTO validation and preview orchestration
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/types/src/trading.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/trades/previewService.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/routes/trades/postPreview.ts
+  - Depends on: T084, T030, T033
+- [ ] T087 Implement entry auto-follow state management with manual override recovery
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/state/tradeCalculatorStore.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/app/(tabs)/trade-calculator.tsx
+  - Depends on: T085, T039, T041
+- [ ] T088 Compose trade bill presentation with throttled refresh, ATR display, and risk-to-reward emphasis
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/app/(tabs)/trade-calculator.tsx, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/features/history/HistoryList.tsx
+  - Depends on: T085, T087, T079
 ## Phase 3.6: Polish
 - [ ] T060 [P] Add unit tests for ATR calculator edge cases and regression protection
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/calculations/__tests__/atrCalculator.test.ts
   - Depends on: T032
-- [ ] T061 [P] Add unit tests for trade calculator Zustand store selectors
+- [ ] T061 [P] Add unit tests for trade calculator Zustand store selectors and override state transitions
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/state/__tests__/tradeCalculatorStore.test.ts
   - Depends on: T039
 - [ ] T062 Add latency smoke/performance test harness verifying p95 budgets

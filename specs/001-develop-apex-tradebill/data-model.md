@@ -56,12 +56,13 @@
 
 ## DTOs (Non-Persisted)
 - **MarketSnapshot**: `symbol`, `lastPrice`, `atr13`, `atrMultiplier`, `bid`, `ask`, `stale`, `source`, `serverTimestamp`.
-- **TradeInput**: `symbol`, `direction`, `accountSize`, `entryPrice`, `stopPrice`, `targetPrice`, `riskPercent`, `atrMultiplier`, `useVolatilityStop`, `timeframe`, `accountEquitySource`, `createdAt`.
-- **TradeOutput**: `positionSize`, `positionCost`, `riskAmount`, `riskToReward`, `suggestedStop`, `warningCodes`.
+- **TradeInput**: `symbol`, `direction`, `accountSize`, `entryPrice`, `stopPrice` (nullable when `useVolatilityStop` is true), `targetPrice`, `riskPercent`, `atrMultiplier`, `useVolatilityStop`, `timeframe`, `accountEquitySource`, `createdAt`.
+- **TradeOutput**: `positionSize`, `positionCost`, `riskAmount`, `riskToReward`, `suggestedStop`, `warningCodes`, `atr13`.
 
 ## Ephemeral Calculator State
 - **RingBuffer**: per-symbol array of the most recent ticks needed for ATR (kept in memory, not stored in the Supabase PostgreSQL database). Resets on process restart and warm-starts from the latest bar snapshot.
 - **Freshness FSM**: `live → stale → reconnecting → live`; manual price entry sets `manual` flag until stream resumes. Logged for audit but not persisted as a table.
+- **Entry Override Flag**: boolean tracking whether the user has manually provided an entry price, pausing auto-follow until cleared.
 
 ---
 

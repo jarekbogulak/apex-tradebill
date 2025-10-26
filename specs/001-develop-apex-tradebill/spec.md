@@ -67,13 +67,14 @@ When creating this spec from a user prompt:
 As a day trader, I want to quickly input a trade idea (account size, direction, entry, stop, target) and immediately see position size, risk, and risk‑to‑reward based on live market data so that I can decide and act with confidence.
 
 ### Acceptance Scenarios
-1. Given live market data is available and the user enters account size, direction, entry, stop, target, and risk %, When the user confirms inputs, Then the app displays position size, position cost, absolute risk amount, and risk‑to‑reward in real time.
-2. Given the user has not entered an entry price, When the app fetches the current trade price, Then the entry field defaults to the current price and all outputs update accordingly.
-3. Given a volatility‑based stop calculation is enabled with a default multiplier, When the user selects a conservative or tighter multiplier, Then the suggested stop and computed position size update consistently with the new risk distance.
-4. Given inputs are invalid (e.g., stop not consistent with direction, zero/negative account size), When the user attempts to calculate, Then the app blocks calculation and shows clear validation messages.
-5. Given live data becomes temporarily unavailable, When the user opens the app or updates inputs, Then the app informs the user and allows manual entry of price with clearly marked fallback.
-6. Given the user is signed in and the connected trading account provides equity, When the app loads, Then the account size is auto-populated from that equity and clearly labeled; if the connection is unavailable, the user enters account size manually.
-7. Given multiple ticks arrive within a 1s window, When the 1s recompute boundary is reached, Then the latest tick within that window is used for calculations; if no tick in the window, carry forward the last price and apply staleness rules.
+1. Given live market data is available and the user provides account size, direction, stop preference, target, and risk %, when the user commits the scenario, then position size, position cost, absolute risk amount, and risk-to-reward display immediately.
+2. Given the user has not entered an entry price, when the platform receives the latest market price, then the entry field defaults to that price and continues tracking live updates until the user overrides it.
+3. Given the user manually edits the entry price while live data is streaming, when the change is applied, then the entry field pauses automatic updates until the user clears it, after which the most recent market price returns.
+4. Given the user elects to use a volatility-derived stop, when that preference becomes active, then the manual stop input may remain blank and the system applies the ATR-based stop distance to all calculations.
+5. Given live data becomes temporarily unavailable, when the user opens the calculator or adjusts inputs, then the experience signals the stale state and allows manual price entry with clear labeling.
+6. Given the user is signed in and the connected trading account provides equity, when the calculator loads, then the account size defaults to that equity and annotates the source; if the feed is unavailable, the user supplies the value manually.
+7. Given multiple ticks arrive within a one-second window, when the next recompute boundary is reached, then the latest tick within that window is used for sizing while previous values are discarded.
+8. Given the trade bill is presenting calculated outputs, when the system detects a new market price inside the live refresh cadence, then the trade bill refreshes automatically using the server-confirmed sizing and applies the appropriate emphasis colors for risk-to-reward thresholds.
 
 ### Edge Cases
 - Extremely high volatility: suggested stop exceeds acceptable distance; app must still compute and warn user.
@@ -85,13 +86,13 @@ As a day trader, I want to quickly input a trade idea (account size, direction, 
 
 ### Functional Requirements
 - **FR-001**: System MUST allow input of account size, trade direction (long/short), entry price, stop price, target price, percent risk, and volatility multiplier.
-- **FR-002**: System MUST default the entry price to the current market price when live data is available.
+- **FR-002**: System MUST default the entry price to the current market price when live data is available, maintain synchronization with the feed, and resume that synchronization when the user clears a manual override.
 - **FR-003**: System MUST compute position size such that maximum loss does not exceed configured percent risk given stop distance.
 - **FR-004**: System MUST compute and display absolute risk amount (in account currency) for the trade.
 - **FR-005**: System MUST compute and display risk‑to‑reward ratio based on entry, stop, and target.
 - **FR-006**: System MUST provide a volatility‑based suggested stop distance derived from live price dynamics with a configurable multiplier (default 1.5; common alternatives 1.0 and 2.0).
 - **FR-007**: Users MUST be able to configure percent risk and volatility multiplier via settings and adjust them from the main flow.
-- **FR-008**: System MUST update all outputs in real time as inputs change without disrupting control positions.
+- **FR-008**: System MUST update trade outputs in real time as inputs or live market data change, without disrupting user interactions or focus states.
 - **FR-009**: System MUST provide an at‑a‑glance risk visualization showing entry, stop, and target with relative distances.
 - **FR-010**: System MUST persist a recent trade calculation history (inputs and outputs) for quick recall and review.
 - **FR-011**: Inputs MUST be validated for presence, ranges, and logical consistency (e.g., long: target > entry > stop; short: target < entry < stop).
@@ -115,11 +116,13 @@ As a day trader, I want to quickly input a trade idea (account size, direction, 
   - Price fields (entry/stop/target): round to $0.01 (or the symbol's tick size if provided).
   - Monetary amounts (position cost, risk amount): round half up to the nearest cent ($0.01).
   - Ratios (risk-to-reward): round to 2 decimal places.
-- **FR-022**: Live market feed: refresh calculated outputs at least once every 1 second whenever the venue reports new prices.
+- **FR-022**: Live market feed: once continuous sizing begins, the platform MUST refresh the calculated outputs at least once every 1 second whenever the venue reports new prices, cancelling overlapping computations as needed.
 - **FR-023**: Data freshness and fallback: mark data stale after 2 seconds without an update; display a “Stale” badge; attempt reconnects with backoff (1s→2s→5s); permit manual price entry during staleness.
 - **FR-024**: Account equity source for risk %: prefer the connected trading account’s reported equity when available; otherwise require manual account size input. Clearly indicate the source (Connected or Manual) and recompute when the source or value changes.
 - **FR-025**: Price sampling rule: when multiple prices arrive within a 1-second window, use the latest price at the refresh boundary. If no price arrives in the window, carry forward the last known price and apply FR-023 staleness behavior.
 - **FR-026**: System MUST cache the most recent trade calculations locally for offline review and sync them to server history within 30 days once connectivity resumes.
+- **FR-027**: When the volatility-based stop option is enabled, the user MAY leave the stop input blank; the system MUST interpret the toggle, apply the ATR-derived stop distance, and record that effective stop in outputs.
+- **FR-028**: The Trade Bill MUST present position size, position cost, risk amount, risk-to-reward, effective stop, target, and ATR with clear hierarchy, emphasizing risk-to-reward and applying accessible color thresholds (>150% favorable, 120%–150% watch, <120% caution).
 
 ### Performance & Reliability Targets
 - Live price change to refreshed outputs: median ≤ 250 ms; 95th percentile ≤ 500 ms on the reference mid-tier mobile device and network.
@@ -130,8 +133,10 @@ As a day trader, I want to quickly input a trade idea (account size, direction, 
 ### Key Entities *(include if feature involves data)*
 - **TradeInput**: user‑provided parameters (account size, direction, entry, stop, target, risk %, multiplier, timestamp, symbol).
 - Update: Account size may be auto-populated from connected account equity when available; the interface must indicate whether the value is Connected or Manual.
+- Update: Stop becomes optional whenever the volatility-based toggle is enabled; the system records the toggle state alongside any manual value.
 - **MarketSnapshot**: symbol, price, timestamp, volatility signal (with freshness metadata).
 - **TradeOutput**: position size (units), position cost, risk amount, risk‑to‑reward, suggested stop.
+- Update: Outputs include the effective stop source, ATR value, and any color-coded risk-to-reward signal shown in the trade bill.
 - **TradeCalculation**: persisted combination of TradeInput + TradeOutput for history display.
 - **User**: authenticated trader profile including role metadata and audit preferences.
 - **UserSettings**: configurable defaults (risk %, multiplier, data freshness threshold) with provenance (manual vs connected account).
