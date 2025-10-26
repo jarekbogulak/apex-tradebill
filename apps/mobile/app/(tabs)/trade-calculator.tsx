@@ -257,7 +257,7 @@ export default function TradeCalculatorScreen() {
           </View>
           <View style={styles.rowBetween}>
             <Text style={styles.outputLabel}>Risk / Reward</Text>
-            <Text style={styles.outputValue}>{output.riskToReward.toFixed(2)}</Text>
+            <Text style={styles.outputValue}>{formatPercent(output.riskToReward)}</Text>
           </View>
           <View style={styles.rowBetween}>
             <Text style={styles.outputLabel}>Risk Percent</Text>

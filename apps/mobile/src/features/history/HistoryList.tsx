@@ -1,5 +1,5 @@
 import type { TradeCalculation } from '@apex-tradebill/types';
-import { formatCurrency } from '@apex-tradebill/utils';
+import { formatCurrency, formatPercent } from '@apex-tradebill/utils';
 import { useMemo } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
@@ -46,7 +46,7 @@ export const HistoryList = ({ items, loading = false, onRefresh, onLoadMore }: H
             </View>
             <View style={styles.row}>
               <Text style={styles.label}>Risk/Reward</Text>
-              <Text style={styles.value}>{item.output.riskToReward.toFixed(2)}</Text>
+              <Text style={styles.value}>{formatPercent(item.output.riskToReward)}</Text>
             </View>
           </View>
         );
