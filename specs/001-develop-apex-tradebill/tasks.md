@@ -261,13 +261,13 @@
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/features/stream/StaleBanner.tsx
   - Depends on: T043, T022
 
-- [ ] T086 [P] Implement volatility-stop optional handling across DTO validation and preview orchestration
+- [x] T086 [P] Implement volatility-stop optional handling across DTO validation and preview orchestration
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/types/src/trading.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/trades/previewService.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/routes/trades/postPreview.ts
   - Depends on: T084, T030, T033
-- [ ] T087 Implement entry auto-follow state management with manual override recovery
+- [x] T087 Implement entry auto-follow state management with manual override recovery
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/state/tradeCalculatorStore.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/app/(tabs)/trade-calculator.tsx
   - Depends on: T085, T039, T041
-- [ ] T088 Compose trade bill presentation with throttled refresh, ATR display, and risk-to-reward emphasis
+- [x] T088 Compose trade bill presentation with throttled refresh, ATR display, and risk-to-reward emphasis
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/app/(tabs)/trade-calculator.tsx, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/features/history/HistoryList.tsx
   - Depends on: T085, T087, T079
 ## Phase 3.6: Polish
