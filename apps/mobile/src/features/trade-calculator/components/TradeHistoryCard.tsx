@@ -24,7 +24,7 @@ export const TradeHistoryCard = ({
     <View style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.sectionTitle}>Recent History</Text>
-        {isFetching ? <ActivityIndicator size="small" /> : null}
+        {isFetching ? <ActivityIndicator size="small" color={palette.textAccent} /> : null}
       </View>
       <HistoryList
         items={items}
@@ -40,13 +40,13 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: palette.surface,
     borderRadius: radii.lg,
-    padding: spacing.lg,
-    gap: spacing.md,
+    padding: spacing.xl,
+    gap: spacing.lg,
     shadowColor: palette.shadow,
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 10,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 12 },
+    shadowRadius: 18,
+    elevation: 4,
   },
   header: {
     flexDirection: 'row',

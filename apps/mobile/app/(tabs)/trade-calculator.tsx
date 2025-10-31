@@ -35,11 +35,16 @@ export default function TradeCalculatorScreen() {
 
   return (
     <>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+        testID="trade-calculator-scroll"
+      >
         <MarketStatusCard
           symbol={input.symbol}
           streamStatus={marketStream.status}
           lastPrice={marketStream.snapshot?.lastPrice}
+          lastUpdatedAt={marketStream.lastUpdatedAt}
         />
 
         <StaleBanner
@@ -100,6 +105,7 @@ export default function TradeCalculatorScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: spacing.lg,
+    paddingBottom: spacing.xl,
     gap: spacing.lg,
     backgroundColor: palette.surfaceAlt,
   },

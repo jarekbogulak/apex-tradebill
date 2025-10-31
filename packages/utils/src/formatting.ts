@@ -93,7 +93,7 @@ const contrastPalettes: Record<'light' | 'dark', ContrastTokens> = {
   light: {
     background: '#F8FAFC',
     surface: '#FFFFFF',
-    accent: '#0284C7',
+    accent: '#2563EB',
     warning: '#DC2626',
     success: '#16A34A',
     textPrimary: '#0F172A',

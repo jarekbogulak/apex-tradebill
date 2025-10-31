@@ -11,6 +11,7 @@ export interface RiskVisualizationProps {
 }
 
 const TRACK_MARGIN_PERCENT = 8;
+const ENTRY_BLUE = '#2563EB';
 
 const formatPrice = (value: number) => `$${value.toFixed(2)}`;
 const formatSignedCurrency = (value: number) =>
@@ -107,22 +108,42 @@ export const RiskVisualization = memo(
         </View>
 
         <View style={styles.summaryRow}>
-          <View style={styles.metricCard}>
+          <View style={[styles.metricCard, styles.metricCardNegative]}>
             <Text style={styles.metricLabel}>Risk-to-Stop</Text>
-            <Text style={[styles.metricValue, styles.metricValueNegative]}>
-              {formatSignedCurrency(riskValue)}
-            </Text>
-            <Text style={[styles.metricPercent, styles.metricPercentNegative]}>
+            <Text
+              style={[styles.metricValue, styles.metricValueNegative]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+            >
               {formatSignedPercent(riskPercent)}
             </Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricLabel}>Reward-to-Target</Text>
-            <Text style={[styles.metricValue, styles.metricValuePositive]}>
-              {formatSignedCurrency(rewardValue)}
+            <Text
+              style={[styles.metricPercent, styles.metricPercentNegative]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+            >
+              {formatSignedCurrency(riskValue)}
             </Text>
-            <Text style={[styles.metricPercent, styles.metricPercentPositive]}>
+          </View>
+          <View style={[styles.metricCard, styles.metricCardPositive]}>
+            <Text style={styles.metricLabel}>Reward-to-Target</Text>
+            <Text
+              style={[styles.metricValue, styles.metricValuePositive]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+            >
               {formatSignedPercent(rewardPercent)}
+            </Text>
+            <Text
+              style={[styles.metricPercent, styles.metricPercentPositive]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+            >
+              {formatSignedCurrency(rewardValue)}
             </Text>
           </View>
         </View>
@@ -203,11 +224,6 @@ export const RiskVisualization = memo(
           </View>
         </View>
 
-        <View style={styles.rangeRow}>
-          <Text style={styles.rangeLabel}>Min: {formatPrice(points.min)}</Text>
-          <Text style={styles.rangeLabel}>Max: {formatPrice(points.max)}</Text>
-        </View>
-
         <Text style={styles.disclaimer}>
           This profile is based on the current market data. Prices are indicative and may vary.
         </Text>
@@ -222,8 +238,6 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: 16,
     padding: 16,
-    borderRadius: 20,
-    backgroundColor: '#F8FAFC',
     gap: 20,
   },
   headerRow: {
@@ -254,7 +268,7 @@ const styles = StyleSheet.create({
     color: '#B91C1C',
   },
   rangeBadge: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#E5E7EB',
     paddingVertical: 4,
     paddingHorizontal: 12,
     borderRadius: 999,
@@ -267,27 +281,40 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: 'row',
     gap: 12,
+    flexWrap: 'wrap',
   },
   metricCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    shadowColor: '#0F172A',
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-    gap: 6,
+    borderRadius: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
+  },
+  metricCardNegative: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FCA5A5',
+  },
+  metricCardPositive: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#86EFAC',
   },
   metricLabel: {
     fontSize: 13,
     color: '#475569',
-    fontWeight: '500',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   metricValue: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
   },
   metricValueNegative: {
@@ -297,7 +324,7 @@ const styles = StyleSheet.create({
     color: '#16A34A',
   },
   metricPercent: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
   },
   metricPercentNegative: {
@@ -308,15 +335,17 @@ const styles = StyleSheet.create({
   },
   trackCard: {
     position: 'relative',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
     paddingVertical: 20,
     paddingHorizontal: 16,
-    shadowColor: '#0F172A',
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
   },
   trackTopLabels: {
     marginBottom: 12,
@@ -349,7 +378,7 @@ const styles = StyleSheet.create({
     marginTop: -4,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#CBD5F5',
   },
   trackSegment: {
     position: 'absolute',
@@ -399,7 +428,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EF4444',
   },
   entryDot: {
-    backgroundColor: '#2563EB',
+    backgroundColor: ENTRY_BLUE,
   },
   targetDot: {
     backgroundColor: '#22C55E',
@@ -426,18 +455,10 @@ const styles = StyleSheet.create({
     color: '#DC2626',
   },
   entryText: {
-    color: '#2563EB',
+    color: ENTRY_BLUE,
   },
   targetText: {
     color: '#16A34A',
-  },
-  rangeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  rangeLabel: {
-    fontSize: 13,
-    color: '#475569',
   },
   disclaimer: {
     fontSize: 12,

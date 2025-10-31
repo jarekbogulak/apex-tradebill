@@ -6,7 +6,7 @@ export const palette = {
   textPrimary: '#0F172A',
   textSecondary: '#475569',
   textMuted: '#64748B',
-  textAccent: '#0284C7',
+  textAccent: '#2563EB',
   textWarning: '#B45309',
   textError: '#DC2626',
   badgeSuccess: '#16A34A',

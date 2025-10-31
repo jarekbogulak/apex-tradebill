@@ -33,6 +33,23 @@ const riskToneColorMap: Record<RiskTone, string> = {
   negative: palette.chipNegative,
 };
 
+const formatTimestamp = (value: string | null) => {
+  if (!value) {
+    return '—';
+  }
+
+  const date = new Date(value);
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+};
+
+const formatRiskReward = (ratio: number | null) => {
+  if (ratio == null || Number.isNaN(ratio)) {
+    return '—';
+  }
+
+  return ratio.toFixed(2);
+};
+
 export const TradeBillCard = ({
   input,
   output,
@@ -42,17 +59,31 @@ export const TradeBillCard = ({
   derivedValues,
   onEditPress,
 }: TradeBillCardProps) => {
+  const baseAsset = input.symbol.split('-')[0] ?? input.symbol;
+  const tradeDetails = [
+    { label: 'Position Size', value: `${Number(output.positionSize).toFixed(4)} ${baseAsset}` },
+    { label: 'Stop Price', value: formatPriceValue(derivedValues.effectiveStop) },
+    { label: 'Target Price', value: formatPriceValue(input.targetPrice) },
+  ];
+  const riskDetails = [
+    { label: 'Risk Amount', value: formatCurrency(output.riskAmount) },
+    { label: 'Risk Percent', value: formatPercent(Number(riskSummary.riskPercent)) },
+    { label: 'ATR (13)', value: formatPriceValue(derivedValues.atrValue) },
+  ];
+  const detailGroups = [
+    { title: 'Trade', items: tradeDetails },
+    { title: 'Risk', items: riskDetails },
+  ];
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerCopy}>
           <Text style={styles.sectionTitle}>Trade Bill</Text>
-          <Text style={styles.timestamp}>
-            Updated {lastUpdatedAt ? new Date(lastUpdatedAt).toLocaleTimeString() : '—'}
-          </Text>
+          <Text style={styles.timestamp}>Last calc: {formatTimestamp(lastUpdatedAt)}</Text>
         </View>
-        <Pressable style={styles.secondaryButton} onPress={onEditPress}>
-          <Text style={styles.secondaryButtonLabel}>Edit</Text>
+        <Pressable style={styles.primaryButton} onPress={onEditPress} accessibilityRole="button">
+          <Text style={styles.primaryButtonLabel}>Edit</Text>
         </Pressable>
       </View>
 
@@ -65,7 +96,7 @@ export const TradeBillCard = ({
               { color: riskToneColorMap[riskSummary.tone] ?? palette.chipNeutral },
             ]}
           >
-            {riskSummary.riskToReward != null ? formatPercent(riskSummary.riskToReward) : '—'}
+            {formatRiskReward(riskSummary.riskToReward)}
           </Text>
         </View>
         <View style={styles.metricCard}>
@@ -74,12 +105,25 @@ export const TradeBillCard = ({
         </View>
       </View>
 
-      <DetailRow label="Position Size" value={Number(output.positionSize).toFixed(4)} />
-      <DetailRow label="Risk Amount" value={formatCurrency(output.riskAmount)} />
-      <DetailRow label="Risk Percent" value={formatPercent(Number(riskSummary.riskPercent))} />
-      <DetailRow label="Stop Price" value={formatPriceValue(derivedValues.effectiveStop)} />
-      <DetailRow label="Target Price" value={formatPriceValue(input.targetPrice)} />
-      <DetailRow label="ATR (13)" value={formatPriceValue(derivedValues.atrValue)} />
+      <View style={styles.divider} />
+
+      <View style={styles.detailGroups}>
+        {detailGroups.map((group) => (
+          <View key={group.title} style={styles.detailGroup}>
+            <Text style={styles.detailGroupLabel}>{group.title}</Text>
+            <View style={styles.detailTable}>
+              {group.items.map((item, index) => (
+                <DetailRow
+                  key={item.label}
+                  label={item.label}
+                  value={item.value}
+                  isLast={index === group.items.length - 1}
+                />
+              ))}
+            </View>
+          </View>
+        ))}
+      </View>
 
       {warnings.length > 0 ? (
         <View style={styles.warningContainer}>
@@ -101,8 +145,8 @@ export const TradeBillCard = ({
   );
 };
 
-const DetailRow = ({ label, value }: { label: string; value: string }) => (
-  <View style={styles.detailRow}>
+const DetailRow = ({ label, value, isLast }: { label: string; value: string; isLast: boolean }) => (
+  <View style={[styles.detailRow, !isLast && styles.detailRowDivider]}>
     <Text style={styles.detailLabel}>{label}</Text>
     <Text style={styles.detailValue}>{value}</Text>
   </View>
@@ -112,13 +156,13 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: palette.surface,
     borderRadius: radii.lg,
-    padding: spacing.lg,
-    gap: spacing.md,
+    padding: spacing.xl,
+    gap: spacing.lg,
     shadowColor: palette.shadow,
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 10,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 12 },
+    shadowRadius: 18,
+    elevation: 4,
   },
   header: {
     flexDirection: 'row',
@@ -126,14 +170,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.lg,
   },
+  headerCopy: {
+    gap: spacing.xs,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: palette.textPrimary,
   },
   timestamp: {
-    color: palette.textMuted,
-    fontSize: 12,
+    color: palette.textSecondary,
+    fontSize: 13,
   },
   metricRow: {
     flexDirection: 'row',
@@ -141,16 +188,17 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    backgroundColor: palette.surfaceAlt,
+    backgroundColor: palette.surface,
     borderRadius: radii.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.lg,
     paddingHorizontal: spacing.lg,
+    borderWidth: 1,
+    borderColor: palette.surfaceMuted,
   },
   metricLabel: {
-    fontSize: 12,
+    fontSize: 13,
     color: palette.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontWeight: '600',
   },
   metricValue: {
     marginTop: spacing.xs,
@@ -165,10 +213,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  detailGroups: {
+    gap: spacing.lg,
+  },
+  detailGroup: {
+    gap: spacing.sm,
+  },
+  detailGroupLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    color: palette.textMuted,
+  },
+  detailTable: {
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: palette.surfaceMuted,
+    overflow: 'hidden',
+    backgroundColor: palette.surface,
+  },
+  detailRowDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: palette.surfaceMuted,
   },
   detailLabel: {
-    color: palette.textSecondary,
-    fontSize: 14,
+    color: palette.textMuted,
+    fontSize: 13,
   },
   detailValue: {
     color: palette.textPrimary,
@@ -177,7 +251,7 @@ const styles = StyleSheet.create({
   },
   warningContainer: {
     gap: spacing.xs,
-    padding: spacing.sm,
+    padding: spacing.md,
     backgroundColor: palette.warningBackground,
     borderRadius: radii.md,
   },
@@ -185,15 +259,19 @@ const styles = StyleSheet.create({
     color: palette.textWarning,
     fontSize: 12,
   },
-  secondaryButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: palette.divider,
+  primaryButton: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radii.lg,
+    backgroundColor: palette.textAccent,
   },
-  secondaryButtonLabel: {
-    color: palette.textAccent,
+  primaryButtonLabel: {
+    color: palette.surface,
     fontWeight: '600',
+    fontSize: 15,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: palette.surfaceMuted,
   },
 });

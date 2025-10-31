@@ -178,8 +178,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   timeframeOptionActive: {
-    backgroundColor: '#0284C7',
-    borderColor: '#0284C7',
+    backgroundColor: '#2563EB',
+    borderColor: '#2563EB',
   },
   timeframeOptionLabel: {
     color: '#0F172A',
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   button: {
-    backgroundColor: '#0284C7',
+    backgroundColor: '#2563EB',
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',

@@ -1,7 +1,9 @@
 import type { TradeCalculation } from '@apex-tradebill/types';
-import { formatCurrency, formatPercent } from '@apex-tradebill/utils';
+import { formatCurrency } from '@apex-tradebill/utils';
 import { useMemo } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+
+import { palette, radii, spacing } from '../trade-calculator/styles/tokens';
 
 export interface HistoryListProps {
   items: TradeCalculation[];
@@ -30,8 +32,11 @@ export const HistoryList = ({ items, loading = false, onRefresh, onLoadMore }: H
       onEndReached={() => onLoadMore?.()}
       scrollEnabled={false}
       renderItem={({ item }) => {
+        const ratio = Number(item.output.riskToReward);
+        const riskRewardValue = Number.isFinite(ratio) ? ratio.toFixed(2) : '—';
+
         return (
-          <View style={styles.card}>
+          <View style={styles.item}>
             <View style={styles.headerRow}>
               <Text style={styles.symbol}>{item.input.symbol}</Text>
               <Text style={styles.timestamp}>{new Date(item.createdAt).toLocaleString()}</Text>
@@ -46,14 +51,17 @@ export const HistoryList = ({ items, loading = false, onRefresh, onLoadMore }: H
             </View>
             <View style={styles.row}>
               <Text style={styles.label}>Risk/Reward</Text>
-              <Text style={styles.value}>{formatPercent(item.output.riskToReward)}</Text>
+              <Text style={styles.value}>{riskRewardValue}</Text>
             </View>
           </View>
         );
       }}
       ListEmptyComponent={
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>No recent calculations yet.</Text>
+          <View style={styles.emptyPlaceholder}>
+            <Text style={styles.emptyTitle}>No recent calculations yet</Text>
+            <Text style={styles.emptyCopy}>Run a calculation and it will appear here.</Text>
+          </View>
         </View>
       }
     />
@@ -61,50 +69,67 @@ export const HistoryList = ({ items, loading = false, onRefresh, onLoadMore }: H
 };
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    shadowColor: '#0F172A20',
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
+  item: {
+    backgroundColor: palette.surfaceAlt,
+    borderRadius: radii.md,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: palette.surfaceMuted,
+    gap: spacing.sm,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
   },
   symbol: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#0F172A',
+    color: palette.textPrimary,
   },
   timestamp: {
     fontSize: 12,
-    color: '#64748B',
+    color: palette.textMuted,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    alignItems: 'center',
   },
   label: {
     fontSize: 13,
-    color: '#475569',
+    color: palette.textMuted,
   },
   value: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#0F172A',
+    color: palette.textPrimary,
   },
   empty: {
-    paddingVertical: 24,
+    paddingVertical: spacing.lg,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  emptyText: {
-    color: '#94A3B8',
+  emptyPlaceholder: {
+    width: '100%',
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: palette.surfaceMuted,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: palette.surfaceAlt,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: palette.textPrimary,
+  },
+  emptyCopy: {
+    fontSize: 13,
+    color: palette.textMuted,
+    textAlign: 'center',
   },
 });
