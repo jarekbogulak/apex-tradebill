@@ -1,0 +1,41 @@
+extends:
+  - spectral:oas
+
+rules:
+  require-global-security:
+    description: Global bearer authentication must be declared to protect every operation.
+    message: "Declare a global security requirement (e.g., bearerAuth)."
+    given: "$"
+    severity: error
+    then:
+      - field: security
+        function: truthy
+
+  forbid-http-servers:
+    description: Service definitions must only advertise TLS-protected endpoints.
+    message: "Replace insecure server URL {{value}} with an https:// endpoint."
+    given: "$.servers[*].url"
+    severity: error
+    then:
+      - function: pattern
+        functionOptions:
+          match: "^https://"
+
+  encourage-401-responses:
+    description: Document unauthorized responses on secured operations to aid clients and scanners.
+    message: "Add a 401 response documenting authentication failure handling."
+    given: "$.paths[*][*]"
+    severity: warn
+    then:
+      - field: responses.401
+        function: defined
+
+  forbid-inline-credentials:
+    description: Do not share secrets or tokens directly in examples.
+    message: "Scrub inline credentials or secrets from examples."
+    given: "$..examples..value"
+    severity: error
+    then:
+      - function: pattern
+        functionOptions:
+          notMatch: "(?i)(api[_-]?key|token|secret|password)"

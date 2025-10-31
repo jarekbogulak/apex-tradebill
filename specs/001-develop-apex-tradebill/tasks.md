@@ -271,22 +271,22 @@
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/app/(tabs)/trade-calculator.tsx, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/features/history/HistoryList.tsx
   - Depends on: T085, T087, T079
 ## Phase 3.6: Polish
-- [ ] T060 [P] Add unit tests for ATR calculator edge cases and regression protection
+- [x] T060 [P] Add unit tests for ATR calculator edge cases and regression protection
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/calculations/__tests__/atrCalculator.test.ts
   - Depends on: T032
-- [ ] T061 [P] Add unit tests for trade calculator Zustand store selectors and override state transitions
+- [x] T061 [P] Add unit tests for trade calculator Zustand store selectors and override state transitions
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/state/__tests__/tradeCalculatorStore.test.ts
   - Depends on: T039
-- [ ] T062 Add latency smoke/performance test harness verifying p95 budgets
+- [x] T062 Add latency smoke/performance test harness verifying p95 budgets
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/performance/latency-smoke.test.ts
   - Depends on: T055, T024
-- [ ] T073 Add Expo performance profiling script capturing frame-rate compliance for calculator flows
+- [x] T073 Add Expo performance profiling script capturing frame-rate compliance for calculator flows
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/performance/mobile-fps.profile.ts
   - Depends on: T041, T070, T072
-- [ ] T063 [P] Document end-to-end setup and troubleshooting in docs/apex-tradebill.md
+- [x] T063 [P] Document end-to-end setup and troubleshooting in docs/apex-tradebill.md
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/docs/apex-tradebill.md
   - Depends on: T044, T045, T046, T047, T048, T049, T050, T051, T052, T053, T054, T055, T056, T057, T058, T059
-- [ ] T064 Configure security scanning and dependency audit automation
+- [x] T064 Configure security scanning and dependency audit automation
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/configs/security/.spectral.yaml, /Users/booke/dev/nix-expo-ic/apex-tradebill/package.json
   - Depends on: T008
 

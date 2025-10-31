@@ -19,7 +19,10 @@
     "test": "pnpm -r test --if-present",
     "test:all": "pnpm -r test --if-present",
     "test:api": "pnpm --filter @apex-tradebill/api test",
-    "test:mobile": "pnpm --filter @apex-tradebill/mobile test"
+    "test:mobile": "pnpm --filter @apex-tradebill/mobile test",
+    "security:audit": "pnpm audit --prod --dev",
+    "security:openapi": "pnpm dlx @stoplight/spectral-cli lint specs/001-develop-apex-tradebill/contracts/openapi.yaml -r configs/security/.spectral.yaml",
+    "security:scan": "pnpm run security:audit && pnpm run security:openapi"
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.26.0",

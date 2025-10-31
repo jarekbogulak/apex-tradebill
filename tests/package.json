@@ -1,7 +1,7 @@
 {
   "name": "@apex-tradebill/tests",
   "private": true,
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "test": "jest --config jest.config.cjs"
   },

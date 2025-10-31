@@ -13,6 +13,7 @@ const config = createBaseJestConfig({
   testMatch: [
     '<rootDir>/tests/contract/**/*.contract.test.ts',
     '<rootDir>/tests/integration/**/*.spec.ts',
+    '<rootDir>/tests/performance/**/*.test.ts',
     '<rootDir>/tests/reliability/**/*.spec.ts',
   ],
   extensionsToTreatAsEsm: ['.ts'],
