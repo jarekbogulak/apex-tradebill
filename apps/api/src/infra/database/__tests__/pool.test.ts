@@ -3,12 +3,13 @@ import os from 'node:os';
 import path from 'node:path';
 import ts from 'typescript';
 import type { DatabaseClient, DatabasePool } from '../pool.js';
+import type * as PoolModule from '../pool.js';
 
-let createDatabasePool: typeof import('../pool.js')['createDatabasePool'];
-let closeSharedDatabasePool: typeof import('../pool.js')['closeSharedDatabasePool'];
-let runPendingMigrations: typeof import('../pool.js')['runPendingMigrations'];
-let withTransaction: typeof import('../pool.js')['withTransaction'];
-let getSharedDatabasePool: typeof import('../pool.js')['getSharedDatabasePool'];
+let createDatabasePool: PoolModule['createDatabasePool'];
+let closeSharedDatabasePool: PoolModule['closeSharedDatabasePool'];
+let runPendingMigrations: PoolModule['runPendingMigrations'];
+let withTransaction: PoolModule['withTransaction'];
+let getSharedDatabasePool: PoolModule['getSharedDatabasePool'];
 
 beforeAll(async () => {
   const sourcePath = path.resolve(process.cwd(), 'src/infra/database/pool.ts');

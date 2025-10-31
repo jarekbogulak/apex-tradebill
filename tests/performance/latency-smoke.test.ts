@@ -30,7 +30,7 @@ const loadDataset = async (): Promise<LatencyDataset | null> => {
       const raw = await readFile(absolutePath, 'utf-8');
       cachedDataset = JSON.parse(raw) as LatencyDataset;
       return cachedDataset;
-    } catch (error) {
+    } catch {
       // Continue trying fallbacks
     }
   }

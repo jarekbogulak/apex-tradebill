@@ -1,8 +1,4 @@
-import type {
-  DatabaseClient,
-  DatabasePool,
-  QueryResult,
-} from '../../infra/database/pool.js';
+import type { DatabaseClient, DatabasePool } from '../../infra/database/pool.js';
 import { createPruneTradeHistoryJob } from '../pruneTradeHistory.js';
 
 const createMockPool = (rowCount = 0) => {

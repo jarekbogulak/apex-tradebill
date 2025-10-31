@@ -1,4 +1,3 @@
-import type { OpenAPIV3_1 } from 'openapi-types';
 import {
   expectSchemaHasRequired,
   getJsonSchemaFromResponseOrThrow,

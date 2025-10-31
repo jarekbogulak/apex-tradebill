@@ -10,7 +10,16 @@ const compat = new FlatCompat({
 
 module.exports = [
   {
-    ignores: ['dist/**', 'build/**', 'coverage/**', 'node_modules/**', '**/*.d.ts'],
+    ignores: [
+      'dist/**',
+      '**/dist/**',
+      'build/**',
+      '**/build/**',
+      'coverage/**',
+      '**/coverage/**',
+      'node_modules/**',
+      '**/*.d.ts',
+    ],
   },
   ...compat.config({
     parser: '@typescript-eslint/parser',
@@ -80,6 +89,17 @@ module.exports = [
       {
         files: ['**/__tests__/**/*.{ts,tsx}', '**/*.test.{ts,tsx}'],
         env: {
+          jest: true,
+        },
+      },
+      {
+        files: [
+          'apps/**/jest.*.{js,ts,cjs}',
+          'apps/**/jest*.{js,ts,cjs}',
+          'apps/**/jest/**/*.{js,ts,cjs}',
+        ],
+        env: {
+          node: true,
           jest: true,
         },
       },

@@ -1,11 +1,23 @@
 import type { TradeCalculation, TradeInput, TradeOutput } from '@apex-tradebill/types';
 
-type SQLiteModule = typeof import('expo-sqlite');
+interface SQLiteBatchStatement {
+  sql: string;
+  args: unknown[];
+}
+
+interface SQLiteDatabase {
+  getAll?: (sql: string, params?: unknown[]) => Record<string, unknown>[];
+  exec?: (statements: SQLiteBatchStatement[]) => void;
+}
+
+interface SQLiteModule {
+  openDatabase(name: string): SQLiteDatabase;
+  openDatabaseSync?: (name: string) => SQLiteDatabase;
+}
 
 let sqlite: SQLiteModule | null = null;
 
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   sqlite = require('expo-sqlite');
 } catch {
   sqlite = null;
@@ -15,7 +27,7 @@ const DATABASE_NAME = 'tradebill-device-cache.db';
 const TABLE_NAME = 'device_cache';
 const MAX_ENTRIES = 20;
 
-let database: ReturnType<SQLiteModule['openDatabaseSync']> | null = null;
+let database: SQLiteDatabase | null = null;
 
 const openDatabase = () => {
   if (!sqlite) {
@@ -23,10 +35,11 @@ const openDatabase = () => {
   }
 
   if (!database) {
-    const open = (sqlite.openDatabaseSync ?? sqlite.openDatabase) as (
-      name: string,
-    ) => ReturnType<SQLiteModule['openDatabaseSync']>;
-    database = open(DATABASE_NAME);
+    if (sqlite.openDatabaseSync) {
+      database = sqlite.openDatabaseSync(DATABASE_NAME);
+    } else {
+      database = sqlite.openDatabase(DATABASE_NAME);
+    }
   }
 
   return database;

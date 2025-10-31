@@ -2,12 +2,15 @@ import type { Timeframe } from '@apex-tradebill/types';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-type SecureStoreModule = typeof import('expo-secure-store');
+interface SecureStoreModule {
+  getItemAsync(name: string): Promise<string | null>;
+  setItemAsync(name: string, value: string): Promise<void>;
+  deleteItemAsync(name: string): Promise<void>;
+}
 
 let secureStore: SecureStoreModule | null = null;
 
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   secureStore = require('expo-secure-store');
 } catch {
   secureStore = null;
@@ -70,7 +73,7 @@ const INITIAL_STATE: Omit<SettingsState, 'setSettings' | 'addMultiplierOption' |
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       ...INITIAL_STATE,
       setSettings: (settings) => {
         set((state) => ({

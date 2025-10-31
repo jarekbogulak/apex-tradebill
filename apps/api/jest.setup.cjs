@@ -1,3 +1,4 @@
+/* eslint-env node */
 /**
  * Optional Testing Library matchers for API tests that rely on DOM assertions.
  * The require is wrapped to avoid crashing when the DOM APIs are not available.

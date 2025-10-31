@@ -105,25 +105,6 @@ const toApiSymbol = (symbol: Symbol): string => {
   return symbol.replace('-', '');
 };
 
-const toHyphenatedSymbol = (value: string): string => {
-  if (value.includes('-')) {
-    return value;
-  }
-  if (value.endsWith('USDT')) {
-    const base = value.slice(0, -4);
-    return `${base}-USDT`;
-  }
-  return value;
-};
-
-const toNumber = (value: unknown): number | null => {
-  if (value == null) {
-    return null;
-  }
-  const numeric = typeof value === 'number' ? value : Number.parseFloat(String(value));
-  return Number.isFinite(numeric) ? numeric : null;
-};
-
 const toPriceString = (value: number): string => {
   return value.toFixed(8);
 };
@@ -182,29 +163,6 @@ const createEnv = (
     return new OmniENV(sanitized, networkId);
   }
   return environment === 'qa' ? OMNI_QA : OMNI_PROD;
-};
-
-const resolveTimestampMs = (value: unknown): number => {
-  if (typeof value === 'number') {
-    if (value > 10_000_000_000_000) {
-      return Math.floor(value / 1000);
-    }
-    if (value < 1_000_000_000_000) {
-      return Math.floor(value * 1000);
-    }
-    return value;
-  }
-  if (typeof value === 'string' && value.trim()) {
-    const numeric = Number(value);
-    if (Number.isFinite(numeric)) {
-      return resolveTimestampMs(numeric);
-    }
-    const parsed = Date.parse(value);
-    if (Number.isFinite(parsed)) {
-      return parsed;
-    }
-  }
-  return Date.now();
 };
 
 export const createApeXOmniClient = ({

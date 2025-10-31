@@ -1,5 +1,5 @@
 import { SymbolSchema } from '@apex-tradebill/types';
-import type { FastifyInstance, FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginAsync } from 'fastify';
 import type { MarketMetadataService } from '../../services/markets/marketMetadataService.js';
 import { createErrorResponse, errorResponseSchema, sendNotFound, sendValidationError } from '../http.js';
 

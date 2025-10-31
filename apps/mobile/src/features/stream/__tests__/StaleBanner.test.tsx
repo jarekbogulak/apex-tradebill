@@ -13,6 +13,9 @@ jest.mock('react-native', () => {
       }
       value.style = flatten;
     }
+    if (accessibilityLiveRegion) {
+      value['aria-live'] = accessibilityLiveRegion;
+    }
     return { ...value, 'data-testid': testID, 'aria-label': accessibilityLabel, role: accessibilityRole };
   };
   return {

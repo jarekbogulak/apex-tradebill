@@ -1,7 +1,6 @@
 import type { MarketSnapshot } from '@apex-tradebill/types';
 import { createApeXOmniClient } from '../apexOmniClient.js';
 
-let mockCalculateAtr: jest.Mock;
 let capturedWsConfig: Record<string, unknown> | null = null;
 
 jest.mock('apexomni-connector-node', () => {
@@ -69,9 +68,9 @@ jest.mock('../../services/calculations/atrCalculator.js', () => ({
   calculateAtr: jest.fn(() => ({ value: 12.3456 })),
 }));
 
-({ calculateAtr: mockCalculateAtr } = jest.requireMock(
+const { calculateAtr: mockCalculateAtr } = jest.requireMock(
   '../../services/calculations/atrCalculator.js',
-) as { calculateAtr: jest.Mock });
+) as { calculateAtr: jest.Mock };
 
 const buildKlines = (count: number) => {
   return Array.from({ length: count }, (_, index) => ({
