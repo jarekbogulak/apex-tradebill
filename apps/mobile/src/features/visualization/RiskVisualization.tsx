@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { Direction } from '@apex-tradebill/types';
+import { spacing } from '../trade-calculator/styles/tokens';
 
 export interface RiskVisualizationProps {
   direction: Direction;
@@ -18,8 +19,7 @@ const COLORS = {
   directionShortBg: '#FEE2E2',
   directionLongText: '#15803D',
   directionShortText: '#B91C1C',
-  rangeBadgeBg: '#E5E7EB',
-  rangeBadgeText: '#1E293B',
+  rangeBadgeText: '#64748B',
   metricCardBg: '#FFFFFF',
   metricCardBorder: '#E2E8F0',
   metricCardNegativeBg: '#FEF2F2',
@@ -137,7 +137,7 @@ export const RiskVisualization = memo(
 
         <View style={styles.summaryRow}>
           <View style={[styles.metricCard, styles.metricCardNegative]}>
-            <Text style={styles.metricLabel}>Risk-to-Stop</Text>
+            <Text style={styles.metricLabel}>Risk to Stop</Text>
             <Text
               style={[styles.metricValue, styles.metricValueNegative]}
               numberOfLines={1}
@@ -156,7 +156,7 @@ export const RiskVisualization = memo(
             </Text>
           </View>
           <View style={[styles.metricCard, styles.metricCardPositive]}>
-            <Text style={styles.metricLabel}>Reward-to-Target</Text>
+            <Text style={styles.metricLabel}>Reward to Target</Text>
             <Text
               style={[styles.metricValue, styles.metricValuePositive]}
               numberOfLines={1}
@@ -265,7 +265,6 @@ RiskVisualization.displayName = 'RiskVisualization';
 const styles = StyleSheet.create({
   container: {
     marginVertical: 16,
-    padding: 16,
     gap: 20,
   },
   headerRow: {
@@ -295,15 +294,12 @@ const styles = StyleSheet.create({
   directionBadgeTextShort: {
     color: COLORS.directionShortText,
   },
-  rangeBadge: {
-    backgroundColor: COLORS.rangeBadgeBg,
+    rangeBadge: {
     paddingVertical: 4,
     paddingHorizontal: 12,
-    borderRadius: 999,
   },
   rangeBadgeText: {
     fontSize: 12,
-    fontWeight: '500',
     color: COLORS.rangeBadgeText,
   },
   summaryRow: {
@@ -314,13 +310,10 @@ const styles = StyleSheet.create({
   metricCard: {
     flex: 1,
     backgroundColor: COLORS.metricCardBg,
-    borderRadius: 20,
-    paddingVertical: 18,
-    paddingHorizontal: 18,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: COLORS.metricCardBorder,
-    shadowColor: COLORS.shadowNone,
+      borderRadius: 10,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.md,
+      gap: 8,
     shadowOpacity: 0,
     shadowRadius: 0,
     shadowOffset: { width: 0, height: 0 },
@@ -335,9 +328,8 @@ const styles = StyleSheet.create({
     borderColor: COLORS.metricCardPositiveBorder,
   },
   metricLabel: {
-    fontSize: 13,
+    fontSize: 10,
     color: COLORS.metricLabel,
-    fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
@@ -363,13 +355,7 @@ const styles = StyleSheet.create({
   },
   trackCard: {
     position: 'relative',
-    backgroundColor: COLORS.trackBackground,
-    borderRadius: 16,
     paddingVertical: 20,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: COLORS.trackBorder,
-    shadowColor: COLORS.shadowNone,
     shadowOpacity: 0,
     shadowRadius: 0,
     shadowOffset: { width: 0, height: 0 },

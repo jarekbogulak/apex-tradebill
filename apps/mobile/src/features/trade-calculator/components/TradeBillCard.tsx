@@ -246,7 +246,6 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     color: palette.textPrimary,
-    fontWeight: '600',
     fontSize: 14,
   },
   warningContainer: {
