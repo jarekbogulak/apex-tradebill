@@ -123,6 +123,7 @@ As a day trader, I want to quickly input a trade idea (account size, direction, 
 - **FR-026**: System MUST cache the most recent trade calculations locally for offline review and sync them to server history within 30 days once connectivity resumes.
 - **FR-027**: When the volatility-based stop option is enabled, the user MAY leave the stop input blank; the system MUST interpret the toggle, apply the ATR-derived stop distance, and record that effective stop in outputs.
 - **FR-028**: The Trade Bill MUST present position size, position cost, risk amount, risk-to-reward, effective stop, target, and ATR with clear hierarchy, emphasizing risk-to-reward and applying accessible color thresholds (>150% favorable, 120%–150% watch, <120% caution).
+- **FR-029**: Visual styling across the experience MUST draw from a single, shared set of design tokens (colors, typography, spacing, elevation) so that every screen maintains consistent branding, state semantics, and dark/light support without reimplementing palette rules when the app is recreated.
 
 ### Performance & Reliability Targets
 - Live price change to refreshed outputs: median ≤ 250 ms; 95th percentile ≤ 500 ms on the reference mid-tier mobile device and network.
