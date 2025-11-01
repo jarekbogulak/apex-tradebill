@@ -1,9 +1,9 @@
-import type { TradeCalculation } from '@apex-tradebill/types';
-import { formatCurrency } from '@apex-tradebill/utils';
 import { useMemo } from 'react';
-import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { formatCurrency } from '@apex-tradebill/utils';
+import { FlatList, RefreshControl, Text, View } from 'react-native';
 
-import { palette, radii, spacing } from '../trade-calculator/styles/tokens';
+import type { TradeCalculation } from '@apex-tradebill/types';
+import { useTheme, type Theme } from '@apex-tradebill/ui';
 
 export interface HistoryListProps {
   items: TradeCalculation[];
@@ -15,6 +15,8 @@ export interface HistoryListProps {
 const keyExtractor = (item: TradeCalculation) => item.id;
 
 export const HistoryList = ({ items, loading = false, onRefresh, onLoadMore }: HistoryListProps) => {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const data = useMemo(
     () =>
       items.filter((item) => {
@@ -27,7 +29,13 @@ export const HistoryList = ({ items, loading = false, onRefresh, onLoadMore }: H
     <FlatList
       data={data}
       keyExtractor={keyExtractor}
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefresh ?? (() => undefined)} />}
+      refreshControl={
+        <RefreshControl
+          refreshing={loading}
+          onRefresh={onRefresh ?? (() => undefined)}
+          tintColor={theme.colors.accent}
+        />
+      }
       onEndReachedThreshold={0.75}
       onEndReached={() => onLoadMore?.()}
       scrollEnabled={false}
@@ -68,68 +76,69 @@ export const HistoryList = ({ items, loading = false, onRefresh, onLoadMore }: H
   );
 };
 
-const styles = StyleSheet.create({
-  item: {
-    backgroundColor: palette.surfaceAlt,
-    borderRadius: radii.md,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: palette.surfaceMuted,
-    gap: spacing.sm,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  symbol: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: palette.textPrimary,
-  },
-  timestamp: {
-    fontSize: 12,
-    color: palette.textMuted,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  label: {
-    fontSize: 13,
-    color: palette.textMuted,
-  },
-  value: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: palette.textPrimary,
-  },
-  empty: {
-    paddingVertical: spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyPlaceholder: {
-    width: '100%',
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: palette.surfaceMuted,
-    paddingVertical: spacing.xl,
-    paddingHorizontal: spacing.lg,
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: palette.surfaceAlt,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: palette.textPrimary,
-  },
-  emptyCopy: {
-    fontSize: 13,
-    color: palette.textMuted,
-    textAlign: 'center',
-  },
-});
+const createStyles = (theme: Theme) =>
+  ({
+    item: {
+      backgroundColor: theme.colors.surfaceAlt,
+      borderRadius: theme.radii.md,
+      padding: theme.spacing.lg,
+      marginBottom: theme.spacing.md,
+      borderWidth: 1,
+      borderColor: theme.colors.surfaceMuted,
+      gap: theme.spacing.sm,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    symbol: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: theme.colors.textPrimary,
+    },
+    timestamp: {
+      fontSize: 12,
+      color: theme.colors.textMuted,
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    label: {
+      fontSize: 13,
+      color: theme.colors.textMuted,
+    },
+    value: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.colors.textPrimary,
+    },
+    empty: {
+      paddingVertical: theme.spacing.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emptyPlaceholder: {
+      width: '100%',
+      borderRadius: theme.radii.lg,
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: theme.colors.surfaceMuted,
+      paddingVertical: theme.spacing.xl,
+      paddingHorizontal: theme.spacing.lg,
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+      backgroundColor: theme.colors.surfaceAlt,
+    },
+    emptyTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.colors.textPrimary,
+    },
+    emptyCopy: {
+      fontSize: 13,
+      color: theme.colors.textMuted,
+      textAlign: 'center',
+    },
+  } as const);

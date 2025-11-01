@@ -1,8 +1,8 @@
-import { memo, useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-
 import type { Direction } from '@apex-tradebill/types';
-import { spacing } from '../trade-calculator/styles/tokens';
+import { memo, useMemo } from 'react';
+import { Text, View } from 'react-native';
+
+import { useTheme, type Theme } from '@apex-tradebill/ui';
 
 export interface RiskVisualizationProps {
   direction: Direction;
@@ -12,34 +12,6 @@ export interface RiskVisualizationProps {
 }
 
 const TRACK_MARGIN_PERCENT = 8;
-const ENTRY_BLUE = '#2563EB';
-
-const COLORS = {
-  directionLongBg: '#DCFCE7',
-  directionShortBg: '#FEE2E2',
-  directionLongText: '#15803D',
-  directionShortText: '#B91C1C',
-  rangeBadgeText: '#64748B',
-  metricCardBg: '#FFFFFF',
-  metricCardBorder: '#E2E8F0',
-  metricCardNegativeBg: '#FEF2F2',
-  metricCardNegativeBorder: '#FCA5A5',
-  metricCardPositiveBg: '#ECFDF5',
-  metricCardPositiveBorder: '#86EFAC',
-  metricLabel: '#475569',
-  metricNegative: '#DC2626',
-  metricPositive: '#16A34A',
-  trackBackground: '#F8FAFC',
-  trackBorder: '#E2E8F0',
-  trackBase: '#CBD5F5',
-  trackNegative: '#EF4444',
-  trackPositive: '#22C55E',
-  connector: '#94A3B8',
-  dotBorder: '#FFFFFF',
-  dotShadow: '#0F172A',
-  markerText: '#64748B',
-  shadowNone: 'transparent',
-} as const;
 
 const formatPrice = (value: number) => `$${value.toFixed(2)}`;
 const formatSignedCurrency = (value: number) =>
@@ -49,6 +21,8 @@ const formatSignedPercent = (value: number) =>
 
 export const RiskVisualization = memo(
   ({ direction, entryPrice, stopPrice, targetPrice }: RiskVisualizationProps) => {
+    const theme = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const points = useMemo(() => {
       const toNumeric = (value: string | null | undefined) => {
         if (value == null || `${value}`.trim().length === 0) {
@@ -262,221 +236,219 @@ export const RiskVisualization = memo(
 
 RiskVisualization.displayName = 'RiskVisualization';
 
-const styles = StyleSheet.create({
-  container: {
-    marginVertical: 16,
-    gap: 20,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  directionBadge: {
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-  },
-  directionBadgeLong: {
-    backgroundColor: COLORS.directionLongBg,
-  },
-  directionBadgeShort: {
-    backgroundColor: COLORS.directionShortBg,
-  },
-  directionBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
-  directionBadgeTextLong: {
-    color: COLORS.directionLongText,
-  },
-  directionBadgeTextShort: {
-    color: COLORS.directionShortText,
-  },
+const createStyles = (theme: Theme) =>
+  ({
+    container: {
+      marginVertical: theme.spacing.lg,
+      gap: theme.spacing.xl,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    directionBadge: {
+      paddingVertical: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.sm,
+      borderRadius: theme.radii.pill,
+    },
+    directionBadgeLong: {
+      backgroundColor: theme.colors.successSurface,
+    },
+    directionBadgeShort: {
+      backgroundColor: theme.colors.errorSurface,
+    },
+    directionBadgeText: {
+      fontSize: 12,
+      fontWeight: '600',
+      letterSpacing: 0.3,
+    },
+    directionBadgeTextLong: {
+      color: theme.colors.success,
+    },
+    directionBadgeTextShort: {
+      color: theme.colors.error,
+    },
     rangeBadge: {
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-  },
-  rangeBadgeText: {
-    fontSize: 12,
-    color: COLORS.rangeBadgeText,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    gap: 12,
-    flexWrap: 'wrap',
-  },
-  metricCard: {
-    flex: 1,
-    backgroundColor: COLORS.metricCardBg,
-      borderRadius: 10,
-      paddingVertical: spacing.md,
-      paddingHorizontal: spacing.md,
-      gap: 8,
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 0,
-  },
-  metricCardNegative: {
-    backgroundColor: COLORS.metricCardNegativeBg,
-    borderColor: COLORS.metricCardNegativeBorder,
-  },
-  metricCardPositive: {
-    backgroundColor: COLORS.metricCardPositiveBg,
-    borderColor: COLORS.metricCardPositiveBorder,
-  },
-  metricLabel: {
-    fontSize: 10,
-    color: COLORS.metricLabel,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  metricValue: {
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  metricValueNegative: {
-    color: COLORS.metricNegative,
-  },
-  metricValuePositive: {
-    color: COLORS.metricPositive,
-  },
-  metricPercent: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  metricPercentNegative: {
-    color: COLORS.metricNegative,
-  },
-  metricPercentPositive: {
-    color: COLORS.metricPositive,
-  },
-  trackCard: {
-    position: 'relative',
-    paddingVertical: 20,
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 0,
-  },
-  trackTopLabels: {
-    marginBottom: 12,
-  },
-  trackLabelRow: {
-    position: 'relative',
-    height: 36,
-    marginHorizontal: 16,
-  },
-  trackTopCallout: {
-    position: 'absolute',
-    width: 80,
-    alignItems: 'center',
-    gap: 4,
-    transform: [{ translateX: -40 }],
-  },
-  trackLineArea: {
-    paddingHorizontal: 16,
-  },
-  trackLine: {
-    position: 'relative',
-    height: 64,
-    justifyContent: 'center',
-  },
-  trackBase: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: '50%',
-    marginTop: -4,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.trackBase,
-  },
-  trackSegment: {
-    position: 'absolute',
-    top: '50%',
-    marginTop: -4,
-    height: 8,
-    borderRadius: 4,
-  },
-  trackSegmentNegative: {
-    backgroundColor: COLORS.trackNegative,
-  },
-  trackSegmentPositive: {
-    backgroundColor: COLORS.trackPositive,
-  },
-  connector: {
-    position: 'absolute',
-    borderStyle: 'dotted',
-    borderLeftWidth: 1,
-    borderColor: COLORS.connector,
-    transform: [{ translateX: -0.5 }],
-  },
-  connectorTop: {
-    top: '50%',
-    height: 36,
-    marginTop: -36,
-  },
-  connectorBottom: {
-    top: '50%',
-    height: 36,
-  },
-  trackDot: {
-    position: 'absolute',
-    top: '50%',
-    marginTop: -7,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: COLORS.dotBorder,
-    shadowColor: COLORS.dotShadow,
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    transform: [{ translateX: -7 }],
-  },
-  stopDot: {
-    backgroundColor: COLORS.trackNegative,
-  },
-  entryDot: {
-    backgroundColor: ENTRY_BLUE,
-  },
-  targetDot: {
-    backgroundColor: COLORS.trackPositive,
-  },
-  trackBottomLabels: {
-    marginTop: 12,
-  },
-  trackBottomCallout: {
-    position: 'absolute',
-    width: 80,
-    alignItems: 'center',
-    gap: 4,
-    transform: [{ translateX: -40 }],
-  },
-  markerTitle: {
-    fontSize: 12,
-    color: COLORS.markerText,
-  },
-  markerValue: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  stopText: {
-    color: COLORS.metricNegative,
-  },
-  entryText: {
-    color: ENTRY_BLUE,
-  },
-  targetText: {
-    color: COLORS.metricPositive,
-  },
-  disclaimer: {
-    fontSize: 12,
-    color: COLORS.markerText,
-    lineHeight: 16,
-  },
-});
+      paddingVertical: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.sm,
+      borderRadius: theme.radii.pill,
+      backgroundColor: theme.colors.surfaceMuted,
+    },
+    rangeBadgeText: {
+      fontSize: 12,
+      color: theme.colors.textMuted,
+    },
+    summaryRow: {
+      flexDirection: 'row',
+      gap: theme.spacing.md,
+      flexWrap: 'wrap',
+    },
+    metricCard: {
+      flex: 1,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radii.md,
+      paddingVertical: theme.spacing.md,
+      paddingHorizontal: theme.spacing.md,
+      gap: theme.spacing.xs,
+      borderWidth: 1,
+      borderColor: theme.colors.surfaceMuted,
+    },
+    metricCardNegative: {
+      backgroundColor: theme.colors.errorSurface,
+      borderColor: theme.colors.error,
+    },
+    metricCardPositive: {
+      backgroundColor: theme.colors.successSurface,
+      borderColor: theme.colors.success,
+    },
+    metricLabel: {
+      fontSize: 10,
+      color: theme.colors.textMuted,
+      textTransform: 'uppercase',
+      letterSpacing: 0.4,
+    },
+    metricValue: {
+      fontSize: 22,
+      fontWeight: '700',
+    },
+    metricValueNegative: {
+      color: theme.colors.error,
+    },
+    metricValuePositive: {
+      color: theme.colors.success,
+    },
+    metricPercent: {
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    metricPercentNegative: {
+      color: theme.colors.error,
+    },
+    metricPercentPositive: {
+      color: theme.colors.success,
+    },
+    trackCard: {
+      position: 'relative',
+      paddingVertical: theme.spacing.xl,
+    },
+    trackTopLabels: {
+      marginBottom: theme.spacing.sm + theme.spacing.xs,
+    },
+    trackLabelRow: {
+      position: 'relative',
+      height: 36,
+      marginHorizontal: theme.spacing.lg,
+    },
+    trackTopCallout: {
+      position: 'absolute',
+      width: 80,
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+      transform: [{ translateX: -40 }],
+    },
+    trackLineArea: {
+      paddingHorizontal: theme.spacing.lg,
+    },
+    trackLine: {
+      position: 'relative',
+      height: 64,
+      justifyContent: 'center',
+    },
+    trackBase: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: '50%',
+      marginTop: -4,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: theme.colors.divider,
+    },
+    trackSegment: {
+      position: 'absolute',
+      top: '50%',
+      marginTop: -4,
+      height: 8,
+      borderRadius: 4,
+    },
+    trackSegmentNegative: {
+      backgroundColor: theme.colors.error,
+    },
+    trackSegmentPositive: {
+      backgroundColor: theme.colors.success,
+    },
+    connector: {
+      position: 'absolute',
+      borderStyle: 'dotted',
+      borderLeftWidth: 1,
+      borderColor: theme.colors.textMuted,
+      transform: [{ translateX: -0.5 }],
+    },
+    connectorTop: {
+      top: '50%',
+      height: 36,
+      marginTop: -36,
+    },
+    connectorBottom: {
+      top: '50%',
+      height: 36,
+    },
+    trackDot: {
+      position: 'absolute',
+      top: '50%',
+      marginTop: -7,
+      width: 14,
+      height: 14,
+      borderRadius: 7,
+      borderWidth: 2,
+      borderColor: theme.colors.surface,
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
+      transform: [{ translateX: -7 }],
+    },
+    stopDot: {
+      backgroundColor: theme.colors.error,
+    },
+    entryDot: {
+      backgroundColor: theme.colors.accent,
+    },
+    targetDot: {
+      backgroundColor: theme.colors.success,
+    },
+    trackBottomLabels: {
+      marginTop: theme.spacing.sm,
+    },
+    trackBottomCallout: {
+      position: 'absolute',
+      width: 80,
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+      transform: [{ translateX: -40 }],
+    },
+    markerTitle: {
+      fontSize: 12,
+      color: theme.colors.textMuted,
+    },
+    markerValue: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.colors.textPrimary,
+    },
+    stopText: {
+      color: theme.colors.error,
+    },
+    entryText: {
+      color: theme.colors.accent,
+    },
+    targetText: {
+      color: theme.colors.success,
+    },
+    disclaimer: {
+      fontSize: 12,
+      color: theme.colors.textMuted,
+      lineHeight: 16,
+    },
+  } as const);

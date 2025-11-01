@@ -52,6 +52,13 @@ Useful variants:
 - `pnpm --filter @apex-tradebill/mobile start --clear` – clear Metro cache.
 - `pnpm --filter @apex-tradebill/mobile start --android` / `--ios` / `--web` – boot directly into a platform target.
 
+## Styling & Theme
+
+- Shared tokens live in `packages/ui/src/theme`; the provider is wired up in `app/_layout.tsx` and mirrors Expo color scheme automatically.
+- Import `useTheme` from `@apex-tradebill/ui` to reach `colors`, `spacing`, `radii`, and `shadows`. Compose component styles inside `useMemo` so that dark mode updates propagate without recalculating on every render.
+- Prefer `useThemeColor` (see `hooks/use-theme-color.ts`) when adapting existing `ThemedView`/`ThemedText` primitives; pass semantic tokens such as `text`, `background`, or any exported `ThemeColorToken`.
+- Avoid hard-coded hex values in app code. If a new semantic color is required, extend the tokens in the UI package so both mobile and future surfaces stay in sync.
+
 ## Build profiles and EAS
 
 - `EAS_BUILD_PROFILE`, `EXPO_RELEASE_CHANNEL`, and `EXPO_PUBLIC_APP_ENV` are surfaced through `extra.eas` for runtime introspection.

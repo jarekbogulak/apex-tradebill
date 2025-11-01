@@ -1,6 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { Pressable, Text, View } from 'react-native';
 
-import { palette, radii, spacing } from '../styles/tokens';
+import { useTheme, type Theme } from '@apex-tradebill/ui';
 
 interface TradeBillEmptyCardProps {
   status: 'idle' | 'loading' | 'success' | 'error';
@@ -8,87 +9,92 @@ interface TradeBillEmptyCardProps {
   onCreatePress: () => void;
 }
 
-export const TradeBillEmptyCard = ({ status, errorMessage, onCreatePress }: TradeBillEmptyCardProps) => (
-  <View style={styles.card}>
-    <View style={styles.header}>
-      <Text style={styles.sectionTitle}>Trade Bill</Text>
-      <Pressable style={styles.primaryButton} onPress={onCreatePress} accessibilityRole="button">
-        <Text style={styles.primaryButtonLabel}>Create</Text>
-      </Pressable>
-    </View>
+export const TradeBillEmptyCard = ({ status, errorMessage, onCreatePress }: TradeBillEmptyCardProps) => {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
-    <View style={styles.emptyBody}>
-      <View style={styles.placeholder}>
-        <Text style={styles.placeholderTitle}>No trade calculated yet</Text>
-        <Text style={styles.placeholderCopy}>Start a calculation to generate your trade bill.</Text>
+  return (
+    <View style={styles.card}>
+      <View style={styles.header}>
+        <Text style={styles.sectionTitle}>Trade Bill</Text>
+        <Pressable style={styles.primaryButton} onPress={onCreatePress} accessibilityRole="button">
+          <Text style={styles.primaryButtonLabel}>Create</Text>
+        </Pressable>
       </View>
+
+      <View style={styles.emptyBody}>
+        <View style={styles.placeholder}>
+          <Text style={styles.placeholderTitle}>No trade calculated yet</Text>
+          <Text style={styles.placeholderCopy}>Start a calculation to generate your trade bill.</Text>
+        </View>
+      </View>
+
+      {status === 'error' && errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
     </View>
+  );
+};
 
-    {status === 'error' && errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-  </View>
-);
+const createStyles = (theme: Theme) => {
+  const shadow = theme.shadows.level2;
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: palette.surface,
-    borderRadius: radii.lg,
-    padding: spacing.xl,
-    gap: spacing.lg,
-    shadowColor: palette.shadow,
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 12 },
-    shadowRadius: 18,
-    elevation: 4,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: palette.textPrimary,
-  },
-  emptyBody: {
-    paddingVertical: spacing.lg,
-  },
-  placeholder: {
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: palette.surfaceMuted,
-    paddingVertical: spacing.xl,
-    paddingHorizontal: spacing.lg,
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: palette.surfaceAlt,
-  },
-  placeholderTitle: {
-    color: palette.textPrimary,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  placeholderCopy: {
-    color: palette.textMuted,
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  errorText: {
-    color: palette.textError,
-    fontSize: 13,
-  },
-  primaryButton: {
-    backgroundColor: palette.textAccent,
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.xl,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryButtonLabel: {
-    color: palette.surface,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-});
+  return {
+    card: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radii.lg,
+      padding: theme.spacing.xl,
+      gap: theme.spacing.lg,
+      ...shadow,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.colors.textPrimary,
+    },
+    emptyBody: {
+      paddingVertical: theme.spacing.lg,
+    },
+    placeholder: {
+      borderRadius: theme.radii.lg,
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: theme.colors.surfaceMuted,
+      paddingVertical: theme.spacing.xl,
+      paddingHorizontal: theme.spacing.lg,
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+      backgroundColor: theme.colors.surfaceAlt,
+    },
+    placeholderTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    placeholderCopy: {
+      color: theme.colors.textMuted,
+      fontSize: 13,
+      textAlign: 'center',
+    },
+    errorText: {
+      color: theme.colors.error,
+      fontSize: 13,
+    },
+    primaryButton: {
+      backgroundColor: theme.colors.accent,
+      paddingVertical: theme.spacing.sm + 2,
+      paddingHorizontal: theme.spacing.xl,
+      borderRadius: theme.radii.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    primaryButtonLabel: {
+      color: theme.colors.textInverted,
+      fontSize: 15,
+      fontWeight: '600',
+    },
+  } as const;
+};

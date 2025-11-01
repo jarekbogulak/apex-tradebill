@@ -1,4 +1,7 @@
-import { ScrollView, StyleSheet } from 'react-native';
+import { useMemo } from 'react';
+import { ScrollView } from 'react-native';
+
+import { useTheme, type Theme } from '@apex-tradebill/ui';
 
 import StaleBanner from '@/src/features/stream/StaleBanner';
 
@@ -9,9 +12,10 @@ import { TradeErrorBanner } from '@/src/features/trade-calculator/components/Tra
 import { TradeHistoryCard } from '@/src/features/trade-calculator/components/TradeHistoryCard';
 import { TradeInputSheet } from '@/src/features/trade-calculator/components/TradeInputSheet';
 import { useTradeCalculatorController } from '@/src/features/trade-calculator/hooks/useTradeCalculatorController';
-import { palette, spacing } from '@/src/features/trade-calculator/styles/tokens';
 
 export default function TradeCalculatorScreen() {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const {
     input,
     output,
@@ -102,11 +106,12 @@ export default function TradeCalculatorScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xl,
-    gap: spacing.lg,
-    backgroundColor: palette.surfaceAlt,
-  },
-});
+const createStyles = (theme: Theme) =>
+  ({
+    container: {
+      padding: theme.spacing.lg,
+      paddingBottom: theme.spacing.xl,
+      gap: theme.spacing.lg,
+      backgroundColor: theme.colors.surfaceAlt,
+    },
+  } as const);

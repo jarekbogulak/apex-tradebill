@@ -1,9 +1,10 @@
+import { useMemo } from 'react';
+import { ActivityIndicator, Text, View } from 'react-native';
+
 import type { TradeCalculation } from '@apex-tradebill/types';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useTheme, type Theme } from '@apex-tradebill/ui';
 
 import { HistoryList } from '@/src/features/history/HistoryList';
-
-import { palette, radii, spacing } from '../styles/tokens';
 
 interface TradeHistoryCardProps {
   items: TradeCalculation[];
@@ -20,11 +21,14 @@ export const TradeHistoryCard = ({
   onRefresh,
   onLoadMore,
 }: TradeHistoryCardProps) => {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.sectionTitle}>Recent History</Text>
-        {isFetching ? <ActivityIndicator size="small" color={palette.textAccent} /> : null}
+        {isFetching ? <ActivityIndicator size="small" color={theme.colors.accent} /> : null}
       </View>
       <HistoryList
         items={items}
@@ -36,26 +40,26 @@ export const TradeHistoryCard = ({
   );
 };
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: palette.surface,
-    borderRadius: radii.lg,
-    padding: spacing.xl,
-    gap: spacing.lg,
-    shadowColor: palette.shadow,
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 12 },
-    shadowRadius: 18,
-    elevation: 4,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: palette.textPrimary,
-  },
-});
+const createStyles = (theme: Theme) => {
+  const shadow = theme.shadows.level2;
+
+  return {
+    card: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radii.lg,
+      padding: theme.spacing.xl,
+      gap: theme.spacing.lg,
+      ...shadow,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.colors.textPrimary,
+    },
+  } as const;
+};

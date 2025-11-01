@@ -1,13 +1,15 @@
-import type { TradeWarningCode } from '@apex-tradebill/types';
+import { useMemo } from 'react';
 import { formatCurrency, formatPercent } from '@apex-tradebill/utils';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import type { TradeWarningCode } from '@apex-tradebill/types';
+import { useTheme, type Theme } from '@apex-tradebill/ui';
 
 import { RiskVisualization } from '@/src/features/visualization/RiskVisualization';
 import type { TradeCalculatorInputState, TradeCalculatorState } from '@/src/state/tradeCalculatorStore';
 
 import type { RiskTone } from '../hooks/useTradeCalculatorController';
 import { formatPriceValue } from '../utils/formatters';
-import { palette, radii, spacing } from '../styles/tokens';
 
 interface TradeBillCardProps {
   input: TradeCalculatorInputState;
@@ -26,12 +28,6 @@ interface TradeBillCardProps {
   };
   onEditPress: () => void;
 }
-
-const riskToneColorMap: Record<RiskTone, string> = {
-  positive: palette.chipPositive,
-  neutral: palette.chipNeutral,
-  negative: palette.chipNegative,
-};
 
 const formatTimestamp = (value: string | null) => {
   if (!value) {
@@ -59,6 +55,9 @@ export const TradeBillCard = ({
   derivedValues,
   onEditPress,
 }: TradeBillCardProps) => {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const riskToneColors = useMemo(() => createRiskToneColors(theme), [theme]);
   const baseAsset = input.symbol.split('-')[0] ?? input.symbol;
   const tradeDetails = [
     { label: 'Position Size', value: `${Number(output.positionSize).toFixed(4)} ${baseAsset}` },
@@ -93,7 +92,7 @@ export const TradeBillCard = ({
           <Text
             style={[
               styles.metricValue,
-              { color: riskToneColorMap[riskSummary.tone] ?? palette.chipNeutral },
+              { color: riskToneColors[riskSummary.tone] ?? riskToneColors.neutral },
             ]}
           >
             {formatRiskReward(riskSummary.riskToReward)}
@@ -118,6 +117,7 @@ export const TradeBillCard = ({
                   label={item.label}
                   value={item.value}
                   isLast={index === group.items.length - 1}
+                  styles={styles}
                 />
               ))}
             </View>
@@ -145,132 +145,148 @@ export const TradeBillCard = ({
   );
 };
 
-const DetailRow = ({ label, value, isLast }: { label: string; value: string; isLast: boolean }) => (
+const DetailRow = ({
+  label,
+  value,
+  isLast,
+  styles,
+}: {
+  label: string;
+  value: string;
+  isLast: boolean;
+  styles: ReturnType<typeof createStyles>;
+}) => (
   <View style={[styles.detailRow, !isLast && styles.detailRowDivider]}>
     <Text style={styles.detailLabel}>{label}</Text>
     <Text style={styles.detailValue}>{value}</Text>
   </View>
 );
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: palette.surface,
-    borderRadius: radii.lg,
-    padding: spacing.xl,
-    gap: spacing.lg,
-    shadowColor: palette.shadow,
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 12 },
-    shadowRadius: 18,
-    elevation: 4,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: spacing.lg,
-  },
-  headerCopy: {
-    gap: spacing.xs,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: palette.textPrimary,
-  },
-  timestamp: {
-    color: palette.textSecondary,
-    fontSize: 13,
-  },
-  metricRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  metricCard: {
-    flex: 1,
-    backgroundColor: palette.surface,
-    borderRadius: radii.md,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.lg,
-    borderWidth: 1,
-    borderColor: palette.surfaceMuted,
-  },
-  metricLabel: {
-    fontSize: 13,
-    color: palette.textMuted,
-    fontWeight: '600',
-  },
-  metricValue: {
-    marginTop: spacing.xs,
-    fontSize: 20,
-    fontWeight: '700',
-    color: palette.textPrimary,
-  },
-  metricAccent: {
-    color: palette.textAccent,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-  },
-  detailGroups: {
-    gap: spacing.lg,
-  },
-  detailGroup: {
-    gap: spacing.sm,
-  },
-  detailGroupLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    color: palette.textMuted,
-  },
-  detailTable: {
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: palette.surfaceMuted,
-    overflow: 'hidden',
-    backgroundColor: palette.surface,
-  },
-  detailRowDivider: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: palette.surfaceMuted,
-  },
-  detailLabel: {
-    color: palette.textMuted,
-    fontSize: 13,
-  },
-  detailValue: {
-    color: palette.textPrimary,
-    fontSize: 14,
-  },
-  warningContainer: {
-    gap: spacing.xs,
-    padding: spacing.md,
-    backgroundColor: palette.warningBackground,
-    borderRadius: radii.md,
-  },
-  warningText: {
-    color: palette.textWarning,
-    fontSize: 12,
-  },
-  primaryButton: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.sm + 2,
-    borderRadius: radii.lg,
-    backgroundColor: palette.textAccent,
-  },
-  primaryButtonLabel: {
-    color: palette.surface,
-    fontWeight: '600',
-    fontSize: 15,
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: palette.surfaceMuted,
-  },
+const createRiskToneColors = (theme: Theme): Record<RiskTone, string> => ({
+  positive: theme.colors.success,
+  neutral: theme.colors.neutral,
+  negative: theme.colors.error,
 });
+
+const createStyles = (theme: Theme) => {
+  const shadow = theme.shadows.level2;
+
+  return {
+    card: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radii.lg,
+      padding: theme.spacing.xl,
+      gap: theme.spacing.lg,
+      ...shadow,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: theme.spacing.lg,
+    },
+    headerCopy: {
+      gap: theme.spacing.xs,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.colors.textPrimary,
+    },
+    timestamp: {
+      color: theme.colors.textSecondary,
+      fontSize: 13,
+    },
+    metricRow: {
+      flexDirection: 'row',
+      gap: theme.spacing.md,
+    },
+    metricCard: {
+      flex: 1,
+      backgroundColor: theme.colors.surfaceAlt,
+      borderRadius: theme.radii.md,
+      paddingVertical: theme.spacing.lg,
+      paddingHorizontal: theme.spacing.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.surfaceMuted,
+    },
+    metricLabel: {
+      fontSize: 13,
+      color: theme.colors.textMuted,
+      fontWeight: '600',
+    },
+    metricValue: {
+      marginTop: theme.spacing.xs,
+      fontSize: 20,
+      fontWeight: '700',
+      color: theme.colors.textPrimary,
+    },
+    metricAccent: {
+      color: theme.colors.accent,
+    },
+    detailRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.lg,
+    },
+    detailGroups: {
+      gap: theme.spacing.lg,
+    },
+    detailGroup: {
+      gap: theme.spacing.sm,
+    },
+    detailGroupLabel: {
+      fontSize: 12,
+      fontWeight: '600',
+      textTransform: 'uppercase',
+      letterSpacing: 0.6,
+      color: theme.colors.textMuted,
+    },
+    detailTable: {
+      borderRadius: theme.radii.md,
+      borderWidth: 1,
+      borderColor: theme.colors.surfaceMuted,
+      overflow: 'hidden',
+      backgroundColor: theme.colors.surface,
+    },
+    detailRowDivider: {
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.surfaceMuted,
+    },
+    detailLabel: {
+      color: theme.colors.textMuted,
+      fontSize: 13,
+    },
+    detailValue: {
+      color: theme.colors.textPrimary,
+      fontSize: 14,
+    },
+    warningContainer: {
+      gap: theme.spacing.xs,
+      padding: theme.spacing.md,
+      backgroundColor: theme.colors.warningSurface,
+      borderRadius: theme.radii.md,
+    },
+    warningText: {
+      color: theme.colors.warning,
+      fontSize: 12,
+    },
+    primaryButton: {
+      paddingHorizontal: theme.spacing.xl,
+      paddingVertical: theme.spacing.sm + 2,
+      borderRadius: theme.radii.lg,
+      backgroundColor: theme.colors.accent,
+    },
+    primaryButtonLabel: {
+      color: theme.colors.textInverted,
+      fontWeight: '600',
+      fontSize: 15,
+    },
+    divider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: theme.colors.divider,
+    },
+  } as const;
+};

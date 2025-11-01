@@ -6,16 +6,15 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Switch,
   Text,
   TextInput,
   View,
 } from 'react-native';
 
-import type { TradeCalculatorInputState, TradeCalculatorStatus } from '@/src/state/tradeCalculatorStore';
+import { useTheme, type Theme } from '@apex-tradebill/ui';
 
-import { palette, radii, spacing } from '../styles/tokens';
+import type { TradeCalculatorInputState, TradeCalculatorStatus } from '@/src/state/tradeCalculatorStore';
 
 interface TradeInputSheetProps {
   visible: boolean;
@@ -66,6 +65,8 @@ export const TradeInputSheet = ({
     () => Platform.select<'padding' | 'height' | undefined>({ ios: 'padding', android: 'height' }),
     [],
   );
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose} presentationStyle="overFullScreen">
@@ -99,15 +100,17 @@ export const TradeInputSheet = ({
                   label="Long"
                   active={input.direction === 'long'}
                   onPress={() => onDirectionChange('long')}
+                  styles={styles}
                 />
                 <SegmentButton
                   label="Short"
                   active={input.direction === 'short'}
                   onPress={() => onDirectionChange('short')}
+                  styles={styles}
                 />
               </View>
 
-              <Field label="Account Size">
+              <Field label="Account Size" styles={styles}>
                 <TextInput
                   value={input.accountSize}
                   keyboardType="decimal-pad"
@@ -116,7 +119,7 @@ export const TradeInputSheet = ({
                 />
               </Field>
 
-              <Field label="Entry Price">
+              <Field label="Entry Price" styles={styles}>
                 <TextInput
                   value={input.entryPrice ?? ''}
                   keyboardType="decimal-pad"
@@ -128,7 +131,7 @@ export const TradeInputSheet = ({
                 />
               </Field>
 
-              <Field label="Target Price">
+              <Field label="Target Price" styles={styles}>
                 <TextInput
                   value={input.targetPrice}
                   keyboardType="decimal-pad"
@@ -137,7 +140,7 @@ export const TradeInputSheet = ({
                 />
               </Field>
 
-              <Field label="Stop Price">
+              <Field label="Stop Price" styles={styles}>
                 <TextInput
                   value={input.stopPrice ?? ''}
                   keyboardType="decimal-pad"
@@ -170,137 +173,157 @@ export const TradeInputSheet = ({
   );
 };
 
-const Field = ({ label, children }: { label: string; children: ReactNode }) => (
+const Field = ({
+  label,
+  children,
+  styles,
+}: {
+  label: string;
+  children: ReactNode;
+  styles: ReturnType<typeof createStyles>;
+}) => (
   <View style={styles.field}>
     <Text style={styles.label}>{label}</Text>
     {children}
   </View>
 );
 
-const SegmentButton = ({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) => (
+const SegmentButton = ({
+  label,
+  active,
+  onPress,
+  styles,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
+}) => (
   <Pressable style={[styles.segment, active && styles.segmentActive]} onPress={onPress}>
     <Text style={[styles.segmentLabel, active && styles.segmentLabelActive]}>{label}</Text>
   </Pressable>
 );
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: palette.surfaceOverlay,
-    justifyContent: 'flex-end',
-  },
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-  },
-  keyboardContainer: {
-    width: '100%',
-  },
-  sheetContainer: {
-    backgroundColor: palette.surface,
-    borderTopLeftRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xl,
-  },
-  sheetHandle: {
-    alignSelf: 'center',
-    width: 48,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: palette.divider,
-    marginBottom: spacing.sm,
-  },
-  sheetContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-    gap: spacing.lg,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: palette.textPrimary,
-  },
-  cancelLink: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  cancelLabel: {
-    color: palette.textMuted,
-    fontWeight: '600',
-  },
-  label: {
-    color: palette.textSecondary,
-    fontSize: 14,
-  },
-  field: {
-    gap: spacing.xs,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: palette.divider,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    fontSize: 16,
-    color: palette.textPrimary,
-  },
-  inputDisabled: {
-    backgroundColor: palette.surfaceMuted,
-    color: palette.textMuted,
-  },
-  switchRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  primaryButton: {
-    backgroundColor: palette.textAccent,
-    paddingVertical: spacing.lg - 2,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryButtonDisabled: {
-    opacity: 0.6,
-  },
-  primaryButtonLabel: {
-    color: palette.surface,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  segmentGroup: {
-    flexDirection: 'row',
-    backgroundColor: palette.surfaceMuted,
-    borderRadius: radii.md,
-    padding: spacing.xs,
-    gap: spacing.xs,
-  },
-  segment: {
-    flex: 1,
-    paddingVertical: spacing.md - 2,
-    borderRadius: radii.md,
-    alignItems: 'center',
-  },
-  segmentActive: {
-    backgroundColor: palette.textAccent,
-  },
-  segmentLabel: {
-    fontWeight: '600',
-    color: palette.textSecondary,
-  },
-  segmentLabelActive: {
-    color: palette.surface,
-  },
-  errorText: {
-    color: palette.textError,
-  },
-});
+const createStyles = (theme: Theme) =>
+  ({
+    overlay: {
+      flex: 1,
+      backgroundColor: theme.colors.overlay,
+      justifyContent: 'flex-end',
+    },
+    backdrop: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+    },
+    keyboardContainer: {
+      width: '100%',
+    },
+    sheetContainer: {
+      backgroundColor: theme.colors.surface,
+      borderTopLeftRadius: theme.radii.xl,
+      borderTopRightRadius: theme.radii.xl,
+      paddingTop: theme.spacing.sm,
+      paddingBottom: theme.spacing.xl,
+    },
+    sheetHandle: {
+      alignSelf: 'center',
+      width: 48,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: theme.colors.divider,
+      marginBottom: theme.spacing.sm,
+    },
+    sheetContent: {
+      paddingHorizontal: theme.spacing.lg,
+      paddingBottom: theme.spacing.lg,
+      gap: theme.spacing.lg,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: theme.colors.textPrimary,
+    },
+    cancelLink: {
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+    },
+    cancelLabel: {
+      color: theme.colors.textMuted,
+      fontWeight: '600',
+    },
+    label: {
+      color: theme.colors.textSecondary,
+      fontSize: 14,
+    },
+    field: {
+      gap: theme.spacing.xs,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: theme.colors.divider,
+      borderRadius: theme.radii.md,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.md,
+      fontSize: 16,
+      color: theme.colors.textPrimary,
+      backgroundColor: theme.colors.surface,
+    },
+    inputDisabled: {
+      backgroundColor: theme.colors.surfaceMuted,
+      color: theme.colors.textMuted,
+    },
+    switchRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    primaryButton: {
+      backgroundColor: theme.colors.accent,
+      paddingVertical: theme.spacing.lg - 2,
+      borderRadius: theme.radii.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    primaryButtonDisabled: {
+      opacity: 0.6,
+    },
+    primaryButtonLabel: {
+      color: theme.colors.textInverted,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    segmentGroup: {
+      flexDirection: 'row',
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.radii.md,
+      padding: theme.spacing.xs,
+      gap: theme.spacing.xs,
+    },
+    segment: {
+      flex: 1,
+      paddingVertical: theme.spacing.md - 2,
+      borderRadius: theme.radii.md,
+      alignItems: 'center',
+    },
+    segmentActive: {
+      backgroundColor: theme.colors.accent,
+    },
+    segmentLabel: {
+      fontWeight: '600',
+      color: theme.colors.textSecondary,
+    },
+    segmentLabelActive: {
+      color: theme.colors.textInverted,
+    },
+    errorText: {
+      color: theme.colors.error,
+    },
+  } as const);

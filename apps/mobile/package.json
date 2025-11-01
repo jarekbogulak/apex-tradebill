@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@apex-tradebill/types": "workspace:*",
+    "@apex-tradebill/ui": "workspace:*",
     "@apex-tradebill/utils": "workspace:*",
     "@expo/vector-icons": "^15.0.2",
     "@react-navigation/bottom-tabs": "^7.4.0",

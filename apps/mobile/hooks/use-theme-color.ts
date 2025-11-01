@@ -1,21 +1,25 @@
-/**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
- */
+import { useTheme, type ThemeColorToken } from '@apex-tradebill/ui';
 
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+const COLOR_TOKEN_MAP: Record<string, ThemeColorToken> = {
+  background: 'background',
+  text: 'textPrimary',
+  tint: 'accent',
+  icon: 'neutral',
+  tabIconDefault: 'neutral',
+  tabIconSelected: 'accent',
+};
 
-export function useThemeColor(
-  props: { light?: string; dark?: string },
-  colorName: keyof typeof Colors.light & keyof typeof Colors.dark,
-) {
-  const theme = useColorScheme() ?? 'light';
-  const colorFromProps = props[theme];
+type ThemeTokenName = ThemeColorToken | keyof typeof COLOR_TOKEN_MAP;
 
-  if (colorFromProps) {
-    return colorFromProps;
-  } else {
-    return Colors[theme][colorName];
+export function useThemeColor(props: Partial<Record<'light' | 'dark', string>>, colorName: ThemeTokenName) {
+  const theme = useTheme();
+  const override = props[theme.scheme];
+  const resolvedToken =
+    COLOR_TOKEN_MAP[String(colorName)] ?? (colorName as ThemeColorToken);
+
+  if (override) {
+    return override;
   }
+
+  return theme.colors[resolvedToken];
 }
