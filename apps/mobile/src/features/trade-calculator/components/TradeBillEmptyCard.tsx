@@ -1,7 +1,8 @@
+import { useTheme, type Theme } from '@apex-tradebill/ui';
 import { useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { useTheme, type Theme } from '@apex-tradebill/ui';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 
 interface TradeBillEmptyCardProps {
   status: 'idle' | 'loading' | 'success' | 'error';
@@ -24,6 +25,13 @@ export const TradeBillEmptyCard = ({ status, errorMessage, onCreatePress }: Trad
 
       <View style={styles.emptyBody}>
         <View style={styles.placeholder}>
+          <IconSymbol
+            name="doc.text"
+            size={36}
+            weight="semibold"
+            color={theme.colors.textMuted}
+            style={styles.placeholderIcon}
+          />
           <Text style={styles.placeholderTitle}>No trade calculated yet</Text>
           <Text style={styles.placeholderCopy}>Start a calculation to generate your trade bill.</Text>
         </View>
@@ -66,11 +74,13 @@ const createStyles = (theme: Theme) => {
       paddingVertical: theme.spacing.xl,
       paddingHorizontal: theme.spacing.lg,
       alignItems: 'center',
-      gap: theme.spacing.sm,
-      backgroundColor: theme.colors.surfaceAlt,
+      gap: theme.spacing.md,
+    },
+    placeholderIcon: {
+      marginBottom: theme.spacing.xs,
     },
     placeholderTitle: {
-      color: theme.colors.textPrimary,
+      color: theme.colors.textSecondary,
       fontSize: 16,
       fontWeight: '600',
     },

@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
-import { formatCurrency } from '@apex-tradebill/utils';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 
+import { formatCurrency } from '@apex-tradebill/utils';
 import type { TradeCalculation } from '@apex-tradebill/types';
 import { useTheme, type Theme } from '@apex-tradebill/ui';
+
+import { IconSymbol } from '@/components/ui/icon-symbol';
 
 export interface HistoryListProps {
   items: TradeCalculation[];
@@ -67,6 +69,13 @@ export const HistoryList = ({ items, loading = false, onRefresh, onLoadMore }: H
       ListEmptyComponent={
         <View style={styles.empty}>
           <View style={styles.emptyPlaceholder}>
+            <IconSymbol
+              name="clock"
+              size={36}
+              weight="semibold"
+              color={theme.colors.textMuted}
+              style={styles.emptyIcon}
+            />
             <Text style={styles.emptyTitle}>No recent calculations yet</Text>
             <Text style={styles.emptyCopy}>Run a calculation and it will appear here.</Text>
           </View>
@@ -128,13 +137,15 @@ const createStyles = (theme: Theme) =>
       paddingVertical: theme.spacing.xl,
       paddingHorizontal: theme.spacing.lg,
       alignItems: 'center',
-      gap: theme.spacing.sm,
-      backgroundColor: theme.colors.surfaceAlt,
+      gap: theme.spacing.md,
+    },
+    emptyIcon: {
+      marginBottom: theme.spacing.xs,
     },
     emptyTitle: {
       fontSize: 16,
       fontWeight: '600',
-      color: theme.colors.textPrimary,
+      color: theme.colors.textSecondary,
     },
     emptyCopy: {
       fontSize: 13,
