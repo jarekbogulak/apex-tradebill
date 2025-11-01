@@ -6,6 +6,14 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { useSettingsStore } from '@/src/state/settingsStore';
 import { createApiClient } from '@/src/services/apiClient';
 
+const COLORS = {
+  textPrimary: '#0F172A',
+  textMuted: '#475569',
+  border: '#CBD5F5',
+  accent: '#2563EB',
+  textOnAccent: '#FFFFFF',
+} as const;
+
 const apiClient = createApiClient();
 const TIMEFRAME_OPTIONS: Timeframe[] = ['1m', '5m', '15m'];
 
@@ -146,23 +154,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#0F172A',
+    color: COLORS.textPrimary,
   },
   field: {
     gap: 4,
   },
   label: {
-    color: '#475569',
+    color: COLORS.textMuted,
     fontSize: 14,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#CBD5F5',
+    borderColor: COLORS.border,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    color: '#0F172A',
+    color: COLORS.textPrimary,
   },
   timeframeGroup: {
     flexDirection: 'row',
@@ -173,35 +181,35 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#CBD5F5',
+    borderColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   timeframeOptionActive: {
-    backgroundColor: '#2563EB',
-    borderColor: '#2563EB',
+    backgroundColor: COLORS.accent,
+    borderColor: COLORS.accent,
   },
   timeframeOptionLabel: {
-    color: '#0F172A',
+    color: COLORS.textPrimary,
     fontSize: 14,
     fontWeight: '600',
   },
   timeframeOptionLabelActive: {
-    color: '#FFFFFF',
+    color: COLORS.textOnAccent,
   },
   button: {
-    backgroundColor: '#2563EB',
+    backgroundColor: COLORS.accent,
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
   },
   buttonLabel: {
-    color: '#FFFFFF',
+    color: COLORS.textOnAccent,
     fontSize: 16,
     fontWeight: '600',
   },
   status: {
     fontSize: 13,
-    color: '#475569',
+    color: COLORS.textMuted,
   },
 });

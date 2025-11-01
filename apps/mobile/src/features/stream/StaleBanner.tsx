@@ -10,6 +10,15 @@ export interface StaleBannerProps {
   onReconnect: () => void;
 }
 
+const COLORS = {
+  staleBackground: '#fff4cd',
+  disconnectedBackground: '#ffe1e0',
+  textPrimary: '#1d1d20',
+  textSecondary: '#3b3b40',
+  buttonBackground: '#1d1d20',
+  buttonText: '#ffffff',
+} as const;
+
 const formatElapsed = (lastUpdatedAt: number | null): string => {
   if (!lastUpdatedAt) {
     return 'Last update time unknown.';
@@ -92,10 +101,10 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   stale: {
-    backgroundColor: '#fff4cd',
+    backgroundColor: COLORS.staleBackground,
   },
   disconnected: {
-    backgroundColor: '#ffe1e0',
+    backgroundColor: COLORS.disconnectedBackground,
   },
   textContainer: {
     flex: 1,
@@ -103,34 +112,34 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1d1d20',
+    color: COLORS.textPrimary,
     marginBottom: 2,
   },
   message: {
     fontSize: 14,
-    color: '#1d1d20',
+    color: COLORS.textPrimary,
     marginBottom: 4,
   },
   elapsed: {
     fontSize: 12,
-    color: '#3b3b40',
+    color: COLORS.textSecondary,
   },
   attempts: {
     marginTop: 4,
     fontSize: 12,
-    color: '#3b3b40',
+    color: COLORS.textSecondary,
   },
   button: {
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#1d1d20',
+    backgroundColor: COLORS.buttonBackground,
   },
   buttonPressed: {
     opacity: 0.8,
   },
   buttonLabel: {
-    color: '#ffffff',
+    color: COLORS.buttonText,
     fontSize: 14,
     fontWeight: '600',
   },

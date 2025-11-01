@@ -30,20 +30,8 @@ export interface PruneTradeHistoryJob {
 }
 
 const defaultLogger: PruneTradeHistoryJobLogger = {
-  info(message, context) {
-    if (context) {
-      console.info(message, context);
-    } else {
-      console.info(message);
-    }
-  },
-  error(message, context) {
-    if (context) {
-      console.error(message, context);
-    } else {
-      console.error(message);
-    }
-  },
+  info() {},
+  error() {},
 };
 
 export const createPruneTradeHistoryJob = (
@@ -90,4 +78,3 @@ export const createPruneTradeHistoryJob = (
     schedule,
   };
 };
-

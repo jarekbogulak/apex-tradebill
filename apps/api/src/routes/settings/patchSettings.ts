@@ -1,7 +1,7 @@
 import { SymbolSchema, TimeframeSchema } from '@apex-tradebill/types';
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { createSettingsService, type SettingsPatchInput } from '../../services/settings/settingsService.js';
+import type { createSettingsService, SettingsPatchInput } from '../../services/settings/settingsService.js';
 import { createErrorResponse, errorResponseSchema, resolveUserId, sendValidationError } from '../http.js';
 import { serializeSettings } from './serialize.js';
 

@@ -13,6 +13,34 @@ export interface RiskVisualizationProps {
 const TRACK_MARGIN_PERCENT = 8;
 const ENTRY_BLUE = '#2563EB';
 
+const COLORS = {
+  directionLongBg: '#DCFCE7',
+  directionShortBg: '#FEE2E2',
+  directionLongText: '#15803D',
+  directionShortText: '#B91C1C',
+  rangeBadgeBg: '#E5E7EB',
+  rangeBadgeText: '#1E293B',
+  metricCardBg: '#FFFFFF',
+  metricCardBorder: '#E2E8F0',
+  metricCardNegativeBg: '#FEF2F2',
+  metricCardNegativeBorder: '#FCA5A5',
+  metricCardPositiveBg: '#ECFDF5',
+  metricCardPositiveBorder: '#86EFAC',
+  metricLabel: '#475569',
+  metricNegative: '#DC2626',
+  metricPositive: '#16A34A',
+  trackBackground: '#F8FAFC',
+  trackBorder: '#E2E8F0',
+  trackBase: '#CBD5F5',
+  trackNegative: '#EF4444',
+  trackPositive: '#22C55E',
+  connector: '#94A3B8',
+  dotBorder: '#FFFFFF',
+  dotShadow: '#0F172A',
+  markerText: '#64748B',
+  shadowNone: 'transparent',
+} as const;
+
 const formatPrice = (value: number) => `$${value.toFixed(2)}`;
 const formatSignedCurrency = (value: number) =>
   `${value >= 0 ? '+' : '-'}$${Math.abs(value).toFixed(2)}`;
@@ -251,10 +279,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   directionBadgeLong: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: COLORS.directionLongBg,
   },
   directionBadgeShort: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: COLORS.directionShortBg,
   },
   directionBadgeText: {
     fontSize: 12,
@@ -262,13 +290,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   directionBadgeTextLong: {
-    color: '#15803D',
+    color: COLORS.directionLongText,
   },
   directionBadgeTextShort: {
-    color: '#B91C1C',
+    color: COLORS.directionShortText,
   },
   rangeBadge: {
-    backgroundColor: '#E5E7EB',
+    backgroundColor: COLORS.rangeBadgeBg,
     paddingVertical: 4,
     paddingHorizontal: 12,
     borderRadius: 999,
@@ -276,7 +304,7 @@ const styles = StyleSheet.create({
   rangeBadgeText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#1E293B',
+    color: COLORS.rangeBadgeText,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -285,30 +313,30 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.metricCardBg,
     borderRadius: 20,
     paddingVertical: 18,
     paddingHorizontal: 18,
     gap: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: 'transparent',
+    borderColor: COLORS.metricCardBorder,
+    shadowColor: COLORS.shadowNone,
     shadowOpacity: 0,
     shadowRadius: 0,
     shadowOffset: { width: 0, height: 0 },
     elevation: 0,
   },
   metricCardNegative: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FCA5A5',
+    backgroundColor: COLORS.metricCardNegativeBg,
+    borderColor: COLORS.metricCardNegativeBorder,
   },
   metricCardPositive: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#86EFAC',
+    backgroundColor: COLORS.metricCardPositiveBg,
+    borderColor: COLORS.metricCardPositiveBorder,
   },
   metricLabel: {
     fontSize: 13,
-    color: '#475569',
+    color: COLORS.metricLabel,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
@@ -318,30 +346,30 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   metricValueNegative: {
-    color: '#DC2626',
+    color: COLORS.metricNegative,
   },
   metricValuePositive: {
-    color: '#16A34A',
+    color: COLORS.metricPositive,
   },
   metricPercent: {
     fontSize: 14,
     fontWeight: '600',
   },
   metricPercentNegative: {
-    color: '#DC2626',
+    color: COLORS.metricNegative,
   },
   metricPercentPositive: {
-    color: '#16A34A',
+    color: COLORS.metricPositive,
   },
   trackCard: {
     position: 'relative',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: COLORS.trackBackground,
     borderRadius: 16,
     paddingVertical: 20,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: 'transparent',
+    borderColor: COLORS.trackBorder,
+    shadowColor: COLORS.shadowNone,
     shadowOpacity: 0,
     shadowRadius: 0,
     shadowOffset: { width: 0, height: 0 },
@@ -378,7 +406,7 @@ const styles = StyleSheet.create({
     marginTop: -4,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#CBD5F5',
+    backgroundColor: COLORS.trackBase,
   },
   trackSegment: {
     position: 'absolute',
@@ -388,16 +416,16 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   trackSegmentNegative: {
-    backgroundColor: '#EF4444',
+    backgroundColor: COLORS.trackNegative,
   },
   trackSegmentPositive: {
-    backgroundColor: '#22C55E',
+    backgroundColor: COLORS.trackPositive,
   },
   connector: {
     position: 'absolute',
     borderStyle: 'dotted',
     borderLeftWidth: 1,
-    borderColor: '#94A3B8',
+    borderColor: COLORS.connector,
     transform: [{ translateX: -0.5 }],
   },
   connectorTop: {
@@ -417,21 +445,21 @@ const styles = StyleSheet.create({
     height: 14,
     borderRadius: 7,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
-    shadowColor: '#0F172A',
+    borderColor: COLORS.dotBorder,
+    shadowColor: COLORS.dotShadow,
     shadowOpacity: 0.08,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     transform: [{ translateX: -7 }],
   },
   stopDot: {
-    backgroundColor: '#EF4444',
+    backgroundColor: COLORS.trackNegative,
   },
   entryDot: {
     backgroundColor: ENTRY_BLUE,
   },
   targetDot: {
-    backgroundColor: '#22C55E',
+    backgroundColor: COLORS.trackPositive,
   },
   trackBottomLabels: {
     marginTop: 12,
@@ -445,24 +473,24 @@ const styles = StyleSheet.create({
   },
   markerTitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: COLORS.markerText,
   },
   markerValue: {
     fontSize: 14,
     fontWeight: '600',
   },
   stopText: {
-    color: '#DC2626',
+    color: COLORS.metricNegative,
   },
   entryText: {
     color: ENTRY_BLUE,
   },
   targetText: {
-    color: '#16A34A',
+    color: COLORS.metricPositive,
   },
   disclaimer: {
     fontSize: 12,
-    color: '#64748B',
+    color: COLORS.markerText,
     lineHeight: 16,
   },
 });

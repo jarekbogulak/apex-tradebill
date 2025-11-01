@@ -51,7 +51,7 @@ export const useMarketStream = ({
       return '';
     }
     return Array.from(new Set(symbols)).join(',');
-  }, [symbols?.join(',')]);
+  }, [symbols]);
 
   const clearStaleTimer = () => {
     if (staleTimerRef.current) {
@@ -68,7 +68,7 @@ export const useMarketStream = ({
           ...current,
           status: 'stale',
         }));
-      }, staleThresholdMs - (Date.now() - timestamp));
+      }, Math.max(0, staleThresholdMs - (Date.now() - timestamp)));
     },
     [staleThresholdMs],
   );

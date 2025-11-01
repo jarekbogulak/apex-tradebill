@@ -8,6 +8,8 @@ export type ThemedTextProps = TextProps & {
   type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
 };
 
+const LINK_COLOR = '#0a7ea4';
+
 export function ThemedText({
   style,
   lightColor,
@@ -55,6 +57,6 @@ const styles = StyleSheet.create({
   link: {
     lineHeight: 30,
     fontSize: 16,
-    color: '#0a7ea4',
+    color: LINK_COLOR,
   },
 });

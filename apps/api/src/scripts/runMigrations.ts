@@ -10,13 +10,13 @@ const run = async () => {
   const { applied, skipped } = await runPendingMigrations(pool);
 
   if (applied.length > 0) {
-    console.info(`Applied migrations: ${applied.join(', ')}`);
+    process.stdout.write(`Applied migrations: ${applied.join(', ')}\n`);
   } else {
-    console.info('No new migrations to apply.');
+    process.stdout.write('No new migrations to apply.\n');
   }
 
   if (skipped.length > 0) {
-    console.info(`Skipped migrations (already applied): ${skipped.join(', ')}`);
+    process.stdout.write(`Skipped migrations (already applied): ${skipped.join(', ')}\n`);
   }
 
   await closeSharedDatabasePool();

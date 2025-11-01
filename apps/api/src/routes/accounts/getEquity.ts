@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { createEquityService } from '../../services/accounts/equityService.js';
+import type { createEquityService } from '../../services/accounts/equityService.js';
 import { createErrorResponse, errorResponseSchema, resolveUserId } from '../http.js';
 
 type EquityService = ReturnType<typeof createEquityService>;

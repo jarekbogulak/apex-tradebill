@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { createSettingsService } from '../../services/settings/settingsService.js';
+import type { createSettingsService } from '../../services/settings/settingsService.js';
 import { errorResponseSchema, resolveUserId, sendValidationError } from '../http.js';
 import { serializeSettings } from './serialize.js';
 
