@@ -62,18 +62,15 @@ export const MarketStatusCard = ({
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <View style={styles.symbolGroup}>
-          <Text style={styles.symbol}>{symbol}</Text>
-          <View style={styles.statusRow}>
-            <View style={[styles.statusDot, { backgroundColor: statusCopy.dotColor }]} />
-            <Text style={[styles.statusText, { color: statusCopy.textColor }]}>
-              {statusCopy.label}
-            </Text>
-            <Text style={styles.statusMeta}>Last updated: {formatUpdatedTime(lastUpdatedAt)}</Text>
-          </View>
-        </View>
-
+        <Text style={styles.symbol}>{symbol}</Text>
         <Text style={styles.price}>{formatPriceValue(lastPrice)}</Text>
+      </View>
+      <View style={styles.statusRow}>
+        <View style={[styles.statusDot, { backgroundColor: statusCopy.dotColor }]} />
+        <Text style={[styles.statusText, { color: statusCopy.textColor }]}>
+          {statusCopy.label}.
+        </Text>
+        <Text style={styles.statusMeta}>Last updated: {formatUpdatedTime(lastUpdatedAt)}</Text>
       </View>
     </View>
   );
@@ -97,10 +94,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  symbolGroup: {
-    flexShrink: 1,
-    gap: spacing.xs,
-  },
   symbol: {
     fontSize: 22,
     fontWeight: '700',
@@ -115,20 +108,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
+    gap: spacing.xs,
   },
   statusDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    marginRight: spacing.xs,
   },
   statusText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   statusMeta: {
     fontSize: 13,
     color: palette.textMuted,
-    marginLeft: spacing.sm,
   },
 });
