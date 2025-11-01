@@ -203,7 +203,6 @@ const createStyles = (theme: Theme) => {
     },
     metricCard: {
       flex: 1,
-      backgroundColor: theme.colors.surfaceAlt,
       borderRadius: theme.radii.md,
       paddingVertical: theme.spacing.lg,
       paddingHorizontal: theme.spacing.lg,

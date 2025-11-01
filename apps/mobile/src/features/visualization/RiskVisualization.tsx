@@ -272,8 +272,6 @@ const createStyles = (theme: Theme) =>
     rangeBadge: {
       paddingVertical: theme.spacing.xs,
       paddingHorizontal: theme.spacing.sm,
-      borderRadius: theme.radii.pill,
-      backgroundColor: theme.colors.surfaceMuted,
     },
     rangeBadgeText: {
       fontSize: 12,
@@ -286,21 +284,17 @@ const createStyles = (theme: Theme) =>
     },
     metricCard: {
       flex: 1,
-      backgroundColor: theme.colors.surface,
       borderRadius: theme.radii.md,
       paddingVertical: theme.spacing.md,
       paddingHorizontal: theme.spacing.md,
       gap: theme.spacing.xs,
       borderWidth: 1,
-      borderColor: theme.colors.surfaceMuted,
     },
     metricCardNegative: {
-      backgroundColor: theme.colors.errorSurface,
-      borderColor: theme.colors.error,
+      borderColor: theme.colors.surfaceMuted,
     },
     metricCardPositive: {
-      backgroundColor: theme.colors.successSurface,
-      borderColor: theme.colors.success,
+      borderColor: theme.colors.surfaceMuted,
     },
     metricLabel: {
       fontSize: 10,
