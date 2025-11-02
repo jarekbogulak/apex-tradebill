@@ -8,6 +8,8 @@ import type { TradeCalculationRepository } from './trade-calculation.entity.js';
 interface TradeCalculationRow extends QueryResultRow {
   id: string;
   user_id: string;
+  execution_method: string;
+  executed_at: string | Date;
   input: unknown;
   output: unknown;
   market_snapshot: unknown;
@@ -31,6 +33,8 @@ const mapRowToTradeCalculation = (row: TradeCalculationRow): TradeCalculation =>
   return TradeCalculationSchema.parse({
     id: row.id,
     userId: row.user_id,
+    executionMethod: row.execution_method,
+    executedAt: toIsoString(row.executed_at),
     input: row.input,
     output: row.output,
     marketSnapshot: row.market_snapshot,
@@ -40,16 +44,18 @@ const mapRowToTradeCalculation = (row: TradeCalculationRow): TradeCalculation =>
 };
 
 const INSERT_TRADE_CALCULATION_SQL = `
-  INSERT INTO trade_calculations (id, user_id, input, output, market_snapshot, source, created_at)
-  VALUES ($1, $2, $3, $4, $5, $6, $7)
+  INSERT INTO trade_calculations (id, user_id, execution_method, executed_at, input, output, market_snapshot, source, created_at)
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
   ON CONFLICT (id) DO UPDATE
     SET user_id = EXCLUDED.user_id,
+        execution_method = EXCLUDED.execution_method,
+        executed_at = EXCLUDED.executed_at,
         input = EXCLUDED.input,
         output = EXCLUDED.output,
         market_snapshot = EXCLUDED.market_snapshot,
         source = EXCLUDED.source,
         created_at = EXCLUDED.created_at
-  RETURNING id, user_id, input, output, market_snapshot, source, created_at;
+  RETURNING id, user_id, execution_method, executed_at, input, output, market_snapshot, source, created_at;
 `.trim();
 
 export const createPostgresTradeCalculationRepository = (
@@ -59,7 +65,7 @@ export const createPostgresTradeCalculationRepository = (
     async findById(id) {
       const result = await pool.query<TradeCalculationRow>(
         `
-          SELECT id, user_id, input, output, market_snapshot, source, created_at
+          SELECT id, user_id, execution_method, executed_at, input, output, market_snapshot, source, created_at
           FROM trade_calculations
           WHERE id = $1;
         `,
@@ -74,6 +80,8 @@ export const createPostgresTradeCalculationRepository = (
       const result = await pool.query<TradeCalculationRow>(INSERT_TRADE_CALCULATION_SQL, [
         parsed.id,
         parsed.userId,
+        parsed.executionMethod,
+        parsed.executedAt,
         parsed.input,
         parsed.output,
         parsed.marketSnapshot,
@@ -98,7 +106,7 @@ export const createPostgresTradeCalculationRepository = (
 
       const result = await pool.query<TradeCalculationRow>(
         `
-          SELECT id, user_id, input, output, market_snapshot, source, created_at
+          SELECT id, user_id, execution_method, executed_at, input, output, market_snapshot, source, created_at
           FROM trade_calculations
           WHERE user_id = $1
           ${cursorClause}

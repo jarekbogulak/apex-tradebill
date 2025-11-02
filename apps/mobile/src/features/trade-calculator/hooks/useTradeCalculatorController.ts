@@ -1,10 +1,11 @@
 import type { MarketSnapshot, TradeInput } from '@apex-tradebill/types';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { InfiniteData } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useMarketStream } from '@/src/features/stream/useMarketStream';
 import { createRefreshScheduler, type RefreshScheduler } from '@/src/features/stream/refreshScheduler';
-import { createApiClient } from '@/src/services/apiClient';
+import { createApiClient, type TradeHistoryResponse } from '@/src/services/apiClient';
 import {
   selectCalculatorInput,
   selectCalculatorStatus,
@@ -29,6 +30,8 @@ type PreviewSource = 'manual' | 'live';
 
 export type RiskTone = 'positive' | 'neutral' | 'negative';
 
+const STOP_REQUIRED_ERROR = 'Stop price is required when volatility stop is disabled';
+
 interface UseTradeCalculatorControllerResult {
   input: TradeCalculatorInputState;
   status: TradeCalculatorStatus;
@@ -41,6 +44,8 @@ interface UseTradeCalculatorControllerResult {
   isFormOpen: boolean;
   formMode: 'create' | 'edit';
   isSubmitting: boolean;
+  isExecuting: boolean;
+  canExecute: boolean;
   marketStream: ReturnType<typeof useMarketStream>;
   historyItems: ReturnType<typeof useTradeHistory>['items'];
   historyQuery: ReturnType<typeof useTradeHistory>['query'];
@@ -61,6 +66,7 @@ interface UseTradeCalculatorControllerResult {
     openEdit: () => void;
     closeForm: () => void;
     submitForm: () => void;
+    execute: () => void;
   };
   fieldHandlers: {
     onAccountSizeChange: (value: string) => void;
@@ -95,6 +101,7 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<'create' | 'edit'>(output ? 'edit' : 'create');
 
+  const queryClient = useQueryClient();
   const riskKey = useSettingsStore(selectRiskConfig);
   const [parsedRiskPercent, parsedAtrMultiplier] = riskKey.split(':');
   const settingsRiskPercent = parsedRiskPercent ?? input.riskPercent;
@@ -159,6 +166,34 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
 
   const { items: historyItems, query: historyQuery } = useTradeHistory();
 
+  const buildTradePayload = useCallback((): TradeInput | null => {
+    const normalize = (value: string | null | undefined) => {
+      if (value == null) {
+        return null;
+      }
+
+      const trimmed = value.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    };
+
+    const { stopPrice: inputStopPrice, ...restInput } = input;
+
+    const normalizedStop = normalize(inputStopPrice);
+    const normalizedEntry = normalize(restInput.entryPrice);
+
+    if (!input.useVolatilityStop && normalizedStop == null) {
+      return null;
+    }
+
+    return {
+      ...restInput,
+      entryPrice: normalizedEntry,
+      ...(normalizedStop != null ? { stopPrice: normalizedStop } : {}),
+      riskPercent: settingsRiskPercent,
+      atrMultiplier: settingsAtrMultiplier,
+    } as TradeInput;
+  }, [input, settingsAtrMultiplier, settingsRiskPercent]);
+
   const previewMutation = useMutation({
     mutationFn: (payload: TradeInput) => apiClient.previewTrade(payload),
     onMutate: () => {
@@ -180,6 +215,57 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
     },
   });
 
+  const executeMutation = useMutation({
+    mutationFn: (payload: TradeInput) => apiClient.executeTrade(payload),
+    onSuccess: (data) => {
+      if (!data?.calculation) {
+        setStatus('error', 'Execute response missing calculation payload');
+        return;
+      }
+      setOutput(data.output, data.marketSnapshot, data.warnings, new Date().toISOString());
+      setStatus('success');
+      livePreviewActiveRef.current = true;
+      queryClient.setQueryData<InfiniteData<TradeHistoryResponse>>(
+        ['tradeHistory'],
+        (current) => {
+          if (!current) {
+            return {
+              pageParams: [undefined],
+              pages: [
+                {
+                  items: [data.calculation],
+                  nextCursor: null,
+                },
+              ],
+            };
+          }
+
+          const [firstPage, ...restPages] = current.pages;
+          const existingItems = firstPage?.items ?? [];
+          const deduped = [
+            data.calculation,
+            ...existingItems.filter((item) => item.id !== data.calculation.id),
+          ];
+
+          return {
+            ...current,
+            pages: [
+              {
+                ...firstPage,
+                items: deduped,
+              },
+              ...restPages,
+            ],
+          };
+        },
+      );
+      void queryClient.invalidateQueries({ queryKey: ['tradeHistory'] });
+    },
+    onError: (error: Error) => {
+      setStatus('error', error.message);
+    },
+  });
+
   const requestPreview = useCallback(
     (source: PreviewSource) => {
       if (source === 'live' && (!livePreviewActiveRef.current || previewMutation.isPending)) {
@@ -190,37 +276,20 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
         return;
       }
 
-      const normalize = (value: string | null | undefined) => {
-        if (value == null) {
-          return null;
-        }
-
-        const trimmed = value.trim();
-        return trimmed.length > 0 ? trimmed : null;
-      };
-
-      const normalizedStop = normalize(input.stopPrice);
-      const normalizedEntry = normalize(input.entryPrice);
-
-      if (!input.useVolatilityStop && normalizedStop == null) {
+      const payload = buildTradePayload();
+      if (!payload) {
         if (source === 'live') {
           livePreviewActiveRef.current = false;
         }
-        setStatus('error', 'Stop price is required when volatility stop is disabled');
+        setStatus('error', STOP_REQUIRED_ERROR);
         return;
       }
 
       requestSourceRef.current = source;
 
-      previewMutation.mutate({
-        ...input,
-        entryPrice: normalizedEntry,
-        stopPrice: normalizedStop,
-        riskPercent: settingsRiskPercent,
-        atrMultiplier: settingsAtrMultiplier,
-      });
+      previewMutation.mutate(payload);
     },
-    [input, previewMutation, settingsAtrMultiplier, settingsRiskPercent, setStatus],
+    [buildTradePayload, previewMutation, setStatus],
   );
 
   useEffect(() => {
@@ -352,6 +421,20 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
     requestPreview('manual');
   }, [requestPreview]);
 
+  const executeTrade = useCallback(() => {
+    if (!output || executeMutation.isPending) {
+      return;
+    }
+
+    const payload = buildTradePayload();
+    if (!payload) {
+      setStatus('error', STOP_REQUIRED_ERROR);
+      return;
+    }
+
+    executeMutation.mutate(payload);
+  }, [buildTradePayload, executeMutation, output, setStatus]);
+
   const riskSummary = useMemo(() => {
     const riskToReward = output?.riskToReward ?? null;
     if (riskToReward == null) {
@@ -395,6 +478,7 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
 
   const hasOutput = Boolean(output);
   const shouldShowErrorBanner = Boolean(hasOutput && status === 'error' && errorMessage);
+  const canExecute = Boolean(output) && !executeMutation.isPending;
 
   return {
     input,
@@ -408,6 +492,8 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
     isFormOpen,
     formMode,
     isSubmitting: previewMutation.isPending,
+    isExecuting: executeMutation.isPending,
+    canExecute,
     marketStream,
     historyItems,
     historyQuery,
@@ -419,6 +505,7 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
       openEdit,
       closeForm,
       submitForm,
+      execute: executeTrade,
     },
     fieldHandlers: {
       onAccountSizeChange: handleAccountSizeChange,

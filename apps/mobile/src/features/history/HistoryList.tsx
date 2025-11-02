@@ -49,7 +49,7 @@ export const HistoryList = ({ items, loading = false, onRefresh, onLoadMore }: H
           <View style={styles.item}>
             <View style={styles.headerRow}>
               <Text style={styles.symbol}>{item.input.symbol}</Text>
-              <Text style={styles.timestamp}>{new Date(item.createdAt).toLocaleString()}</Text>
+              <Text style={styles.timestamp}>{new Date(item.executedAt).toLocaleString()}</Text>
             </View>
             <View style={styles.row}>
               <Text style={styles.label}>Position</Text>

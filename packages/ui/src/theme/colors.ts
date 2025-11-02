@@ -1,4 +1,4 @@
-import type { ThemeColorScheme, ThemeColorTokens } from './types.js';
+import type { ThemeColorScheme, ThemeColorTokens } from './types.ts';
 
 const baseColors = {
   white: '#FFFFFF',

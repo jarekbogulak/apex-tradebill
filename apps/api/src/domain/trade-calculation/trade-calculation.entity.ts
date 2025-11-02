@@ -4,6 +4,7 @@ import {
   type TradeCalculation,
   type TradeInput,
   type TradeOutput,
+  type TradeExecutionMethod,
   type TradeSource,
 } from '@apex-tradebill/types';
 import { randomUUID } from 'node:crypto';
@@ -13,18 +14,23 @@ const now = () => new Date().toISOString();
 export interface NewTradeCalculationInput {
   id?: string;
   userId: string;
+  executionMethod: TradeExecutionMethod;
   input: TradeInput;
   output: TradeOutput;
   marketSnapshot: MarketSnapshot;
   source?: TradeSource;
   createdAt?: string;
+  executedAt?: string;
 }
 
 export const createTradeCalculation = (input: NewTradeCalculationInput): TradeCalculation => {
   const createdAt = input.createdAt ?? now();
+  const executedAt = input.executedAt ?? createdAt;
   return TradeCalculationSchema.parse({
     id: input.id ?? randomUUID(),
     userId: input.userId,
+    executionMethod: input.executionMethod,
+    executedAt,
     input: input.input,
     output: input.output,
     marketSnapshot: input.marketSnapshot,

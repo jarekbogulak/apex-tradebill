@@ -14,6 +14,10 @@ export interface TradePreviewResponse {
   warnings: TradeWarningCode[];
 }
 
+export interface TradeExecuteResponse extends TradePreviewResponse {
+  calculation: TradeCalculation;
+}
+
 export interface TradeHistoryResponse {
   items: TradeCalculation[];
   nextCursor: string | null;
@@ -36,6 +40,7 @@ export interface EquityResponse {
 
 export interface ApiClient {
   previewTrade(input: TradeInput): Promise<TradePreviewResponse>;
+  executeTrade(input: TradeInput): Promise<TradeExecuteResponse>;
   getTradeHistory(params: { limit?: number; cursor?: string | null }): Promise<TradeHistoryResponse>;
   getSettings(): Promise<SettingsResponse>;
   updateSettings(patch: Partial<SettingsResponse>): Promise<SettingsResponse>;
@@ -46,12 +51,17 @@ const createHeaders = () => ({
   'Content-Type': 'application/json',
 });
 
-const handleResponse = async <T>(response: Response): Promise<T> => {
+const parseJsonResponse = async <T>(response: Response): Promise<T> => {
+  const text = await response.text();
   if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Request failed (${response.status}): ${errorBody}`);
+    throw new Error(`Request failed (${response.status}): ${text}`);
   }
-  return response.json() as Promise<T>;
+
+  try {
+    return JSON.parse(text) as T;
+  } catch (error) {
+    throw new Error(`Failed to parse response JSON: ${text}`);
+  }
 };
 
 export const createApiClient = (baseUrl: string = env.api.baseUrl): ApiClient => {
@@ -62,7 +72,15 @@ export const createApiClient = (baseUrl: string = env.api.baseUrl): ApiClient =>
         headers: createHeaders(),
         body: JSON.stringify(input),
       });
-      return handleResponse<TradePreviewResponse>(response);
+      return parseJsonResponse<TradePreviewResponse>(response);
+    },
+    async executeTrade(input) {
+      const response = await fetch(`${baseUrl}/v1/trades/execute`, {
+        method: 'POST',
+        headers: createHeaders(),
+        body: JSON.stringify(input),
+      });
+      return parseJsonResponse<TradeExecuteResponse>(response);
     },
     async getTradeHistory({ limit = 20, cursor = null } = {}) {
       const params = new URLSearchParams();
@@ -75,11 +93,11 @@ export const createApiClient = (baseUrl: string = env.api.baseUrl): ApiClient =>
 
       const url = `${baseUrl}/v1/trades/history${params.toString() ? `?${params.toString()}` : ''}`;
       const response = await fetch(url, { headers: createHeaders() });
-      return handleResponse<TradeHistoryResponse>(response);
+      return parseJsonResponse<TradeHistoryResponse>(response);
     },
     async getSettings() {
       const response = await fetch(`${baseUrl}/v1/settings`, { headers: createHeaders() });
-      return handleResponse<SettingsResponse>(response);
+      return parseJsonResponse<SettingsResponse>(response);
     },
     async updateSettings(patch) {
       const response = await fetch(`${baseUrl}/v1/settings`, {
@@ -87,11 +105,11 @@ export const createApiClient = (baseUrl: string = env.api.baseUrl): ApiClient =>
         headers: createHeaders(),
         body: JSON.stringify(patch),
       });
-      return handleResponse<SettingsResponse>(response);
+      return parseJsonResponse<SettingsResponse>(response);
     },
     async getEquity() {
       const response = await fetch(`${baseUrl}/v1/accounts/equity`, { headers: createHeaders() });
-      return handleResponse<EquityResponse>(response);
+      return parseJsonResponse<EquityResponse>(response);
     },
   };
 };

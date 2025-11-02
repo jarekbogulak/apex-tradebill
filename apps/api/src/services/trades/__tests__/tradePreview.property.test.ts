@@ -91,7 +91,7 @@ describe('Trade preview property suite', () => {
     expect(result.output.atr13).toBe(result.marketSnapshot.atr13);
 
     const history = await repository.listRecent(PRIMARY_USER_ID, 10);
-    expect(history.items).toHaveLength(1);
+    expect(history.items).toHaveLength(0);
   });
 
   test('precision aligns with market tick sizes', async () => {
@@ -177,5 +177,37 @@ describe('Trade preview property suite', () => {
     expect(result.output.suggestedStop).toBeDefined();
     expect(result.output.warnings).not.toContain('VOLATILITY_STOP_GREATER');
     expect(result.output.positionSize).not.toBe('0.0000');
+  });
+
+  test('execute persists calculation with execution metadata', async () => {
+    const repository = createInMemoryTradeCalculationRepository();
+    const service = createTradePreviewService({
+      marketData: baseMarketData,
+      metadata: baseMetadata,
+      tradeCalculations: repository,
+    });
+
+    const result = await service.execute(PRIMARY_USER_ID, {
+      symbol: 'BTC-USDT',
+      direction: 'long',
+      accountSize: '10000.00',
+      entryPrice: '100.00',
+      stopPrice: '90.00',
+      targetPrice: '130.00',
+      riskPercent: '0.02',
+      atrMultiplier: '1.50',
+      useVolatilityStop: false,
+      timeframe: '15m',
+      accountEquitySource: 'manual',
+    });
+
+    expect(result.calculation.executionMethod).toBe('execute-button');
+    expect(result.calculation.executedAt).toBeDefined();
+    expect(result.calculation.userId).toBe(PRIMARY_USER_ID);
+
+    const history = await repository.listRecent(PRIMARY_USER_ID, 10);
+    expect(history.items).toHaveLength(1);
+    expect(history.items[0].executionMethod).toBe('execute-button');
+    expect(history.items[0].executedAt).toBe(result.calculation.executedAt);
   });
 });

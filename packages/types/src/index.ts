@@ -1,1 +1,1 @@
-export * from './trading.js';
+export * from './trading.ts';

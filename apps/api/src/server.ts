@@ -20,6 +20,7 @@ import type {
 } from './domain/ports/tradebillPorts.js';
 import getSymbolRoute from './routes/markets/getSymbol.js';
 import postPreviewRoute from './routes/trades/postPreview.js';
+import postExecuteRoute from './routes/trades/postExecute.js';
 import getHistoryRoute from './routes/trades/getHistory.js';
 import postHistoryImportRoute from './routes/trades/postHistoryImport.js';
 import getSettingsRoute from './routes/settings/getSettings.js';
@@ -481,6 +482,10 @@ export const buildServer = async (): Promise<FastifyInstance> => {
   });
 
   await app.register(postPreviewRoute, {
+    previewService: services.previewService,
+  });
+
+  await app.register(postExecuteRoute, {
     previewService: services.previewService,
   });
 

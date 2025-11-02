@@ -1,11 +1,11 @@
-export { colors } from './colors.js';
+export { colors } from './colors.ts';
 export { ThemeProvider, ThemeContextInstance, useTheme, useThemeColor } from './ThemeProvider.tsx';
-export { createTheme, darkTheme, lightTheme, themes } from './theme.js';
-export { radii, shadows, spacing, typography } from './tokens.js';
+export { createTheme, darkTheme, lightTheme, themes } from './theme.ts';
+export { radii, shadows, spacing, typography } from './tokens.ts';
 export type {
   Theme,
   ThemeScheme,
-} from './theme.js';
+} from './theme.ts';
 export type {
   ThemeColorScheme,
   ThemeColorToken,
@@ -18,4 +18,4 @@ export type {
   ThemeSpacingToken,
   ThemeTokens,
   ThemeTypographyScale,
-} from './types.js';
+} from './types.ts';

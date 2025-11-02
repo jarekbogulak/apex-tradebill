@@ -1,7 +1,7 @@
 import { createContext, type ComponentType, type ReactNode, useContext, useMemo } from 'react';
 
-import { createTheme, darkTheme, lightTheme } from './theme.js';
-import type { CreateThemeOptions, ThemeColorToken, ThemeTokens } from './types.js';
+import { createTheme, darkTheme, lightTheme } from './theme.ts';
+import type { CreateThemeOptions, ThemeColorToken, ThemeTokens } from './types.ts';
 
 type ThemeContextValue = ThemeTokens;
 

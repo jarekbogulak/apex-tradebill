@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { formatCurrency, formatPercent } from '@apex-tradebill/utils';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { TradeWarningCode } from '@apex-tradebill/types';
 import { useTheme, type Theme } from '@apex-tradebill/ui';
@@ -27,6 +27,9 @@ interface TradeBillCardProps {
     visualizationStop: string;
   };
   onEditPress: () => void;
+  onExecutePress: () => void;
+  canExecute: boolean;
+  isExecuting: boolean;
 }
 
 const formatTimestamp = (value: string | null) => {
@@ -54,6 +57,9 @@ export const TradeBillCard = ({
   riskSummary,
   derivedValues,
   onEditPress,
+  onExecutePress,
+  canExecute,
+  isExecuting,
 }: TradeBillCardProps) => {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -73,6 +79,7 @@ export const TradeBillCard = ({
     { title: 'Trade', items: tradeDetails },
     { title: 'Risk', items: riskDetails },
   ];
+  const executeDisabled = !canExecute || isExecuting;
 
   return (
     <View style={styles.card}>
@@ -141,6 +148,22 @@ export const TradeBillCard = ({
         stopPrice={derivedValues.visualizationStop}
         targetPrice={input.targetPrice}
       />
+
+      <View style={styles.footer}>
+        <Pressable
+          style={[styles.executeButton, executeDisabled && styles.executeButtonDisabled]}
+          onPress={onExecutePress}
+          disabled={executeDisabled}
+          accessibilityRole="button"
+          accessibilityLabel="Execute trade bill"
+        >
+          {isExecuting ? (
+            <ActivityIndicator size="small" color={theme.colors.textInverted} />
+          ) : (
+            <Text style={styles.executeButtonLabel}>Execute</Text>
+          )}
+        </Pressable>
+      </View>
     </View>
   );
 };
@@ -286,6 +309,26 @@ const createStyles = (theme: Theme) => {
     divider: {
       height: StyleSheet.hairlineWidth,
       backgroundColor: theme.colors.divider,
+    },
+    footer: {
+      marginTop: theme.spacing.md,
+    },
+    executeButton: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: theme.spacing.md,
+      borderRadius: theme.radii.lg,
+      backgroundColor: theme.colors.accent,
+      flexDirection: 'row',
+      gap: theme.spacing.sm,
+    },
+    executeButtonDisabled: {
+      opacity: 0.5,
+    },
+    executeButtonLabel: {
+      color: theme.colors.textInverted,
+      fontWeight: '700',
+      fontSize: 16,
     },
   } as const;
 };

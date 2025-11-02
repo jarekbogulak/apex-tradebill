@@ -1,5 +1,6 @@
 import {
   MarketSnapshotSchema,
+  TradeExecutionMethodSchema,
   TradeInputSchema,
   TradeOutputSchema,
   TradeSourceSchema,
@@ -23,7 +24,10 @@ const DeviceCacheImportSchema = z.object({
   marketSnapshot: MarketSnapshotSchema,
   source: TradeSourceSchema.optional(),
   createdAt: z.string().datetime(),
+  executionMethod: TradeExecutionMethodSchema.optional(),
+  executedAt: z.string().datetime().optional(),
 });
+type DeviceCacheImport = z.infer<typeof DeviceCacheImportSchema>;
 
 const BodySchema = z.object({
   entries: z.array(DeviceCacheImportSchema).min(1),
@@ -77,7 +81,8 @@ export const postHistoryImportRoute: FastifyPluginAsync<PostHistoryImportRouteOp
       const userId = resolveUserId(request);
       const syncedIds: string[] = [];
 
-      for (const entry of parseResult.data.entries) {
+      for (const rawEntry of parseResult.data.entries) {
+        const entry: DeviceCacheImport = rawEntry;
         try {
           const calculation = createTradeCalculation({
             userId,
@@ -86,6 +91,8 @@ export const postHistoryImportRoute: FastifyPluginAsync<PostHistoryImportRouteOp
             marketSnapshot: entry.marketSnapshot,
             source: entry.source ?? 'manual',
             createdAt: entry.createdAt,
+            executionMethod: entry.executionMethod ?? 'history-import',
+            executedAt: entry.executedAt ?? entry.createdAt,
           });
           await tradeCalculations.save(calculation);
           syncedIds.push(entry.id);

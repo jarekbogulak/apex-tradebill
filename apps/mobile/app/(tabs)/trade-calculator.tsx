@@ -27,6 +27,8 @@ export default function TradeCalculatorScreen() {
     isFormOpen,
     formMode,
     isSubmitting,
+    isExecuting,
+    canExecute,
     marketStream,
     historyItems,
     historyQuery,
@@ -67,6 +69,9 @@ export default function TradeCalculatorScreen() {
             riskSummary={riskSummary}
             derivedValues={derivedValues}
             onEditPress={actions.openEdit}
+            onExecutePress={actions.execute}
+            canExecute={canExecute}
+            isExecuting={isExecuting}
           />
         ) : (
           <TradeBillEmptyCard status={status} errorMessage={errorMessage} onCreatePress={actions.openCreate} />

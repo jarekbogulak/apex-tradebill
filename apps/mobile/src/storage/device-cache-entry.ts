@@ -1,4 +1,9 @@
-import type { TradeCalculation, TradeInput, TradeOutput } from '@apex-tradebill/types';
+import type {
+  TradeCalculation,
+  TradeExecutionMethod,
+  TradeInput,
+  TradeOutput,
+} from '@apex-tradebill/types';
 
 interface SQLiteBatchStatement {
   sql: string;
@@ -49,6 +54,8 @@ export interface DeviceCacheEntry {
   id: string;
   input: TradeInput;
   output: TradeOutput;
+  executionMethod: TradeExecutionMethod;
+  executedAt: string;
   createdAt: string;
   syncedAt: string | null;
   dirty: boolean;
@@ -68,10 +75,45 @@ const ensureTable = () => {
         id TEXT PRIMARY KEY NOT NULL,
         input TEXT NOT NULL,
         output TEXT NOT NULL,
+        execution_method TEXT NOT NULL DEFAULT 'execute-button',
+        executed_at TEXT NOT NULL DEFAULT (datetime('now')),
         created_at TEXT NOT NULL,
         synced_at TEXT,
         dirty INTEGER NOT NULL
       );`,
+      args: [],
+    },
+  ]);
+
+  try {
+    db.exec?.([
+      {
+        sql: `ALTER TABLE ${TABLE_NAME} ADD COLUMN execution_method TEXT NOT NULL DEFAULT 'execute-button';`,
+        args: [],
+      },
+    ]);
+  } catch {
+    // ignore duplicate column errors
+  }
+
+  try {
+    db.exec?.([
+      {
+        sql: `ALTER TABLE ${TABLE_NAME} ADD COLUMN executed_at TEXT NOT NULL DEFAULT (datetime('now'));`,
+        args: [],
+      },
+    ]);
+  } catch {
+    // ignore duplicate column errors
+  }
+
+  db.exec?.([
+    {
+      sql: `UPDATE ${TABLE_NAME} SET execution_method = COALESCE(execution_method, 'execute-button');`,
+      args: [],
+    },
+    {
+      sql: `UPDATE ${TABLE_NAME} SET executed_at = COALESCE(executed_at, created_at);`,
       args: [],
     },
   ]);
@@ -88,6 +130,8 @@ export const saveDeviceCacheEntry = async (entry: DeviceCacheEntry): Promise<voi
       ...entry.output,
       atr13: entry.output.atr13 ?? '0.00000000',
     },
+    executionMethod: entry.executionMethod ?? 'execute-button',
+    executedAt: entry.executedAt ?? entry.createdAt,
   };
 
   const db = openDatabase();
@@ -103,12 +147,14 @@ export const saveDeviceCacheEntry = async (entry: DeviceCacheEntry): Promise<voi
 
   db.exec?.([
     {
-      sql: `INSERT OR REPLACE INTO ${TABLE_NAME} (id, input, output, created_at, synced_at, dirty)
-        VALUES (?, ?, ?, ?, ?, ?);`,
+      sql: `INSERT OR REPLACE INTO ${TABLE_NAME} (id, input, output, execution_method, executed_at, created_at, synced_at, dirty)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
       args: [
         normalizedEntry.id,
         JSON.stringify(normalizedEntry.input),
         JSON.stringify(normalizedEntry.output),
+        normalizedEntry.executionMethod,
+        normalizedEntry.executedAt,
         normalizedEntry.createdAt,
         normalizedEntry.syncedAt,
         normalizedEntry.dirty ? 1 : 0,
@@ -138,6 +184,8 @@ const mapRowToEntry = (row: Record<string, unknown>): DeviceCacheEntry => {
     id: String(row.id),
     input,
     output,
+    executionMethod: (row.execution_method as TradeExecutionMethod | undefined) ?? 'execute-button',
+    executedAt: (row.executed_at as string | null) ?? String(row.created_at),
     createdAt: String(row.created_at),
     syncedAt: (row.synced_at as string | null) ?? null,
     dirty: Boolean(row.dirty),
@@ -153,7 +201,7 @@ export const listDeviceCacheEntries = async (limit = MAX_ENTRIES): Promise<Devic
   ensureTable();
 
   const result = db.getAll?.(
-    `SELECT id, input, output, created_at, synced_at, dirty FROM ${TABLE_NAME}
+    `SELECT id, input, output, execution_method, executed_at, created_at, synced_at, dirty FROM ${TABLE_NAME}
      ORDER BY datetime(created_at) DESC LIMIT ?`,
     [limit],
   );
@@ -211,6 +259,8 @@ export const removeDeviceCacheEntry = async (id: string): Promise<void> => {
 export const toTradeCalculation = (entry: DeviceCacheEntry): TradeCalculation => ({
   id: entry.id,
   userId: 'local-device',
+  executionMethod: entry.executionMethod,
+  executedAt: entry.executedAt,
   input: entry.input,
   output: entry.output,
   marketSnapshot: {

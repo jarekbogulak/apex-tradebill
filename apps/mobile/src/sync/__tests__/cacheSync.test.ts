@@ -65,6 +65,8 @@ const buildEntry = () => ({
     atr13: '0.00000000',
     warnings: [],
   },
+  executionMethod: 'execute-button' as const,
+  executedAt: '2025-01-01T00:00:00.000Z',
   createdAt: '2025-01-01T00:00:00.000Z',
   syncedAt: null,
   dirty: true,
@@ -76,6 +78,8 @@ describe('createCacheSyncWorker', () => {
     const calculation: TradeCalculation = {
       id: entry.id,
       userId: 'local-device',
+      executionMethod: 'execute-button',
+      executedAt: entry.executedAt,
       input: entry.input,
       output: entry.output,
       marketSnapshot: {
@@ -139,6 +143,8 @@ describe('createCacheSyncWorker', () => {
     mockToTradeCalculation.mockReturnValue({
       id: entry.id,
       userId: 'user',
+      executionMethod: 'execute-button',
+      executedAt: entry.executedAt,
       input: entry.input,
       output: entry.output,
       marketSnapshot: {

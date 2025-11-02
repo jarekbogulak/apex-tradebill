@@ -1,6 +1,6 @@
-import { Decimal, toDecimal } from './decimal.js';
-import type { DecimalValue } from './decimal.js';
-export type { DecimalValue } from './decimal.js';
+import { Decimal, toDecimal } from './decimal.ts';
+import type { DecimalValue } from './decimal.ts';
+export type { DecimalValue } from './decimal.ts';
 
 const DEFAULT_PRICE_TICK = '0.01';
 const DEFAULT_QUANTITY_STEP = '0.000001';

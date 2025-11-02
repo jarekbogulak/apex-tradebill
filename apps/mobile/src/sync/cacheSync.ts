@@ -5,7 +5,7 @@ import {
   removeDeviceCacheEntry,
   toTradeCalculation,
   type DeviceCacheEntry,
-} from '../storage/device-cache-entry.js';
+} from '../storage/device-cache-entry.ts';
 import { env } from '../config/env';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
@@ -103,6 +103,8 @@ export const createCacheSyncWorker = ({
         marketSnapshot: calculation.marketSnapshot,
         source: calculation.source,
         createdAt: entry.createdAt,
+        executionMethod: entry.executionMethod,
+        executedAt: entry.executedAt,
       }));
       const headers = await buildRequestHeaders(getHeaders);
 

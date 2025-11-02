@@ -47,6 +47,9 @@ export type MarketDataSource = z.infer<typeof MarketDataSourceSchema>;
 export const TradeSourceSchema = z.enum(['live', 'manual']);
 export type TradeSource = z.infer<typeof TradeSourceSchema>;
 
+export const TradeExecutionMethodSchema = z.enum(['execute-button', 'history-import']);
+export type TradeExecutionMethod = z.infer<typeof TradeExecutionMethodSchema>;
+
 export const TradeWarningCodeSchema = z.enum([
   'ATR_STALE',
   'INSUFFICIENT_EQUITY',
@@ -168,6 +171,8 @@ export type MarketSnapshot = z.infer<typeof MarketSnapshotSchema>;
 export const TradeCalculationSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
+  executionMethod: TradeExecutionMethodSchema,
+  executedAt: z.string().datetime(),
   input: TradeInputSchema,
   output: TradeOutputSchema,
   marketSnapshot: MarketSnapshotSchema,

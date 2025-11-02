@@ -3,8 +3,10 @@ import {
   TradeOutputSchema,
   TradeWarningCodeSchema,
   type MarketSnapshot,
+  type TradeCalculation,
   type TradeInput,
   type TradeOutput,
+  type TradeSource,
   type TradeWarningCode,
 } from '@apex-tradebill/types';
 import {
@@ -32,6 +34,10 @@ export interface TradePreviewResult {
   output: TradeOutput;
   marketSnapshot: MarketSnapshot;
   warnings: TradeWarningCode[];
+}
+
+export interface TradeExecuteResult extends TradePreviewResult {
+  calculation: TradeCalculation;
 }
 
 const dedupeWarnings = (warnings: TradeWarningCode[]): TradeWarningCode[] => {
@@ -77,6 +83,11 @@ const computeSuggestedStop = (
 
   return lastPrice.plus(displacement);
 };
+
+interface TradeComputation extends TradePreviewResult {
+  input: TradeInput;
+  source: TradeSource;
+}
 
 const collectWarnings = ({
   input,
@@ -150,7 +161,7 @@ export const createTradePreviewService = ({
   metadata,
   tradeCalculations,
 }: TradePreviewServiceDeps) => {
-  const preview = async (userId: string, rawInput: TradeInput): Promise<TradePreviewResult> => {
+  const computeTrade = async (rawInput: TradeInput): Promise<TradeComputation> => {
     const input = TradeInputSchema.parse(rawInput);
 
     const symbolMetadata = await metadata.getMetadata(input.symbol);
@@ -264,26 +275,51 @@ export const createTradePreviewService = ({
       atr13: atrValueString,
       atrMultiplier: input.atrMultiplier,
     };
+    const source: TradeSource =
+      input.accountEquitySource === 'manual' ? 'manual' : 'live';
 
-    const calculation = createTradeCalculation({
-      userId,
+    return {
       input,
       output,
       marketSnapshot,
-      source: input.accountEquitySource === 'manual' ? 'manual' : 'live',
+      warnings,
+      source,
+    };
+  };
+
+  const preview = async (_userId: string, rawInput: TradeInput): Promise<TradePreviewResult> => {
+    const result = await computeTrade(rawInput);
+    return {
+      output: result.output,
+      marketSnapshot: result.marketSnapshot,
+      warnings: result.warnings,
+    };
+  };
+
+  const execute = async (userId: string, rawInput: TradeInput): Promise<TradeExecuteResult> => {
+    const result = await computeTrade(rawInput);
+    const calculation = createTradeCalculation({
+      userId,
+      executionMethod: 'execute-button',
+      input: result.input,
+      output: result.output,
+      marketSnapshot: result.marketSnapshot,
+      source: result.source,
     });
 
-    await tradeCalculations.save(calculation);
+    const saved = await tradeCalculations.save(calculation);
 
     return {
-      output,
-      marketSnapshot,
-      warnings,
+      calculation: saved,
+      output: result.output,
+      marketSnapshot: result.marketSnapshot,
+      warnings: result.warnings,
     };
   };
 
   return {
     preview,
+    execute,
   };
 };
 
