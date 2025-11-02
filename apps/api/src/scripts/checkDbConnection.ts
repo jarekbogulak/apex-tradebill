@@ -27,7 +27,7 @@ const resolveTarget = () => {
 
 const run = async () => {
   const target = resolveTarget();
-  console.log(`Checking database connectivity for ${target} ...`);
+  process.stdout.write(`Checking database connectivity for ${target} ...\n`);
 
   const pool = await getSharedDatabasePool();
 
@@ -35,7 +35,7 @@ const run = async () => {
     const result = await pool.query<{ ok: number }>('SELECT 1 AS ok;');
     const ok = result.rows[0]?.ok;
     if (ok === 1) {
-      console.log('Database connectivity check succeeded.');
+      process.stdout.write('Database connectivity check succeeded.\n');
     } else {
       console.warn('Database connectivity check returned an unexpected result:', result.rows);
     }
