@@ -1,2 +1,2 @@
-export * from './rounding.ts';
-export * from './formatting.ts';
+export * from './rounding.js';
+export * from './formatting.js';

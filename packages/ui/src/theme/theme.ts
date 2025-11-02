@@ -1,6 +1,6 @@
-import { getColorsForScheme } from './colors.ts';
-import { radii, shadows, spacing, typography } from './tokens.ts';
-import type { CreateThemeOptions, ThemeTokens, ThemeTypographyScale } from './types.ts';
+import { getColorsForScheme } from './colors.js';
+import { radii, shadows, spacing, typography } from './tokens.js';
+import type { CreateThemeOptions, ThemeTokens, ThemeTypographyScale } from './types.js';
 
 const mergeTypography = (
   base: ThemeTypographyScale,

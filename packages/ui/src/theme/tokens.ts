@@ -3,7 +3,7 @@ import type {
   ThemeShadowScale,
   ThemeSpacingScale,
   ThemeTypographyScale,
-} from './types.ts';
+} from './types.js';
 
 export const spacing: ThemeSpacingScale = {
   xxs: 2,

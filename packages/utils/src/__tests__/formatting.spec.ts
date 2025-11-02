@@ -1,4 +1,4 @@
-import { contrastRatio, formatCurrency, formatPercent, getContrastTokens } from '../formatting.ts';
+import { contrastRatio, formatCurrency, formatPercent, getContrastTokens } from '../formatting.js';
 
 describe('Formatting utilities', () => {
   test('applies locale-aware currency and percentage formats', () => {

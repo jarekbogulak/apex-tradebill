@@ -6,7 +6,7 @@ import {
   roundPriceToTick,
   violatesMinNotional,
   violatesMinQuantity,
-} from '../rounding.ts';
+} from '../rounding.js';
 
 describe('Rounding rules utilities', () => {
   test('enforces tick size floors for market quantities', () => {

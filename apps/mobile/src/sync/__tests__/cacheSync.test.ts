@@ -14,11 +14,11 @@ jest.mock('react-native/Libraries/TurboModule/TurboModuleRegistry', () => ({
   },
 }));
 
-jest.mock('../../storage/device-cache-entry.ts');
+jest.mock('../../storage/device-cache-entry.js');
 
 import type { TradeCalculation } from '@apex-tradebill/types';
-import * as deviceCacheEntry from '../../storage/device-cache-entry.ts';
-import { createCacheSyncWorker } from '../cacheSync.ts';
+import * as deviceCacheEntry from '../../storage/device-cache-entry.js';
+import { createCacheSyncWorker } from '../cacheSync.js';
 
 const mockListDeviceCacheEntries = deviceCacheEntry
   .listDeviceCacheEntries as jest.Mock;

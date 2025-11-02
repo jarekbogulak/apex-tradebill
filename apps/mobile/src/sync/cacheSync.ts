@@ -5,7 +5,7 @@ import {
   removeDeviceCacheEntry,
   toTradeCalculation,
   type DeviceCacheEntry,
-} from '../storage/device-cache-entry.ts';
+} from '../storage/device-cache-entry.js';
 import { env } from '../config/env';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
