@@ -60,7 +60,7 @@ const parseJsonResponse = async <T>(response: Response): Promise<T> => {
   try {
     return JSON.parse(text) as T;
   } catch (error) {
-    throw new Error(`Failed to parse response JSON: ${text}`);
+    throw new Error(`Failed to parse response JSON: ${text}`, { cause: error });
   }
 };
 

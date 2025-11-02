@@ -44,6 +44,118 @@ export const formatPercent = (
   }).format(value);
 };
 
+export interface CompactCurrencyFormatOptions extends CurrencyFormatOptions {
+  threshold?: number;
+  compactMinimumFractionDigits?: number;
+  compactMaximumFractionDigits?: number;
+}
+
+const compactSuffixTiers = [
+  { value: 1_000_000_000_000, suffix: 'T' },
+  { value: 1_000_000_000, suffix: 'B' },
+  { value: 1_000_000, suffix: 'M' },
+  { value: 1_000, suffix: 'K' },
+] as const;
+
+const compactSupportCache = new Map<string, boolean>();
+
+const hasNativeCompactSupport = (locale: string, currency: string): boolean => {
+  const cacheKey = `${locale}-${currency}`;
+  if (compactSupportCache.has(cacheKey)) {
+    return compactSupportCache.get(cacheKey) ?? false;
+  }
+
+  try {
+    const baselineFormatter = new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+    const compactFormatter = new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency,
+      notation: 'compact',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+
+    const baseline = baselineFormatter.format(1_000);
+    const compact = compactFormatter.format(1_000);
+    const supported = baseline !== compact;
+    compactSupportCache.set(cacheKey, supported);
+    return supported;
+  } catch {
+    compactSupportCache.set(cacheKey, false);
+    return false;
+  }
+};
+
+export const formatCurrencyCompact = (
+  value: number | string,
+  {
+    threshold = 1000,
+    locale = 'en-US',
+    currency = 'USD',
+    minimumFractionDigits = 2,
+    maximumFractionDigits = 2,
+    compactMinimumFractionDigits = 0,
+    compactMaximumFractionDigits = 0,
+  }: CompactCurrencyFormatOptions = {},
+): string => {
+  const numericValue = typeof value === 'string' ? Number.parseFloat(value) : value;
+  const resolvedValue = Number.isFinite(numericValue) ? numericValue : 0;
+
+  const standardFormatted = formatCurrency(resolvedValue, {
+    locale,
+    currency,
+    minimumFractionDigits,
+    maximumFractionDigits,
+  });
+
+  if (Math.abs(resolvedValue) < threshold) {
+    return standardFormatted;
+  }
+
+  const compactMin = Math.max(0, compactMinimumFractionDigits ?? 0);
+  const compactMax = Math.max(compactMin, compactMaximumFractionDigits ?? compactMin);
+
+  if (hasNativeCompactSupport(locale, currency)) {
+    try {
+      const compactFormatter = new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency,
+        notation: 'compact',
+        minimumFractionDigits: compactMin,
+        maximumFractionDigits: compactMax,
+      });
+      const formatted = compactFormatter.format(resolvedValue);
+
+      if (formatted !== standardFormatted) {
+        return formatted;
+      }
+    } catch {
+      // fall through to manual fallback
+    }
+  }
+
+  const absolute = Math.abs(resolvedValue);
+  const tier =
+    compactSuffixTiers.find(({ value: tierValue }) => absolute >= tierValue) ?? {
+      value: threshold,
+      suffix: '',
+    };
+
+  const scaled = resolvedValue / tier.value;
+  const scaledFormatter = new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: compactMin,
+    maximumFractionDigits: compactMax,
+  });
+  return `${scaledFormatter.format(scaled)}${tier.suffix}`;
+};
+
 const hexChannelToLinear = (channel: number): number => {
   const normalized = channel / 255;
   return normalized <= 0.03928

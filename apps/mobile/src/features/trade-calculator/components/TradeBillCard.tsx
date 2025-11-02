@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { formatCurrency, formatPercent } from '@apex-tradebill/utils';
+import { formatCurrency, formatCurrencyCompact, formatPercent } from '@apex-tradebill/utils';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { TradeWarningCode } from '@apex-tradebill/types';
@@ -101,13 +101,16 @@ export const TradeBillCard = ({
               styles.metricValue,
               { color: riskToneColors[riskSummary.tone] ?? riskToneColors.neutral },
             ]}
+            numberOfLines={1}
           >
             {formatRiskReward(riskSummary.riskToReward)}
           </Text>
         </View>
         <View style={styles.metricCard}>
           <Text style={styles.metricLabel}>Position Cost</Text>
-          <Text style={[styles.metricValue, styles.metricAccent]}>{formatCurrency(output.positionCost)}</Text>
+          <Text style={[styles.metricValue, styles.metricAccent]} numberOfLines={1}>
+            {formatCurrencyCompact(output.positionCost)}
+          </Text>
         </View>
       </View>
 
