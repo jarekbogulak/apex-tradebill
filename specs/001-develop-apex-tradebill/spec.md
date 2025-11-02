@@ -67,20 +67,23 @@ When creating this spec from a user prompt:
 As a day trader, I want to quickly input a trade idea (account size, direction, entry, stop, target) and immediately see position size, risk, and risk‑to‑reward based on live market data so that I can decide and act with confidence.
 
 ### Acceptance Scenarios
-1. Given live market data is available and the user provides account size, direction, stop preference, target, and risk %, when the user commits the scenario, then position size, position cost, absolute risk amount, and risk-to-reward display immediately.
+1. Given live market data is available and the user provides account size, direction, stop preference, target, and risk %, when the user presses Execute, then the current trade bill persists to history and position size, position cost, absolute risk amount, and risk-to-reward display immediately.
 2. Given the user has not entered an entry price, when the platform receives the latest market price, then the entry field defaults to that price and continues tracking live updates until the user overrides it.
 3. Given the user manually edits the entry price while live data is streaming, when the change is applied, then the entry field pauses automatic updates until the user clears it, after which the most recent market price returns.
 4. Given the user elects to use a volatility-derived stop, when that preference becomes active, then the manual stop input may remain blank and the system applies the ATR-based stop distance to all calculations.
 5. Given live data becomes temporarily unavailable, when the user opens the calculator or adjusts inputs, then the experience signals the stale state and allows manual price entry with clear labeling.
 6. Given the user is signed in and the connected trading account provides equity, when the calculator loads, then the account size defaults to that equity and annotates the source; if the feed is unavailable, the user supplies the value manually.
 7. Given multiple ticks arrive within a one-second window, when the next recompute boundary is reached, then the latest tick within that window is used for sizing while previous values are discarded.
-8. Given the trade bill is presenting calculated outputs, when the system detects a new market price inside the live refresh cadence, then the trade bill refreshes automatically using the server-confirmed sizing and applies the appropriate emphasis colors for risk-to-reward thresholds.
+8. Given the trade bill is presenting calculated outputs, when the system detects a new market price inside the live refresh cadence, then the trade bill refreshes automatically using the server-confirmed sizing and applies the appropriate emphasis colors for risk-to-reward thresholds without creating a new history entry.
+9. Given the trade bill is streaming live updates, when the user does not press Execute, then no new history entries are added and the existing history remains unchanged.
+10. Given the user adjusts inputs after previously executing a calculation, when they press Execute again, then a new history entry is recorded capturing the latest state alongside the prior entry.
 
 ### Edge Cases
 - Extremely high volatility: suggested stop exceeds acceptable distance; app must still compute and warn user.
 - Very small account size or very tight stop: computed position size rounds to zero or minimum lot; app must display a clear constraint message.
 - Direction mismatch: stop/target on wrong side of entry for long/short; validation must prevent calculation until corrected.
 - Data staleness: if market snapshot is older than the freshness threshold (2 s), the app must surface a “Stale” badge, attempt auto-reconnect with 1 s→2 s→5 s backoff, prompt users to refresh, and allow clearly marked manual price entry.
+- Execute spam: rapid repeated presses of Execute must debounce or queue safely so no duplicate history entries are stored for the same state.
 
 ## Requirements *(mandatory)*
 
@@ -94,7 +97,7 @@ As a day trader, I want to quickly input a trade idea (account size, direction, 
 - **FR-007**: Users MUST be able to configure percent risk and volatility multiplier via settings and adjust them from the main flow.
 - **FR-008**: System MUST update trade outputs in real time as inputs or live market data change, without disrupting user interactions or focus states.
 - **FR-009**: System MUST provide an at‑a‑glance risk visualization showing entry, stop, and target with relative distances.
-- **FR-010**: System MUST persist a recent trade calculation history (inputs and outputs) for quick recall and review.
+- **FR-010**: System MUST persist a recent trade calculation history (inputs and outputs) for quick recall and review whenever the trader explicitly executes the current trade bill.
 - **FR-011**: Inputs MUST be validated for presence, ranges, and logical consistency (e.g., long: target > entry > stop; short: target < entry < stop).
 - **FR-012**: On data unavailability, the app MUST fail gracefully and allow manual price input with clear indication of non‑live data.
 - **FR-013**: System MUST present numbers with locale‑aware formatting and accessible contrast that meets WCAG 2.1 AA (≥4.5:1) and honours system font scaling up to 200%.
@@ -120,10 +123,19 @@ As a day trader, I want to quickly input a trade idea (account size, direction, 
 - **FR-023**: Data freshness and fallback: mark data stale after 2 seconds without an update; display a “Stale” badge; attempt reconnects with backoff (1s→2s→5s); permit manual price entry during staleness.
 - **FR-024**: Account equity source for risk %: prefer the connected trading account’s reported equity when available; otherwise require manual account size input. Clearly indicate the source (Connected or Manual) and recompute when the source or value changes.
 - **FR-025**: Price sampling rule: when multiple prices arrive within a 1-second window, use the latest price at the refresh boundary. If no price arrives in the window, carry forward the last known price and apply FR-023 staleness behavior.
-- **FR-026**: System MUST cache the most recent trade calculations locally for offline review and sync them to server history within 30 days once connectivity resumes.
+- **FR-026**: System MUST cache the most recent trade calculations locally for offline review and sync them to server history within 30 days once connectivity resumes, tagging each cached item with the execution metadata required in FR-010.
 - **FR-027**: When the volatility-based stop option is enabled, the user MAY leave the stop input blank; the system MUST interpret the toggle, apply the ATR-derived stop distance, and record that effective stop in outputs.
 - **FR-028**: The Trade Bill MUST present position size, position cost, risk amount, risk-to-reward, effective stop, target, and ATR with clear hierarchy, emphasizing risk-to-reward and applying accessible color thresholds (>150% favorable, 120%–150% watch, <120% caution).
 - **FR-029**: Visual styling across the experience MUST draw from a single, shared set of design tokens (colors, typography, spacing, elevation) so that every screen maintains consistent branding, state semantics, and dark/light support without reimplementing palette rules when the app is recreated.
+- **FR-030**: The Trade Bill MUST expose an Execute control that is visually distinct, communicates disabled states until required inputs are valid, provides immediate feedback on success or failure, and persists exactly one history entry per activation using the latest calculated values.
+- **FR-031**: Executed history entries MUST record the execution timestamp, method (`execute-button`, future extensibility), and the actor initiating the execution; real-time updates alone MUST NOT generate additional entries without a new Execute action.
+
+### Interaction & UI Guidelines *(updated)*
+- Execute button sits within the Trade Bill’s sticky footer alongside the primary outputs summary so traders can see the calculated totals immediately before committing; on tablets it aligns right with sufficient spacing from secondary actions.
+- Use the primary action color token with accessible contrast in both light and dark themes; include an iconographic affordance only if it does not reduce readability.
+- Show disabled styling (reduced opacity, no focus drop shadow) when required inputs are incomplete or invalid, and surface a concise inline error near the offending input rather than relying solely on the disabled state.
+- On press, provide instant tactile feedback (haptic on supported devices) and a confirmation toast/snackbar reading “Trade bill saved to Recent History” with a CTA to “View” history. Errors surface with actionable copy (e.g., “Save failed — retry”).
+- Debounce repeated presses within 500 ms; if a second execution is requested after inputs change, update the button label to reflect the pending state (“Saving…”) until completion.
 
 ### Performance & Reliability Targets
 - Live price change to refreshed outputs: median ≤ 250 ms; 95th percentile ≤ 500 ms on the reference mid-tier mobile device and network.
@@ -138,7 +150,7 @@ As a day trader, I want to quickly input a trade idea (account size, direction, 
 - **MarketSnapshot**: symbol, price, timestamp, volatility signal (with freshness metadata).
 - **TradeOutput**: position size (units), position cost, risk amount, risk‑to‑reward, suggested stop.
 - Update: Outputs include the effective stop source, ATR value, and any color-coded risk-to-reward signal shown in the trade bill.
-- **TradeCalculation**: persisted combination of TradeInput + TradeOutput for history display.
+- **TradeCalculation**: persisted combination of TradeInput + TradeOutput for history display. Include execution metadata: `executionMethod` (`execute-button`, future options), `executedAt` timestamp, and the initiating `userId`.
 - **User**: authenticated trader profile including role metadata and audit preferences.
 - **UserSettings**: configurable defaults (risk %, multiplier, data freshness threshold) with provenance (manual vs connected account).
 - **ConnectedAccount**: representation of the linked Apex Omni account, including equity snapshots and connection state for labeling.

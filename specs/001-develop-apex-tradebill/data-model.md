@@ -39,6 +39,8 @@
 - **Fields**
   - `id: UUID`
   - `userId: UUID`
+  - `executionMethod: enum` (`execute-button`, future extensibility)
+  - `executedAt: ISO8601`
   - `input: TradeInput (JSONB)`
   - `output: TradeOutput (JSONB)`
   - `marketSnapshot: MarketSnapshot (JSONB)`
@@ -51,7 +53,10 @@
   - `id: string` (hash of calculation id)
   - `input: TradeInput`
   - `output: TradeOutput`
+  - `executionMethod: enum` (`execute-button`)
+  - `executedAt: ISO8601`
   - `syncedAt: ISO8601`
+  - `dirty: boolean`
 - **Validation Rules**: Keep most recent 20 per device; purge entries older than 30 days once successfully synced; mark entries dirty until server acknowledgement arrives.
 
 ## DTOs (Non-Persisted)

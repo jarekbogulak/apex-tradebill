@@ -28,13 +28,14 @@
 1. **Live sizing (stub)**: Launch Expo app pointing to the Fastify stub; confirm the calculator screen renders current mock values and updates when mock timers fire.
 2. **Live sizing (real feed)**: After the ApeX WebSocket integration task, verify BTC-USDT updates every second and the stale badge appears after two seconds of silence.
 3. **Volatility multiplier**: Toggle between multiplier presets (1.0, 1.5, 2.0); confirm suggested stop and position sizing adjust using the shared calculator module.
-4. **Validation**: Enter invalid stop/target (e.g., stop above entry on long) and ensure calculation is blocked with explicit error labels.
-5. **Stale fallback**: Simulate feed outage (pause the ApeX client); check UI shows “Stale,” reconnect backoff indicators, and manual price entry unlocks.
-6. **Equity sync**: Switch between connected equity and manual entry; confirm labeling and audit trail entries align with the constitution.
-7. **History retention**: Once Supabase database writes are enabled, ensure only the most recent 30 days of trade calculations appear and older entries prune in nightly jobs.
-8. **Risk visualization**: Interact with the calculator while watching the visualization panel; verify entry/stop/target markers stay in sync with numerical outputs, use accessible contrast (WCAG AA), and do not reorder.
-9. **Settings panel**: Open the settings screen, update risk %, ATR multiplier, and freshness threshold, then confirm changes persist (SecureStore + API) and appear in subsequent calculations.
-10. **Offline cache**: Disable network connectivity, complete a calculation, and confirm the DeviceCache retains the result. Re-enable connectivity and ensure the calculation syncs into history within the 30-day window.
+4. **Execute capture**: Populate valid inputs, press Execute, and verify exactly one history entry is created with the current outputs while the button briefly enters its saving state. Repeat after adjusting inputs to ensure a second entry appends without duplicating the first.
+5. **Validation**: Enter invalid stop/target (e.g., stop above entry on long) and ensure Execute remains disabled (or fails gracefully) with explicit error labels; once corrected, Execute should succeed.
+6. **Stale fallback**: Simulate feed outage (pause the ApeX client); check UI shows “Stale,” reconnect backoff indicators, and manual price entry unlocks.
+7. **Equity sync**: Switch between connected equity and manual entry; confirm labeling and audit trail entries align with the constitution.
+8. **History retention**: Once Supabase database writes are enabled, execute multiple trades across more than 30 days of seeded data and ensure only the most recent 30 days of executed calculations appear while older entries prune in nightly jobs.
+9. **Risk visualization**: Interact with the calculator while watching the visualization panel; verify entry/stop/target markers stay in sync with numerical outputs, use accessible contrast (WCAG AA), and do not reorder.
+10. **Settings panel**: Open the settings screen, update risk %, ATR multiplier, and freshness threshold, then confirm changes persist (SecureStore + API) and appear in subsequent calculations.
+11. **Offline cache**: Disable network connectivity, complete a calculation, and press Execute to confirm the DeviceCache retains the executed result. Re-enable connectivity and ensure the calculation syncs into history within the 30-day window without duplicate entries from background refreshes.
 
 ## Shutdown
 - Stop Expo and Fastify processes.
