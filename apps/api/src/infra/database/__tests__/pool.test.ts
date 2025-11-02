@@ -3,7 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 import ts from 'typescript';
 import type { DatabaseClient, DatabasePool } from '../pool.js';
-import type * as PoolModule from '../pool.js';
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- need module function signatures for manual loader
+type PoolModule = typeof import('../pool.js');
 
 let createDatabasePool: PoolModule['createDatabasePool'];
 let closeSharedDatabasePool: PoolModule['closeSharedDatabasePool'];
@@ -244,7 +246,7 @@ describe('withTransaction', () => {
       on: jest.fn(),
     };
 
-    const result = await withTransaction(pool, async (tx) => {
+    const result = await withTransaction(pool, async (tx: DatabaseClient) => {
       await tx.query('SELECT 1;');
       return 42;
     });
@@ -276,7 +278,7 @@ describe('withTransaction', () => {
     };
 
     await expect(
-      withTransaction(pool, async (tx) => {
+      withTransaction(pool, async (tx: DatabaseClient) => {
         await tx.query('SELECT broken;');
         throw new Error('kaboom');
       }),

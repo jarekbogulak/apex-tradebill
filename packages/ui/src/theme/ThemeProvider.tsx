@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useContext, useMemo } from 'react';
+import { createContext, type ComponentType, type ReactNode, useContext, useMemo } from 'react';
 
 import { createTheme, darkTheme, lightTheme } from './theme.js';
 import type { CreateThemeOptions, ThemeColorToken, ThemeTokens } from './types.js';
@@ -47,6 +47,21 @@ export const useTheme = (): ThemeTokens => {
 export const useThemeColor = (token: ThemeColorToken): string => {
   const theme = useTheme();
   return theme.colors[token];
+};
+
+export const withThemeProvider = <P extends Record<string, unknown>>(
+  Component: ComponentType<P>,
+) => {
+  const WrappedComponent: ComponentType<P> = (props) => (
+    <ThemeProvider>
+      <Component {...props} />
+    </ThemeProvider>
+  );
+
+  const componentName = Component.displayName ?? Component.name ?? 'Component';
+  WrappedComponent.displayName = `WithThemeProvider(${componentName})`;
+
+  return WrappedComponent;
 };
 
 export const ThemeContextInstance = ThemeContext;

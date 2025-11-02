@@ -11,6 +11,7 @@
   "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "exclude": ["dist", "node_modules"],
   "references": [
-    { "path": "../../packages/types/tsconfig.json" }
+    { "path": "../../packages/types/tsconfig.json" },
+    { "path": "../../packages/utils/tsconfig.json" }
   ]
 }
