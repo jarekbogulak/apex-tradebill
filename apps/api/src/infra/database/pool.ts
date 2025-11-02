@@ -149,7 +149,7 @@ export interface MigrationResult {
 }
 
 const defaultMigrationsDir = (): string => {
-  const url = new URL('../../../../configs/db/migrations', import.meta.url);
+  const url = new URL('../../../../../configs/db/migrations', import.meta.url);
   return fileURLToPath(url);
 };
 
@@ -253,4 +253,3 @@ export const withTransaction = async <T>(
     client.release();
   }
 };
-

@@ -39,12 +39,15 @@ pnpm --filter @apex-tradebill/api dev      # Start Fastify with tsx watcher
 pnpm --filter @apex-tradebill/api build    # Emit compiled output to dist/
 pnpm --filter @apex-tradebill/api start    # Launch the compiled server
 pnpm --filter @apex-tradebill/api migrate  # Apply pending SQL migrations
+pnpm --filter @apex-tradebill/api db:check # Verify SUPABASE_DB_URL connectivity
 pnpm --filter @apex-tradebill/api lint     # Lint the workspace
 pnpm --filter @apex-tradebill/api typecheck
 pnpm --filter @apex-tradebill/api test     # Jest unit tests (passWithNoTests)
 ```
 
 Database migrations live in `configs/db/migrations`. The helper script (`src/scripts/runMigrations.ts`) reads your `.env` file automatically and tracks applied versions in `schema_migrations`.
+
+Use `pnpm --filter @apex-tradebill/api db:check` to confirm that the API can reach the database specified in `SUPABASE_DB_URL` (or `DATABASE_URL`). It issues a lightweight `SELECT 1` through the same pool used by the server and reports either success or the underlying connection error.
 
 ## Additional References
 

@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint --config ../../configs/eslint/.eslintrc.cjs --ext .ts .",
     "test": "jest --passWithNoTests",
-    "migrate": "tsx src/scripts/runMigrations.ts"
+    "migrate": "tsx src/scripts/runMigrations.ts",
+    "db:check": "tsx src/scripts/checkDbConnection.ts"
   },
   "engines": {
     "node": ">=22"
