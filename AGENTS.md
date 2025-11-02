@@ -4,7 +4,7 @@ Auto-generated from all feature plans. Last updated: 2025-09-25
 
 ## Active Technologies
 
-- TypeScript 5.9 + Expo SDK 54 (React Native 0.81) client + Node.js 22 LTS service layer + Expo 54 managed workflow, Expo Router 3, TanStack Query 5, Zustand 5, Apex Omni OpenAPI Node SDK, Fastify 5 + `ws` 8 streaming (001-develop-apex-tradebill)
+- TypeScript 5.9 + Expo SDK 54 (React Native 0.81) client + Node.js 22 LTS service layer + Expo 54 managed workflow, Expo Router 6, TanStack Query 5, Zustand 5, Apex Omni OpenAPI Node SDK, Fastify 5 + `ws` 8 streaming (001-develop-apex-tradebill)
 - PostgreSQL 16 for user profiles/trade history + in-process ring buffer for market ticks (Redis upgrade deferred) (001-develop-apex-tradebill)
 
 ## Code Style
@@ -13,7 +13,7 @@ TypeScript 5.9 + Expo SDK 54 (React Native 0.81) + Node.js 22 LTS service layer:
 
 ## Recent Changes
 
-- 001-develop-apex-tradebill: Updated stack to TypeScript 5.9, Expo SDK 54 (React Native 0.81), Node.js 22 LTS, Expo Router 3, TanStack Query 5, Zustand 5, Fastify 5 + `ws` 8
+- 001-develop-apex-tradebill: Updated stack to TypeScript 5.9, Expo SDK 54 (React Native 0.81), Node.js 22 LTS, Expo Router 6, TanStack Query 5, Zustand 5, Fastify 5 + `ws` 8
 
 <!-- MANUAL ADDITIONS START -->
 
@@ -21,7 +21,7 @@ TypeScript 5.9 + Expo SDK 54 (React Native 0.81) + Node.js 22 LTS service layer:
 
 ## Coding Style & Naming
 
-- TypeScript/React Native: 2‑space indent, functional components, hooks over classes. Filenames `PascalCase.tsx` for components, `kebab-case.ts` for utils.
+- TypeScript/React Native: 2-space indent, functional components, hooks over classes. Filenames `PascalCase.tsx` for components, `kebab-case.ts` for utils.
 - Tests: colocate in `__tests__` or `*.test.tsx`. Example: `mobile/src/components/__tests__/Hello.test.tsx`.
 - Node.js: idiomatic TypeScript. Public APIs must be documented briefly.
 - Imports: absolute within app where configured; otherwise relative, grouped (external → internal).
@@ -39,25 +39,26 @@ TypeScript 5.9 + Expo SDK 54 (React Native 0.81) + Node.js 22 LTS service layer:
 Use workspaces (pnpm).
 
 ```plaintext
-/mobile       # Expo app
-/api          # Fastify/Node service layer
+apps/
+├── mobile    # Expo app
+└── api       # Fastify/Node service layer
 
-/packages
+packages/
 ├── ui        # Shared React Native components (JS/TS)
 ├── utils     # Shared utilities (isomorphic)
 └── types     # Shared TypeScript types (DTOs, API contracts)
 
-/tests        # Cross-cutting suites (contract, latency) when not colocated
-/configs      # Shared configs (ESLint, TS, Babel, etc.)
+tests/        # Cross-cutting suites (contract, latency) when not colocated
+configs/      # Shared configs (ESLint, TS, Babel, etc.)
 ```
 
 ## Node.js backend in the same repo
 
 Keep the server independent and twelve-factor:
 
-- **/api** with its own `package.json`, `.env` loading, and a single start script.
+- **apps/api** with its own `package.json`, `.env` loading, and a single start script.
 - Share **types** and **validation schemas** from `/packages/types` so client and server agree (great for request/response contracts).
-- If you’ll ever SSR/edge anything later, you can add `/web` alongside.
+- If you’ll ever SSR/edge anything later, you can add `/apps/web` alongside.
 
 ## Shared packages guidance
 
@@ -65,7 +66,7 @@ Keep the server independent and twelve-factor:
 - **/packages/utils**: Keep it isomorphic (no `fs`, `path`, etc.).
 - **/packages/types**: Just `.d.ts` or `.ts` exports consumed by both app and server.
 
-## API Ducumentaion
+## API Documentation
 
 Find the Apex Omni API documentation at https://api-docs.pro.apex.exchange/. You can use the mcp_servers.brightData endpoint to access it.
 

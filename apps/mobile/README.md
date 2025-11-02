@@ -1,10 +1,10 @@
 # Apex TradeBill Mobile
 
-Managed Expo 54 client for the TradeBill stack. We use a typed `app.config.ts` and env files to keep local, preview, and production builds in sync.
+Managed Expo 54 client for the TradeBill stack. The bundle boots through `expo-router/entry` and is structured entirely with Expo Router 6 so that screens, layouts, and deep links stay colocated. Data fetching and state management lean on TanStack Query 5 and Zustand 5, with shared theme tokens sourced from `@apex-tradebill/ui`.
 
 ## Prerequisites
 
-- Node.js 22 (managed via corepack)
+- Node.js 22 (managed via Corepack)
 - pnpm 9 (`corepack enable pnpm`)
 - Xcode / Android Studio when running native simulators
 
@@ -14,7 +14,7 @@ Install workspace dependencies from the repository root:
 corepack pnpm install
 ```
 
-## Environment configuration
+## Environment Configuration
 
 `app.config.ts` loads environment variables from the closest matching file:
 
@@ -34,12 +34,12 @@ Key variables:
 - `EXPO_PUBLIC_APP_ENV` – `development` | `preview` | `production`; influences which `.env.*` file is read.
 - `EXPO_PUBLIC_API_URL` – base URL for the TradeBill API (defaults to `http://127.0.0.1:4000`).
 - `EXPO_PUBLIC_API_WS_URL` – optional override for WebSocket connections; falls back to `EXPO_PUBLIC_API_URL`.
-- `EXPO_PUBLIC_APEX_ENVIRONMENT` – `prod` (default) or `testnet`. When unset the mobile build inherits `APEX_OMNI_ENVIRONMENT` from the API env, so you can share a single toggle or override per-client when needed.
-- `EXPO_PUBLIC_APEX_*` – optional overrides for REST/WebSocket endpoints. We default to the same prod/testnet URLs defined for the API service (see `apps/api/.env.example`), so only set these when you need an alternate cluster. Credentials stay server-side.
+- `EXPO_PUBLIC_APEX_ENVIRONMENT` – `prod` (default) or `testnet`. When unset the mobile build inherits `APEX_OMNI_ENVIRONMENT` from the API env.
+- `EXPO_PUBLIC_APEX_*` – optional overrides for REST/WebSocket endpoints. We default to the same prod/testnet URLs defined for the API service, so only set these when you need an alternate cluster. Credentials stay server-side.
 
 The resolved config is exposed at runtime via `env` (`src/config/env.ts`).
 
-## Running the app
+## Running the App
 
 From the repo root:
 
@@ -59,7 +59,7 @@ Useful variants:
 - Prefer `useThemeColor` (see `hooks/use-theme-color.ts`) when adapting existing `ThemedView`/`ThemedText` primitives; pass semantic tokens such as `text`, `background`, or any exported `ThemeColorToken`.
 - Avoid hard-coded hex values in app code. If a new semantic color is required, extend the tokens in the UI package so both mobile and future surfaces stay in sync.
 
-## Build profiles and EAS
+## Build Profiles and EAS
 
 - `EAS_BUILD_PROFILE`, `EXPO_RELEASE_CHANNEL`, and `EXPO_PUBLIC_APP_ENV` are surfaced through `extra.eas` for runtime introspection.
 - Add secure values (API tokens, Sentry DSNs, etc.) through EAS Secrets or your CI environment. Only `EXPO_PUBLIC_*` keys end up in the JavaScript bundle.
