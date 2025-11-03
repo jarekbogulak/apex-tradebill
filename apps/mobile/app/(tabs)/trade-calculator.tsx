@@ -82,9 +82,7 @@ export default function TradeCalculatorScreen() {
         <TradeHistoryCard
           items={historyItems}
           isFetching={historyQuery.isFetching}
-          isFetchingNextPage={historyQuery.isFetchingNextPage}
           onRefresh={() => historyQuery.refetch()}
-          onLoadMore={() => historyQuery.fetchNextPage()}
         />
       </ScrollView>
 

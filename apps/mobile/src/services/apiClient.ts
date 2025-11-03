@@ -41,7 +41,11 @@ export interface EquityResponse {
 export interface ApiClient {
   previewTrade(input: TradeInput): Promise<TradePreviewResponse>;
   executeTrade(input: TradeInput): Promise<TradeExecuteResponse>;
-  getTradeHistory(params: { limit?: number; cursor?: string | null }): Promise<TradeHistoryResponse>;
+  getTradeHistory(params: {
+    limit?: number;
+    cursor?: string | null;
+    signal?: AbortSignal;
+  }): Promise<TradeHistoryResponse>;
   getSettings(): Promise<SettingsResponse>;
   updateSettings(patch: Partial<SettingsResponse>): Promise<SettingsResponse>;
   getEquity(): Promise<EquityResponse>;
@@ -82,7 +86,7 @@ export const createApiClient = (baseUrl: string = env.api.baseUrl): ApiClient =>
       });
       return parseJsonResponse<TradeExecuteResponse>(response);
     },
-    async getTradeHistory({ limit = 20, cursor = null } = {}) {
+    async getTradeHistory({ limit = 20, cursor = null, signal } = {}) {
       const params = new URLSearchParams();
       if (limit) {
         params.set('limit', String(limit));
@@ -92,7 +96,15 @@ export const createApiClient = (baseUrl: string = env.api.baseUrl): ApiClient =>
       }
 
       const url = `${baseUrl}/v1/trades/history${params.toString() ? `?${params.toString()}` : ''}`;
-      const response = await fetch(url, { headers: createHeaders() });
+      const requestInit: RequestInit = {
+        headers: createHeaders(),
+      };
+      if (signal) {
+        // React Query provides a DOM AbortSignal; React Native fetch expects the global variant.
+        (requestInit as { signal: globalThis.AbortSignal }).signal =
+          signal as unknown as globalThis.AbortSignal;
+      }
+      const response = await fetch(url, requestInit);
       return parseJsonResponse<TradeHistoryResponse>(response);
     },
     async getSettings() {

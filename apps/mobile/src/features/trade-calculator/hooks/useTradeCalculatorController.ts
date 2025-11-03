@@ -1,11 +1,10 @@
 import type { MarketSnapshot, TradeInput } from '@apex-tradebill/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { InfiniteData } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useMarketStream } from '@/src/features/stream/useMarketStream';
 import { createRefreshScheduler, type RefreshScheduler } from '@/src/features/stream/refreshScheduler';
-import { createApiClient, type TradeHistoryResponse } from '@/src/services/apiClient';
+import { createApiClient } from '@/src/services/apiClient';
 import {
   selectCalculatorInput,
   selectCalculatorStatus,
@@ -164,7 +163,7 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
     onSnapshot: handleSnapshot,
   });
 
-  const { items: historyItems, query: historyQuery } = useTradeHistory();
+  const { items: historyItems, query: historyQuery, addLocalItem } = useTradeHistory();
 
   const buildTradePayload = useCallback((): TradeInput | null => {
     const normalize = (value: string | null | undefined) => {
@@ -225,41 +224,8 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
       setOutput(data.output, data.marketSnapshot, data.warnings, new Date().toISOString());
       setStatus('success');
       livePreviewActiveRef.current = true;
-      queryClient.setQueryData<InfiniteData<TradeHistoryResponse>>(
-        ['tradeHistory'],
-        (current) => {
-          if (!current) {
-            return {
-              pageParams: [undefined],
-              pages: [
-                {
-                  items: [data.calculation],
-                  nextCursor: null,
-                },
-              ],
-            };
-          }
-
-          const [firstPage, ...restPages] = current.pages;
-          const existingItems = firstPage?.items ?? [];
-          const deduped = [
-            data.calculation,
-            ...existingItems.filter((item) => item.id !== data.calculation.id),
-          ];
-
-          return {
-            ...current,
-            pages: [
-              {
-                ...firstPage,
-                items: deduped,
-              },
-              ...restPages,
-            ],
-          };
-        },
-      );
-      void queryClient.invalidateQueries({ queryKey: ['tradeHistory'] });
+      addLocalItem(data.calculation);
+      void queryClient.invalidateQueries({ queryKey: ['tradeHistory'], refetchType: 'active' });
     },
     onError: (error: Error) => {
       setStatus('error', error.message);

@@ -1,37 +1,56 @@
 import type { TradeCalculation } from '@apex-tradebill/types';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { createApiClient } from '@/src/services/apiClient';
 
 const apiClient = createApiClient();
 
-interface TradeHistoryPage {
-  items?: TradeCalculation[];
-  nextCursor?: string | null;
-}
-
-/**
- * Retrieves paginated trade history and flattens the items for consumption by the UI.
- */
 export const useTradeHistory = () => {
-  const historyQuery = useInfiniteQuery({
+  const [localItems, setLocalItems] = useState<TradeCalculation[]>([]);
+
+  const historyQuery = useQuery({
     queryKey: ['tradeHistory'],
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ signal }) =>
       apiClient.getTradeHistory({
-        cursor: typeof pageParam === 'string' ? pageParam : undefined,
+        signal,
       }),
-    getNextPageParam: (lastPage: TradeHistoryPage) => lastPage?.nextCursor ?? undefined,
-    initialPageParam: undefined as string | undefined,
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
   });
 
+  useEffect(() => {
+    const remoteItems = historyQuery.data?.items ?? [];
+    if (remoteItems.length === 0) {
+      return;
+    }
+
+    setLocalItems((current) =>
+      current.filter((item) => !remoteItems.some((remote) => remote.id === item.id)),
+    );
+  }, [historyQuery.data?.items]);
+
+  const addLocalItem = useCallback((item: TradeCalculation) => {
+    setLocalItems((current) => {
+      const deduped = current.filter((existing) => existing.id !== item.id);
+      return [item, ...deduped];
+    });
+  }, []);
+
   const items = useMemo(
-    () => historyQuery.data?.pages.flatMap((page) => page?.items ?? []) ?? [],
-    [historyQuery.data],
+    () => {
+      const remoteItems = historyQuery.data?.items ?? [];
+      const unsynced = localItems.filter(
+        (item) => !remoteItems.some((remote) => remote.id === item.id),
+      );
+      return [...unsynced, ...remoteItems];
+    },
+    [historyQuery.data?.items, localItems],
   );
 
   return {
     items,
     query: historyQuery,
+    addLocalItem,
   };
 };

@@ -9,17 +9,13 @@ import { HistoryList } from '@/src/features/history/HistoryList';
 interface TradeHistoryCardProps {
   items: TradeCalculation[];
   isFetching: boolean;
-  isFetchingNextPage: boolean;
   onRefresh: () => void;
-  onLoadMore: () => void;
 }
 
 export const TradeHistoryCard = ({
   items,
   isFetching,
-  isFetchingNextPage,
   onRefresh,
-  onLoadMore,
 }: TradeHistoryCardProps) => {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -32,9 +28,8 @@ export const TradeHistoryCard = ({
       </View>
       <HistoryList
         items={items}
-        loading={isFetching && !isFetchingNextPage}
+        loading={isFetching}
         onRefresh={onRefresh}
-        onLoadMore={onLoadMore}
       />
     </View>
   );
