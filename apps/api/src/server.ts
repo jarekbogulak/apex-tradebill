@@ -518,11 +518,100 @@ export const buildServer = async (): Promise<FastifyInstance> => {
   return app;
 };
 
+const registerGracefulShutdown = (server: FastifyInstance): void => {
+  const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM'];
+  let closing = false;
+  const listeners = new Map<NodeJS.Signals, () => void>();
+  const shutdownTimeoutMs = Number.parseInt(process.env.SHUTDOWN_TIMEOUT_MS ?? '', 10) || 1000;
+
+  const shutdown = async (signal: NodeJS.Signals) => {
+    if (closing) {
+      server.log.warn({ signal }, 'shutdown.already_in_progress');
+      return;
+    }
+
+    closing = true;
+    server.log.info({ signal }, 'shutdown.signal_received');
+
+    const closeServer = async () => {
+      try {
+        // Fastify exposes the underlying Node server; force-close lingering sockets if supported.
+        const rawServer = server.server as unknown as {
+          closeIdleConnections?: () => void;
+          closeAllConnections?: () => void;
+        };
+        rawServer.closeIdleConnections?.();
+        rawServer.closeAllConnections?.();
+      } catch (forceError) {
+        server.log.warn({ err: forceError }, 'shutdown.force_close_attempt_failed');
+      }
+
+      await server.close();
+    };
+
+    let timeoutHandle: NodeJS.Timeout | null = null;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutHandle = setTimeout(() => {
+        reject(new Error(`shutdown timeout (${shutdownTimeoutMs}ms)`));
+      }, shutdownTimeoutMs);
+      timeoutHandle.unref();
+    });
+
+    try {
+      server.log.info({ timeoutMs: shutdownTimeoutMs }, 'shutdown.closing_server');
+      const closingPromise = closeServer();
+      closingPromise.catch(() => {
+        // Prevent unhandled rejection noise if we force-exit before Fastify closes.
+      });
+      await Promise.race([closingPromise, timeoutPromise]);
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+      }
+      server.log.info('shutdown.server_closed');
+      process.exit(0);
+    } catch (error) {
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+      }
+      server.log.error({ err: error }, 'shutdown.failed_to_close');
+      try {
+        const rawServer = server.server as unknown as {
+          closeIdleConnections?: () => void;
+          closeAllConnections?: () => void;
+        };
+        rawServer.closeIdleConnections?.();
+        rawServer.closeAllConnections?.();
+      } catch (forceError) {
+        server.log.warn({ err: forceError }, 'shutdown.force_close_after_failure_failed');
+      }
+      // Attempt a last-resort force exit to prevent the dev runner from hanging.
+      setImmediate(() => {
+        process.exit(1);
+      });
+    }
+  };
+
+  for (const signal of signals) {
+    const handler = () => {
+      void shutdown(signal);
+    };
+    listeners.set(signal, handler);
+    process.once(signal, handler);
+  }
+
+  server.addHook('onClose', () => {
+    for (const [signal, handler] of listeners.entries()) {
+      process.removeListener(signal, handler);
+    }
+  });
+};
+
 const start = async () => {
   const port = Number.parseInt(process.env.PORT ?? '4000', 10);
   const host = process.env.HOST ?? '0.0.0.0';
 
   const server = await buildServer();
+  registerGracefulShutdown(server);
 
   try {
     await server.listen({ port, host });

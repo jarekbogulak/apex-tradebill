@@ -191,7 +191,19 @@ export const marketDataStreamRoute: FastifyPluginAsync<MarketDataStreamRouteOpti
   });
 
   app.addHook('onClose', (_instance, done) => {
-    wss.close(() => done());
+    for (const client of wss.clients) {
+      try {
+        client.terminate();
+      } catch {
+        // Ignore termination errors during shutdown.
+      }
+    }
+    try {
+      wss.close();
+    } catch {
+      // Ignore if the server was already closed.
+    }
+    done();
   });
 
   app.get('/v1/stream/market-data', async (_request, reply) => {
