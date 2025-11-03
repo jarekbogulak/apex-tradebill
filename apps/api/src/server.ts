@@ -1,3 +1,4 @@
+import './config/loadEnv.js';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { type MarketSnapshot, type Symbol as TradingSymbol, type Timeframe } from '@apex-tradebill/types';
 import { fileURLToPath } from 'node:url';
@@ -315,6 +316,22 @@ const createMarketInfrastructure = async (
 
   const allowlisted = await marketMetadata.listAllowlistedSymbols();
   const symbols = allowlisted.length > 0 ? allowlisted : (Object.keys(BASE_PRICES) as TradingSymbol[]);
+
+  const probeSymbol = symbols[0] ?? ('BTC-USDT' as TradingSymbol);
+  try {
+    const snapshot = await client.getMarketSnapshot(probeSymbol);
+    if (!snapshot) {
+      throw new Error(`Received empty snapshot for ${probeSymbol}`);
+    }
+  } catch (error) {
+    app.log.warn(
+      { err: error, probeSymbol },
+      'apex.omni.snapshot_failed_falling_back_to_in_memory_market_data',
+    );
+    return {
+      marketData: createInMemoryMarketDataPort(),
+    };
+  }
 
   await app.register(marketStreamPlugin, {
     client,
