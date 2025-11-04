@@ -64,16 +64,13 @@ export const useTradeHistory = () => {
     });
   }, []);
 
-  const items = useMemo(
-    () => {
-      const remoteItems = historyQuery.data?.items ?? [];
-      const unsynced = localItems.filter(
-        (item) => !remoteItems.some((remote) => remote.id === item.id),
-      );
-      return [...unsynced, ...remoteItems];
-    },
-    [historyQuery.data?.items, localItems],
-  );
+  const items = useMemo(() => {
+    const remoteItems = historyQuery.data?.items ?? [];
+    const unsynced = localItems.filter(
+      (item) => !remoteItems.some((remote) => remote.id === item.id),
+    );
+    return [...unsynced, ...remoteItems];
+  }, [historyQuery.data?.items, localItems]);
 
   return {
     items,

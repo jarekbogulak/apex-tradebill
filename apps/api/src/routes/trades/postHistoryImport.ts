@@ -97,10 +97,7 @@ export const postHistoryImportRoute: FastifyPluginAsync<PostHistoryImportRouteOp
           await tradeCalculations.save(calculation);
           syncedIds.push(entry.id);
         } catch (error) {
-          app.log.warn(
-            { err: error, entryId: entry.id },
-            'trade_history.import_entry_failed',
-          );
+          app.log.warn({ err: error, entryId: entry.id }, 'trade_history.import_entry_failed');
         }
       }
 

@@ -1,7 +1,4 @@
-import {
-  TradeCalculationSchema,
-  type TradeCalculation,
-} from '@apex-tradebill/types';
+import { TradeCalculationSchema, type TradeCalculation } from '@apex-tradebill/types';
 import type { DatabasePool, QueryResultRow } from '../../infra/database/pool.js';
 import type { TradeCalculationRepository } from './trade-calculation.entity.js';
 
@@ -118,7 +115,7 @@ export const createPostgresTradeCalculationRepository = (
 
       const items = result.rows.map(mapRowToTradeCalculation);
       const nextCursor =
-        items.length === limit ? items[items.length - 1]?.createdAt ?? null : null;
+        items.length === limit ? (items[items.length - 1]?.createdAt ?? null) : null;
 
       return {
         items,

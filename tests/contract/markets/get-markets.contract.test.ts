@@ -23,9 +23,9 @@ describe('GET /v1/markets/{symbol}', () => {
 
     expect(symbolParam.in).toBe('path');
     expect(symbolParam.required).toBe(true);
-    expect(symbolParam.schema && '$ref' in symbolParam.schema ? symbolParam.schema.$ref : null).toBe(
-      '#/components/schemas/Symbol',
-    );
+    expect(
+      symbolParam.schema && '$ref' in symbolParam.schema ? symbolParam.schema.$ref : null,
+    ).toBe('#/components/schemas/Symbol');
   });
 
   test('exposes symbol metadata including precision boundaries', () => {
@@ -33,7 +33,14 @@ describe('GET /v1/markets/{symbol}', () => {
     const schema = getJsonSchemaFromResponseOrThrow(response);
 
     expect(schema.type).toBe('object');
-    expectSchemaHasRequired(schema, ['symbol', 'tickSize', 'stepSize', 'minNotional', 'minQuantity', 'status']);
+    expectSchemaHasRequired(schema, [
+      'symbol',
+      'tickSize',
+      'stepSize',
+      'minNotional',
+      'minQuantity',
+      'status',
+    ]);
     expect(schema.additionalProperties).toBeUndefined();
 
     const properties = schema.properties ?? {};

@@ -4,7 +4,7 @@ import type { CreateThemeOptions, ThemeTokens, ThemeTypographyScale } from './ty
 
 const mergeTypography = (
   base: ThemeTypographyScale,
-  override?: Partial<ThemeTypographyScale>
+  override?: Partial<ThemeTypographyScale>,
 ): ThemeTypographyScale => {
   if (!override) {
     return base;

@@ -12,11 +12,7 @@ interface TradeHistoryCardProps {
   onRefresh: () => void;
 }
 
-export const TradeHistoryCard = ({
-  items,
-  isFetching,
-  onRefresh,
-}: TradeHistoryCardProps) => {
+export const TradeHistoryCard = ({ items, isFetching, onRefresh }: TradeHistoryCardProps) => {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -26,11 +22,7 @@ export const TradeHistoryCard = ({
         <Text style={styles.sectionTitle}>Recent History</Text>
         {isFetching ? <ActivityIndicator size="small" color={theme.colors.accent} /> : null}
       </View>
-      <HistoryList
-        items={items}
-        loading={isFetching}
-        onRefresh={onRefresh}
-      />
+      <HistoryList items={items} loading={isFetching} onRefresh={onRefresh} />
     </View>
   );
 };

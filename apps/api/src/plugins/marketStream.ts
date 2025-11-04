@@ -1,9 +1,6 @@
 import { SymbolSchema, type Symbol } from '@apex-tradebill/types';
 import type { FastifyPluginAsync } from 'fastify';
-import type {
-  ApeXOmniClient,
-  MarketStreamConnection,
-} from '../clients/apexOmniClient.js';
+import type { ApeXOmniClient, MarketStreamConnection } from '../clients/apexOmniClient.js';
 import type { RingBuffer } from '../realtime/ringBuffer.js';
 
 export interface MarketStreamPluginOptions {
@@ -95,10 +92,7 @@ const toMessageObject = (payload: unknown): Record<string, unknown> | null => {
   }
   if (ArrayBuffer.isView(payload)) {
     try {
-      return JSON.parse(Buffer.from(payload.buffer).toString('utf-8')) as Record<
-        string,
-        unknown
-      >;
+      return JSON.parse(Buffer.from(payload.buffer).toString('utf-8')) as Record<string, unknown>;
     } catch {
       return null;
     }
@@ -145,13 +139,9 @@ const parseStreamUpdate = (payload: unknown): ParsedStreamUpdate | null => {
   }
 
   const bid =
-    toNumber(data.bid) ??
-    toNumber((data as { tick?: { bid?: unknown } }).tick?.bid) ??
-    null;
+    toNumber(data.bid) ?? toNumber((data as { tick?: { bid?: unknown } }).tick?.bid) ?? null;
   const ask =
-    toNumber(data.ask) ??
-    toNumber((data as { tick?: { ask?: unknown } }).tick?.ask) ??
-    null;
+    toNumber(data.ask) ?? toNumber((data as { tick?: { ask?: unknown } }).tick?.ask) ?? null;
   const atrMultiplierCandidate =
     (data.atrMultiplier as string | number | null | undefined) ??
     ((data as { tick?: { atrMultiplier?: unknown } }).tick?.atrMultiplier as
@@ -173,8 +163,7 @@ const parseStreamUpdate = (payload: unknown): ParsedStreamUpdate | null => {
     lastPrice,
     bid,
     ask,
-    atrMultiplier:
-      atrMultiplierCandidate != null ? String(atrMultiplierCandidate) : null,
+    atrMultiplier: atrMultiplierCandidate != null ? String(atrMultiplierCandidate) : null,
     serverTimestamp,
   };
 };
@@ -219,10 +208,7 @@ export const marketStreamPlugin: FastifyPluginAsync<MarketStreamPluginOptions> =
         if (closed) {
           return;
         }
-        app.log.warn(
-          { code, reason: reason?.toString('utf-8') ?? '' },
-          'market_stream.closed',
-        );
+        app.log.warn({ code, reason: reason?.toString('utf-8') ?? '' }, 'market_stream.closed');
         app.observability?.incrementCounter('market_stream_disconnects_total', {
           code,
         });

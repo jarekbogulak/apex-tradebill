@@ -8,13 +8,15 @@ type AllowlistConfig = {
 
 const config = allowlistConfig as AllowlistConfig;
 
-const DEFAULT_METADATA: Pick<SymbolMetadata, 'tickSize' | 'stepSize' | 'minNotional' | 'minQuantity'> =
-  {
-    tickSize: '0.01',
-    stepSize: '0.000001',
-    minNotional: '10.00',
-    minQuantity: '0.000100',
-  };
+const DEFAULT_METADATA: Pick<
+  SymbolMetadata,
+  'tickSize' | 'stepSize' | 'minNotional' | 'minQuantity'
+> = {
+  tickSize: '0.01',
+  stepSize: '0.000001',
+  minNotional: '10.00',
+  minQuantity: '0.000100',
+};
 
 const createDefaultMetadata = (symbol: Symbol): SymbolMetadata => ({
   symbol,
@@ -27,9 +29,7 @@ export interface MarketMetadataService extends MarketMetadataPort {
   upsertMetadata(metadata: SymbolMetadata): Promise<SymbolMetadata>;
 }
 
-export const createMarketMetadataService = (
-  seed: SymbolMetadata[] = [],
-): MarketMetadataService => {
+export const createMarketMetadataService = (seed: SymbolMetadata[] = []): MarketMetadataService => {
   const allowlisted = new Set<Symbol>(config.symbols as Symbol[]);
   const metadataStore = new Map<Symbol, SymbolMetadata>();
 

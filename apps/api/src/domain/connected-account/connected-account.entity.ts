@@ -70,7 +70,9 @@ export const transitionConnectedAccountStatus = (
 
   const allowed = transitionMap[account.status];
   if (!allowed.includes(nextStatus)) {
-    throw new Error(`Invalid connected account status transition: ${account.status} → ${nextStatus}`);
+    throw new Error(
+      `Invalid connected account status transition: ${account.status} → ${nextStatus}`,
+    );
   }
 
   return ConnectedAccountSchema.parse({

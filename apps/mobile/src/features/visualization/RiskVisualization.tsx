@@ -16,8 +16,7 @@ const TRACK_MARGIN_PERCENT = 8;
 const formatPrice = (value: number) => `$${value.toFixed(2)}`;
 const formatSignedCurrency = (value: number) =>
   `${value >= 0 ? '+' : '-'}$${Math.abs(value).toFixed(2)}`;
-const formatSignedPercent = (value: number) =>
-  `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+const formatSignedPercent = (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 
 export const RiskVisualization = memo(
   ({ direction, entryPrice, stopPrice, targetPrice }: RiskVisualizationProps) => {
@@ -93,7 +92,10 @@ export const RiskVisualization = memo(
       <View style={styles.container}>
         <View style={styles.headerRow}>
           <View
-            style={[styles.directionBadge, isLong ? styles.directionBadgeLong : styles.directionBadgeShort]}
+            style={[
+              styles.directionBadge,
+              isLong ? styles.directionBadgeLong : styles.directionBadgeShort,
+            ]}
           >
             <Text
               style={[
@@ -155,11 +157,15 @@ export const RiskVisualization = memo(
             <View style={styles.trackLabelRow}>
               <View style={[styles.trackTopCallout, { left: `${points.stopPercent}%` }]}>
                 <Text style={styles.markerTitle}>Stop</Text>
-                <Text style={[styles.markerValue, styles.stopText]}>{formatPrice(points.stop)}</Text>
+                <Text style={[styles.markerValue, styles.stopText]}>
+                  {formatPrice(points.stop)}
+                </Text>
               </View>
               <View style={[styles.trackTopCallout, { left: `${points.targetPercent}%` }]}>
                 <Text style={styles.markerTitle}>Target</Text>
-                <Text style={[styles.markerValue, styles.targetText]}>{formatPrice(points.target)}</Text>
+                <Text style={[styles.markerValue, styles.targetText]}>
+                  {formatPrice(points.target)}
+                </Text>
               </View>
             </View>
           </View>
@@ -170,7 +176,11 @@ export const RiskVisualization = memo(
                 style={[styles.connector, styles.connectorTop, { left: `${points.stopPercent}%` }]}
               />
               <View
-                style={[styles.connector, styles.connectorTop, { left: `${points.targetPercent}%` }]}
+                style={[
+                  styles.connector,
+                  styles.connectorTop,
+                  { left: `${points.targetPercent}%` },
+                ]}
               />
               <View
                 style={[
@@ -220,7 +230,9 @@ export const RiskVisualization = memo(
             <View style={styles.trackLabelRow}>
               <View style={[styles.trackBottomCallout, { left: `${points.entryPercent}%` }]}>
                 <Text style={styles.markerTitle}>Entry</Text>
-                <Text style={[styles.markerValue, styles.entryText]}>{formatPrice(points.entry)}</Text>
+                <Text style={[styles.markerValue, styles.entryText]}>
+                  {formatPrice(points.entry)}
+                </Text>
               </View>
             </View>
           </View>
@@ -445,4 +457,4 @@ const createStyles = (theme: Theme) =>
       color: theme.colors.textMuted,
       lineHeight: 16,
     },
-  } as const);
+  }) as const;

@@ -37,4 +37,3 @@ declare module 'pg' {
     on(event: 'error', listener: (error: Error) => void): this;
   }
 }
-

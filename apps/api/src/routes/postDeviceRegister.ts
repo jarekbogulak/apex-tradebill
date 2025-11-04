@@ -1,9 +1,6 @@
 import { z } from 'zod';
 import type { FastifyPluginAsync } from 'fastify';
-import {
-  createErrorResponse,
-  errorResponseSchema,
-} from './http.js';
+import { createErrorResponse, errorResponseSchema } from './http.js';
 import type { DeviceAuthService } from '../services/deviceAuthService.js';
 
 interface PostDeviceRegisterOptions {
@@ -55,7 +52,9 @@ export const postDeviceRegisterRoute: FastifyPluginAsync<PostDeviceRegisterOptio
       if (!deviceAuthService) {
         return reply
           .status(503)
-          .send(createErrorResponse('DEVICE_AUTH_UNAVAILABLE', 'Device registration is unavailable'));
+          .send(
+            createErrorResponse('DEVICE_AUTH_UNAVAILABLE', 'Device registration is unavailable'),
+          );
       }
 
       const parseResult = BodySchema.safeParse(request.body);

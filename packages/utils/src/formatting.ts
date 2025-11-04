@@ -140,11 +140,10 @@ export const formatCurrencyCompact = (
   }
 
   const absolute = Math.abs(resolvedValue);
-  const tier =
-    compactSuffixTiers.find(({ value: tierValue }) => absolute >= tierValue) ?? {
-      value: threshold,
-      suffix: '',
-    };
+  const tier = compactSuffixTiers.find(({ value: tierValue }) => absolute >= tierValue) ?? {
+    value: threshold,
+    suffix: '',
+  };
 
   const scaled = resolvedValue / tier.value;
   const scaledFormatter = new Intl.NumberFormat(locale, {
@@ -158,9 +157,7 @@ export const formatCurrencyCompact = (
 
 const hexChannelToLinear = (channel: number): number => {
   const normalized = channel / 255;
-  return normalized <= 0.03928
-    ? normalized / 12.92
-    : Math.pow((normalized + 0.055) / 1.055, 2.4);
+  return normalized <= 0.03928 ? normalized / 12.92 : Math.pow((normalized + 0.055) / 1.055, 2.4);
 };
 
 const hexToRgb = (hex: string): [number, number, number] => {

@@ -33,8 +33,9 @@ interface AppExtra {
 
 const resolveExtra = (): AppExtra => {
   const configExtra = Constants.expoConfig?.extra as AppExtra | undefined;
-  const manifestExtra =
-    (Constants.manifest as { extra?: unknown } | null | undefined)?.extra as AppExtra | undefined;
+  const manifestExtra = (Constants.manifest as { extra?: unknown } | null | undefined)?.extra as
+    | AppExtra
+    | undefined;
 
   const extra = configExtra ?? manifestExtra;
   if (!extra) {

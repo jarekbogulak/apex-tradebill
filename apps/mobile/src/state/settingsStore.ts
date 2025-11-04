@@ -56,7 +56,9 @@ export interface SettingsState {
   defaultTimeframe: Timeframe;
   rememberedMultiplierOptions: string[];
   lastSyncedAt: string | null;
-  setSettings: (settings: Partial<Omit<SettingsState, 'setSettings' | 'addMultiplierOption' | 'reset'>>) => void;
+  setSettings: (
+    settings: Partial<Omit<SettingsState, 'setSettings' | 'addMultiplierOption' | 'reset'>>,
+  ) => void;
   addMultiplierOption: (value: string) => void;
   reset: () => void;
 }
@@ -87,10 +89,7 @@ export const useSettingsStore = create<SettingsState>()(
       addMultiplierOption: (value) => {
         set((state) => ({
           ...state,
-          rememberedMultiplierOptions: dedupeOptions([
-            ...state.rememberedMultiplierOptions,
-            value,
-          ]),
+          rememberedMultiplierOptions: dedupeOptions([...state.rememberedMultiplierOptions, value]),
         }));
       },
       reset: () => set({ ...INITIAL_STATE }),
@@ -112,10 +111,9 @@ export const useSettingsStore = create<SettingsState>()(
   ),
 );
 
-export const selectRiskConfig = (state: SettingsState) => state.riskPercent + ':' + state.atrMultiplier;
+export const selectRiskConfig = (state: SettingsState) =>
+  state.riskPercent + ':' + state.atrMultiplier;
 
-export const selectFreshnessThreshold = (state: SettingsState) =>
-  state.dataFreshnessThresholdMs;
+export const selectFreshnessThreshold = (state: SettingsState) => state.dataFreshnessThresholdMs;
 
-export const selectMultiplierOptions = (state: SettingsState) =>
-  state.rememberedMultiplierOptions;
+export const selectMultiplierOptions = (state: SettingsState) => state.rememberedMultiplierOptions;

@@ -1,7 +1,12 @@
 import { calculateAtr } from '../atrCalculator.js';
 import type { MarketCandle } from '../../../domain/ports/tradebillPorts.js';
 
-const buildCandle = (timestamp: string, high: number, low: number, close: number): MarketCandle => ({
+const buildCandle = (
+  timestamp: string,
+  high: number,
+  low: number,
+  close: number,
+): MarketCandle => ({
   timestamp,
   high,
   low,
@@ -11,7 +16,12 @@ const buildCandle = (timestamp: string, high: number, low: number, close: number
 describe('calculateAtr', () => {
   test('throws when the available candles are below the requested period', () => {
     const candles: MarketCandle[] = Array.from({ length: 12 }, (_, index) =>
-      buildCandle(`2024-01-01T00:${String(index).padStart(2, '0')}:00.000Z`, 100 + index, 90 + index, 95 + index),
+      buildCandle(
+        `2024-01-01T00:${String(index).padStart(2, '0')}:00.000Z`,
+        100 + index,
+        90 + index,
+        95 + index,
+      ),
     );
 
     expect(() => calculateAtr(candles, 13)).toThrow('ATR requires at least 13 candles');

@@ -46,10 +46,9 @@ export const createPruneTradeHistoryJob = (
   const run = async (): Promise<PruneTradeHistoryResult> => {
     const cutoffIso = new Date(now().getTime() - retentionMs).toISOString();
     try {
-      const result = await pool.query(
-        `DELETE FROM trade_calculations WHERE created_at < $1;`,
-        [cutoffIso],
-      );
+      const result = await pool.query(`DELETE FROM trade_calculations WHERE created_at < $1;`, [
+        cutoffIso,
+      ]);
 
       const removed = result.rowCount ?? 0;
       logger.info('trade_history.pruned', { removed, cutoffIso });

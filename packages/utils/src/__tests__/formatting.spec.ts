@@ -10,7 +10,9 @@ describe('Formatting utilities', () => {
   test('applies locale-aware currency and percentage formats', () => {
     expect(formatCurrency(1234.56)).toBe('$1,234.56');
     expect(formatCurrency('9876.5', { locale: 'en-GB', currency: 'GBP' })).toBe('£9,876.50');
-    expect(formatPercent(0.025, { minimumFractionDigits: 1, maximumFractionDigits: 1 })).toBe('2.5%');
+    expect(formatPercent(0.025, { minimumFractionDigits: 1, maximumFractionDigits: 1 })).toBe(
+      '2.5%',
+    );
   });
 
   test('compacts large currency values while preserving smaller ones', () => {

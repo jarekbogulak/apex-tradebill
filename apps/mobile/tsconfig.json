@@ -5,24 +5,11 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "expo-router/paths": [
-        "./types/expo-router-paths"
-      ]
+      "@/*": ["./*"],
+      "expo-router/paths": ["./types/expo-router-paths"]
     },
-    "typeRoots": [
-      "./node_modules/@types",
-      "../../node_modules/@types"
-    ]
+    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts",
-    "types/**/*.d.ts"
-  ],
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "types/**/*.d.ts"],
   "references": []
 }

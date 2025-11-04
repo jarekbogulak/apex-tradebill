@@ -17,10 +17,7 @@ import {
 } from '@apex-tradebill/utils';
 import Decimal from 'decimal.js-light/decimal.js';
 import { calculateAtr } from '../calculations/atrCalculator.js';
-import type {
-  MarketDataPort,
-  MarketMetadataPort,
-} from '../../domain/ports/tradebillPorts.js';
+import type { MarketDataPort, MarketMetadataPort } from '../../domain/ports/tradebillPorts.js';
 import { createTradeCalculation } from '../../domain/trade-calculation/trade-calculation.entity.js';
 import type { TradeCalculationRepository } from '../../domain/trade-calculation/trade-calculation.entity.js';
 
@@ -130,9 +127,7 @@ const collectWarnings = ({
 
   if (input.useVolatilityStop && manualStop) {
     const manualStopComparison =
-      input.direction === 'long'
-        ? manualStop.gt(suggestedStop)
-        : manualStop.lt(suggestedStop);
+      input.direction === 'long' ? manualStop.gt(suggestedStop) : manualStop.lt(suggestedStop);
 
     if (manualStopComparison) {
       warnings.push('VOLATILITY_STOP_GREATER');
@@ -151,8 +146,8 @@ const collectWarnings = ({
     warnings.push('MIN_NOTIONAL');
   }
 
-  return dedupeWarnings(warnings).filter((warning) =>
-    TradeWarningCodeSchema.safeParse(warning).success,
+  return dedupeWarnings(warnings).filter(
+    (warning) => TradeWarningCodeSchema.safeParse(warning).success,
   );
 };
 
@@ -186,7 +181,9 @@ export const createTradePreviewService = ({
     const atrResult = calculateAtr(candles, 13);
     const atrValue = new Decimal(atrResult.value);
 
-    const entryPrice = input.entryPrice ? toDecimal(input.entryPrice) : toDecimal(snapshot.lastPrice);
+    const entryPrice = input.entryPrice
+      ? toDecimal(input.entryPrice)
+      : toDecimal(snapshot.lastPrice);
     const suggestedStop = computeSuggestedStop(input, entryPrice, atrValue);
     const manualStop = input.stopPrice ? toDecimal(input.stopPrice) : null;
 
@@ -212,9 +209,7 @@ export const createTradePreviewService = ({
 
     const rewardPerUnit = computeRewardPerUnit(input, entryPrice);
 
-    const rawPositionSize = riskPerUnit.gt(0)
-      ? riskBudget.div(riskPerUnit)
-      : new Decimal(0);
+    const rawPositionSize = riskPerUnit.gt(0) ? riskBudget.div(riskPerUnit) : new Decimal(0);
 
     const flooredPositionSize = new Decimal(
       floorToStepSize(rawPositionSize.toString(), symbolMetadata.stepSize),
@@ -275,8 +270,7 @@ export const createTradePreviewService = ({
       atr13: atrValueString,
       atrMultiplier: input.atrMultiplier,
     };
-    const source: TradeSource =
-      input.accountEquitySource === 'manual' ? 'manual' : 'live';
+    const source: TradeSource = input.accountEquitySource === 'manual' ? 'manual' : 'live';
 
     return {
       input,

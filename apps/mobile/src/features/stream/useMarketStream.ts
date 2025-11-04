@@ -63,12 +63,15 @@ export const useMarketStream = ({
   const scheduleStaleCheck = useCallback(
     (timestamp: number) => {
       clearStaleTimer();
-      staleTimerRef.current = setTimeout(() => {
-        setState((current) => ({
-          ...current,
-          status: 'stale',
-        }));
-      }, Math.max(0, staleThresholdMs - (Date.now() - timestamp)));
+      staleTimerRef.current = setTimeout(
+        () => {
+          setState((current) => ({
+            ...current,
+            status: 'stale',
+          }));
+        },
+        Math.max(0, staleThresholdMs - (Date.now() - timestamp)),
+      );
     },
     [staleThresholdMs],
   );
@@ -88,9 +91,7 @@ export const useMarketStream = ({
       closeSocket();
 
       const query = symbolQuery ? `?symbols=${symbolQuery}` : '';
-      const socket = new WebSocket(
-        `${wsBaseUrl}/v1/stream/market-data${query}`,
-      ) as MarketWebSocket;
+      const socket = new WebSocket(`${wsBaseUrl}/v1/stream/market-data${query}`) as MarketWebSocket;
       wsRef.current = socket;
 
       setState((current) => ({

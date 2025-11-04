@@ -63,9 +63,7 @@ describe('marketStreamPlugin', () => {
     expect(handlers).toBeTruthy();
 
     handlers?.onOpen?.();
-    expect(observability.incrementCounter).toHaveBeenCalledWith(
-      'market_stream_connections_total',
-    );
+    expect(observability.incrementCounter).toHaveBeenCalledWith('market_stream_connections_total');
 
     const payload = JSON.stringify({
       topic: 'instrumentInfo.H.BTCUSDT',
@@ -89,15 +87,12 @@ describe('marketStreamPlugin', () => {
     });
 
     handlers?.onError?.(new Error('ws failure'));
-    expect(observability.incrementCounter).toHaveBeenCalledWith(
-      'market_stream_errors_total',
-    );
+    expect(observability.incrementCounter).toHaveBeenCalledWith('market_stream_errors_total');
 
     handlers?.onClose?.(1006, Buffer.from('test'));
-    expect(observability.incrementCounter).toHaveBeenCalledWith(
-      'market_stream_disconnects_total',
-      { code: 1006 },
-    );
+    expect(observability.incrementCounter).toHaveBeenCalledWith('market_stream_disconnects_total', {
+      code: 1006,
+    });
 
     await app.close();
     expect(close).toHaveBeenCalled();

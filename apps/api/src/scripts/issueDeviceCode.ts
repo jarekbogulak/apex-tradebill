@@ -5,10 +5,7 @@ if (typeof process.loadEnvFile === 'function') {
 import '../config/loadEnv.js';
 
 import crypto from 'node:crypto';
-import {
-  closeSharedDatabasePool,
-  getSharedDatabasePool,
-} from '../infra/database/pool.js';
+import { closeSharedDatabasePool, getSharedDatabasePool } from '../infra/database/pool.js';
 
 interface CliOptions {
   deviceId: string;

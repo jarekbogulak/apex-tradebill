@@ -1,10 +1,13 @@
 jest.mock('react-native', () => {
   const React = require('react');
   const sanitize = <T extends Record<string, unknown>>(props: T) => {
-    const { accessibilityRole, accessibilityLabel, accessibilityLiveRegion, testID, ...rest } = props;
+    const { accessibilityRole, accessibilityLabel, accessibilityLiveRegion, testID, ...rest } =
+      props;
     const value = { ...rest } as Record<string, unknown>;
     if (value.style) {
-      const flatten = Array.isArray(value.style) ? Object.assign({}, ...value.style) : { ...value.style };
+      const flatten = Array.isArray(value.style)
+        ? Object.assign({}, ...value.style)
+        : { ...value.style };
       for (const key of Object.keys(flatten)) {
         const styleValue = flatten[key as keyof typeof flatten];
         if (typeof styleValue === 'number') {
@@ -16,15 +19,26 @@ jest.mock('react-native', () => {
     if (accessibilityLiveRegion) {
       value['aria-live'] = accessibilityLiveRegion;
     }
-    return { ...value, 'data-testid': testID, 'aria-label': accessibilityLabel, role: accessibilityRole };
+    return {
+      ...value,
+      'data-testid': testID,
+      'aria-label': accessibilityLabel,
+      role: accessibilityRole,
+    };
   };
   return {
     Text: ({ children, ...props }: { children?: React.ReactNode }) =>
       React.createElement('span', sanitize(props), children),
     View: ({ children, ...props }: { children?: React.ReactNode }) =>
       React.createElement('div', sanitize(props), children),
-    Pressable: ({ children, onPress, ...props }: { children?: React.ReactNode; onPress?: () => void }) =>
-      React.createElement('button', { ...sanitize(props), onClick: onPress }, children),
+    Pressable: ({
+      children,
+      onPress,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      onPress?: () => void;
+    }) => React.createElement('button', { ...sanitize(props), onClick: onPress }, children),
     StyleSheet: {
       create: (styles: unknown) => styles,
     },
@@ -65,7 +79,9 @@ describe('StaleBanner', () => {
     expect(container.textContent).toContain('Last update 10s ago.');
     expect(container.textContent).toContain('Reconnect attempt 2');
 
-    const button = container.querySelector('[data-testid="stream-reconnect-button"]') as HTMLButtonElement;
+    const button = container.querySelector(
+      '[data-testid="stream-reconnect-button"]',
+    ) as HTMLButtonElement;
     button.click();
     expect(onReconnect).toHaveBeenCalledTimes(1);
 

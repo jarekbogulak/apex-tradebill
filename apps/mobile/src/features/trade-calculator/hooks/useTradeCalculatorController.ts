@@ -3,7 +3,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useMarketStream } from '@/src/features/stream/useMarketStream';
-import { createRefreshScheduler, type RefreshScheduler } from '@/src/features/stream/refreshScheduler';
+import {
+  createRefreshScheduler,
+  type RefreshScheduler,
+} from '@/src/features/stream/refreshScheduler';
 import { createApiClient } from '@/src/services/apiClient';
 import {
   selectCalculatorInput,
@@ -283,7 +286,12 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
     }
   }, [output]);
 
-  const { riskPercent: inputRisk, atrMultiplier: inputAtr, timeframe: inputTimeframe, symbol: inputSymbol } = input;
+  const {
+    riskPercent: inputRisk,
+    atrMultiplier: inputAtr,
+    timeframe: inputTimeframe,
+    symbol: inputSymbol,
+  } = input;
 
   useEffect(() => {
     if (
@@ -434,10 +442,12 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
   }, [output?.riskToReward, settingsRiskPercent]);
 
   const derivedValues = useMemo(() => {
-    const effectiveStop = input.useVolatilityStop ? output?.suggestedStop ?? null : input.stopPrice;
+    const effectiveStop = input.useVolatilityStop
+      ? (output?.suggestedStop ?? null)
+      : input.stopPrice;
     const visualizationStop = input.useVolatilityStop
-      ? output?.suggestedStop ?? ''
-      : input.stopPrice ?? '';
+      ? (output?.suggestedStop ?? '')
+      : (input.stopPrice ?? '');
     const atrValue = output?.atr13 ?? snapshot?.atr13 ?? null;
     const marketPlaceholder = marketStream.snapshot?.lastPrice ?? 'Market';
 

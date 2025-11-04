@@ -1,10 +1,5 @@
 import type { MarketSnapshot, Symbol, Timeframe } from '@apex-tradebill/types';
-import {
-  ApexClient,
-  OmniENV,
-  OMNI_PROD,
-  OMNI_QA,
-} from 'apexomni-connector-node';
+import { ApexClient, OmniENV, OMNI_PROD, OMNI_QA } from 'apexomni-connector-node';
 import {
   PUBLIC_WSS,
   PRIVATE_WSS,
@@ -42,11 +37,7 @@ export interface MarketStreamConnection {
 
 export interface ApeXOmniClient {
   getMarketSnapshot(symbol: Symbol): Promise<MarketSnapshot | null>;
-  getRecentCandles(
-    symbol: Symbol,
-    timeframe: Timeframe,
-    limit: number,
-  ): Promise<MarketCandle[]>;
+  getRecentCandles(symbol: Symbol, timeframe: Timeframe, limit: number): Promise<MarketCandle[]>;
   connectMarketStream(options: MarketStreamConnectOptions): MarketStreamConnection;
 }
 
@@ -109,9 +100,7 @@ const toPriceString = (value: number): string => {
   return value.toFixed(8);
 };
 
-const extractBestPrice = (
-  levels?: Array<[string, string]> | string[][],
-): string | null => {
+const extractBestPrice = (levels?: Array<[string, string]> | string[][]): string | null => {
   if (!levels || levels.length === 0) {
     return null;
   }
@@ -196,7 +185,7 @@ export const createApeXOmniClient = ({
       undefined,
       limit,
     );
-    const raw = ((response as unknown) as Record<string, OmniKline[]>)[apiSymbol] ?? [];
+    const raw = (response as unknown as Record<string, OmniKline[]>)[apiSymbol] ?? [];
     return convertKlinesToCandles(raw);
   };
 
@@ -279,7 +268,7 @@ export const createApeXOmniClient = ({
       publicUrl: publicWsUrl,
       privateUrl: privateWsUrl,
       apiKey: shouldUsePrivateAuth ? apiKey : '',
-      passphrase: shouldUsePrivateAuth ? passphrase ?? '' : '',
+      passphrase: shouldUsePrivateAuth ? (passphrase ?? '') : '',
       secret: shouldUsePrivateAuth ? apiSecret : '',
       heartbeatInterval: wsHeartbeatIntervalMs,
       maxReconnectAttempts: wsMaxReconnectAttempts,

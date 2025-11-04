@@ -4,7 +4,9 @@ import { createInMemoryTradeCalculationRepository } from '../../../domain/trade-
 
 const USER_ID = '55555555-5555-5555-5555-555555555555';
 
-const buildCalculation = (overrides: Partial<Parameters<typeof createTradeCalculation>[0]> = {}) => {
+const buildCalculation = (
+  overrides: Partial<Parameters<typeof createTradeCalculation>[0]> = {},
+) => {
   return createTradeCalculation({
     userId: USER_ID,
     executionMethod: 'execute-button',

@@ -10,7 +10,11 @@ interface TradeBillEmptyCardProps {
   onCreatePress: () => void;
 }
 
-export const TradeBillEmptyCard = ({ status, errorMessage, onCreatePress }: TradeBillEmptyCardProps) => {
+export const TradeBillEmptyCard = ({
+  status,
+  errorMessage,
+  onCreatePress,
+}: TradeBillEmptyCardProps) => {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -33,11 +37,15 @@ export const TradeBillEmptyCard = ({ status, errorMessage, onCreatePress }: Trad
             style={styles.placeholderIcon}
           />
           <Text style={styles.placeholderTitle}>No trade calculated yet</Text>
-          <Text style={styles.placeholderCopy}>Start a calculation to generate your trade bill.</Text>
+          <Text style={styles.placeholderCopy}>
+            Start a calculation to generate your trade bill.
+          </Text>
         </View>
       </View>
 
-      {status === 'error' && errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+      {status === 'error' && errorMessage ? (
+        <Text style={styles.errorText}>{errorMessage}</Text>
+      ) : null}
     </View>
   );
 };

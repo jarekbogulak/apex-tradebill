@@ -29,7 +29,15 @@ const tradeWarningCodeJsonSchema = {
 const tradeOutputJsonSchema = {
   type: 'object',
   additionalProperties: false,
-  required: ['positionSize', 'positionCost', 'riskAmount', 'riskToReward', 'suggestedStop', 'atr13', 'warnings'],
+  required: [
+    'positionSize',
+    'positionCost',
+    'riskAmount',
+    'riskToReward',
+    'suggestedStop',
+    'atr13',
+    'warnings',
+  ],
   properties: {
     positionSize: { type: 'string' },
     positionCost: { type: 'string' },
@@ -182,7 +190,9 @@ export const postExecuteRoute: FastifyPluginAsync<PostExecuteRouteOptions> = asy
     async (request, reply) => {
       const parseResult = TradeInputSchema.safeParse(request.body);
       if (!parseResult.success) {
-        const details = parseResult.error.issues.map((issue) => `${issue.path.join('.')} ${issue.message}`);
+        const details = parseResult.error.issues.map(
+          (issue) => `${issue.path.join('.')} ${issue.message}`,
+        );
         return sendValidationError(reply, 'Trade input failed validation', details);
       }
 
@@ -208,9 +218,7 @@ export const postExecuteRoute: FastifyPluginAsync<PostExecuteRouteOptions> = asy
           message.includes('No market snapshot') ||
           message.includes('not allowlisted')
         ) {
-          return reply
-            .status(404)
-            .send(createErrorResponse('NOT_FOUND', message));
+          return reply.status(404).send(createErrorResponse('NOT_FOUND', message));
         }
 
         return reply.status(400).send(createErrorResponse('EXECUTE_FAILED', message));

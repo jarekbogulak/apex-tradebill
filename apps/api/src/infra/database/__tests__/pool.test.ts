@@ -144,8 +144,7 @@ describe('createDatabasePool', () => {
   });
 
   it('configures the pg pool with defaults derived from env', async () => {
-    process.env.SUPABASE_DB_URL =
-      'postgres://user:pass@db.supabase.co:5432/apex?sslmode=require';
+    process.env.SUPABASE_DB_URL = 'postgres://user:pass@db.supabase.co:5432/apex?sslmode=require';
     process.env.SUPABASE_DB_POOL_MIN = '2';
     process.env.SUPABASE_DB_POOL_MAX = '8';
     process.env.SUPABASE_DB_IDLE_TIMEOUT_MS = '60000';
@@ -190,9 +189,7 @@ describe('runPendingMigrations', () => {
     const result = await runPendingMigrations(pool, tempDir);
 
     expect(query).toHaveBeenCalledWith(expect.stringContaining('CREATE TABLE IF NOT EXISTS'));
-    expect(query).toHaveBeenCalledWith(
-      expect.stringContaining('SELECT id FROM schema_migrations'),
-    );
+    expect(query).toHaveBeenCalledWith(expect.stringContaining('SELECT id FROM schema_migrations'));
     expect(clientQuery).toHaveBeenNthCalledWith(1, 'BEGIN;');
     expect(clientQuery).toHaveBeenNthCalledWith(2, 'CREATE TABLE example (id INT);');
     expect(clientQuery).toHaveBeenNthCalledWith(

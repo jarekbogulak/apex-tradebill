@@ -1,7 +1,12 @@
 import { SymbolSchema } from '@apex-tradebill/types';
 import type { FastifyPluginAsync } from 'fastify';
 import type { MarketMetadataService } from '../../services/markets/marketMetadataService.js';
-import { createErrorResponse, errorResponseSchema, sendNotFound, sendValidationError } from '../http.js';
+import {
+  createErrorResponse,
+  errorResponseSchema,
+  sendNotFound,
+  sendValidationError,
+} from '../http.js';
 
 interface GetSymbolRouteOptions {
   metadata: MarketMetadataService;
@@ -70,7 +75,9 @@ export const getSymbolRoute: FastifyPluginAsync<GetSymbolRouteOptions> = async (
       if (info.status !== 'tradable') {
         return reply
           .status(404)
-          .send(createErrorResponse('NOT_TRADABLE', `Symbol ${info.symbol} is currently suspended`));
+          .send(
+            createErrorResponse('NOT_TRADABLE', `Symbol ${info.symbol} is currently suspended`),
+          );
       }
 
       return reply.send({

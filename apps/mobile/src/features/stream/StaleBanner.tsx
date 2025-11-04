@@ -67,7 +67,9 @@ const StaleBanner: FC<StaleBannerProps> = ({
       testID="stream-stale-banner"
     >
       <View style={styles.textContainer}>
-        <Text style={styles.title}>{status === 'stale' ? 'Data Stale' : 'Stream Disconnected'}</Text>
+        <Text style={styles.title}>
+          {status === 'stale' ? 'Data Stale' : 'Stream Disconnected'}
+        </Text>
         <Text style={styles.message}>{message}</Text>
         <Text style={styles.elapsed}>{elapsedText}</Text>
         {reconnectAttempts > 0 ? (

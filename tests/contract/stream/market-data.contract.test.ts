@@ -1,5 +1,10 @@
 import type { OpenAPIV3_1 } from 'openapi-types';
-import { expectSchemaHasRequired, getOperationOrThrow, getResponseObjectOrThrow, isParameterObject } from '../openapi.js';
+import {
+  expectSchemaHasRequired,
+  getOperationOrThrow,
+  getResponseObjectOrThrow,
+  isParameterObject,
+} from '../openapi.js';
 
 const PATH = '/v1/stream/market-data';
 
@@ -21,7 +26,9 @@ describe('GET /v1/stream/market-data (WebSocket)', () => {
 
   test('documents optional symbol list for subscription', () => {
     const parameters = (operation.parameters ?? []).filter(isParameterObject);
-      const symbolsParameter = parameters.find((parameter: OpenAPIV3_1.ParameterObject) => parameter.name === 'symbols');
+    const symbolsParameter = parameters.find(
+      (parameter: OpenAPIV3_1.ParameterObject) => parameter.name === 'symbols',
+    );
 
     expect(symbolsParameter).toBeDefined();
     if (!symbolsParameter) {
@@ -40,9 +47,11 @@ describe('GET /v1/stream/market-data (WebSocket)', () => {
     }
 
     const itemSchema = schema.items;
-    expect(itemSchema && '$ref' in (itemSchema as OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.SchemaObject)
-      ? (itemSchema as OpenAPIV3_1.ReferenceObject).$ref
-      : null).toBe('#/components/schemas/Symbol');
+    expect(
+      itemSchema && '$ref' in (itemSchema as OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.SchemaObject)
+        ? (itemSchema as OpenAPIV3_1.ReferenceObject).$ref
+        : null,
+    ).toBe('#/components/schemas/Symbol');
   });
 
   test('specifies WebSocket upgrade response', () => {

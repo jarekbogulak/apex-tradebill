@@ -116,7 +116,9 @@ export const getResponseObjectOrThrow = (
   }
 
   if ('$ref' in response) {
-    throw new Error(`Response ${statusCode} should be an inline object, received $ref: ${response.$ref}`);
+    throw new Error(
+      `Response ${statusCode} should be an inline object, received $ref: ${response.$ref}`,
+    );
   }
 
   return response;
@@ -143,10 +145,7 @@ export const getJsonSchemaFromResponseOrThrow = (
   return media.schema;
 };
 
-export const expectSchemaHasRequired = (
-  schema: OpenAPIV3_1.SchemaObject,
-  properties: string[],
-) => {
+export const expectSchemaHasRequired = (schema: OpenAPIV3_1.SchemaObject, properties: string[]) => {
   expect(Array.isArray(schema.required)).toBe(true);
   for (const property of properties) {
     expect(schema.required).toContain(property);

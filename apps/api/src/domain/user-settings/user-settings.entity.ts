@@ -58,10 +58,7 @@ export const createUserSettings = (input: NewUserSettingsInput): UserSettings =>
   const issuedAt = input.createdAt ?? now();
   const atrMultiplier = input.atrMultiplier ?? DEFAULT_ATR_MULTIPLIER;
 
-  const remembered = dedupeAndSort([
-    atrMultiplier,
-    ...(input.rememberedMultiplierOptions ?? []),
-  ]);
+  const remembered = dedupeAndSort([atrMultiplier, ...(input.rememberedMultiplierOptions ?? [])]);
 
   return UserSettingsSchema.parse({
     userId: input.userId,

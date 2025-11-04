@@ -109,7 +109,10 @@ export const DeviceActivationGate = ({ children }: DeviceActivationGateProps) =>
         />
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Pressable
-          style={[styles.button, (submitting || activationCode.trim().length === 0) && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            (submitting || activationCode.trim().length === 0) && styles.buttonDisabled,
+          ]}
           onPress={handleSubmit}
           disabled={submitting || activationCode.trim().length === 0}
         >

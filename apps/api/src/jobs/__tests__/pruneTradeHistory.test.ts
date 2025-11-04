@@ -2,12 +2,10 @@ import type { DatabaseClient, DatabasePool } from '../../infra/database/pool.js'
 import { createPruneTradeHistoryJob } from '../pruneTradeHistory.js';
 
 const createMockPool = (rowCount = 0) => {
-  const query: jest.MockedFunction<DatabasePool['query']> = jest
-    .fn()
-    .mockResolvedValue({
-      rows: [],
-      rowCount,
-    });
+  const query: jest.MockedFunction<DatabasePool['query']> = jest.fn().mockResolvedValue({
+    rows: [],
+    rowCount,
+  });
 
   const client: DatabaseClient = {
     query,

@@ -42,11 +42,15 @@ declare module 'fastify' {
 
 const base64UrlDecode = (segment: string): string => {
   const padding = 4 - (segment.length % 4);
-  const normalized = segment.replace(/-/g, '+').replace(/_/g, '/') + (padding < 4 ? '='.repeat(padding) : '');
+  const normalized =
+    segment.replace(/-/g, '+').replace(/_/g, '/') + (padding < 4 ? '='.repeat(padding) : '');
   return Buffer.from(normalized, 'base64').toString('utf8');
 };
 
-const isAudienceValid = (expected: string | undefined, actual: string | string[] | undefined): boolean => {
+const isAudienceValid = (
+  expected: string | undefined,
+  actual: string | string[] | undefined,
+): boolean => {
   if (!expected || !actual) {
     return true;
   }
@@ -119,13 +123,7 @@ const forbid = (reply: FastifyReply, message: string) => {
 
 export const authenticationPlugin: FastifyPluginAsync<AuthenticationPluginOptions> = async (
   app,
-  {
-    secret,
-    issuer,
-    audience,
-    clockToleranceMs = 5000,
-    allowGuest = true,
-  },
+  { secret, issuer, audience, clockToleranceMs = 5000, allowGuest = true },
 ) => {
   if (!secret) {
     throw new Error('Authentication secret must be provided');

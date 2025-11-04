@@ -13,17 +13,20 @@ const createDecimalStringSchema = ({
     .string()
     .trim()
     .refine((value) => decimalPattern.test(value), 'Invalid decimal string')
-    .refine((value) => {
-      if (!allowNegative && value.startsWith('-')) {
-        return false;
-      }
-      if (maxFractionDigits == null) {
-        return true;
-      }
+    .refine(
+      (value) => {
+        if (!allowNegative && value.startsWith('-')) {
+          return false;
+        }
+        if (maxFractionDigits == null) {
+          return true;
+        }
 
-      const [, fraction = ''] = value.split('.');
-      return fraction.length <= maxFractionDigits;
-    }, `Fractional precision must be <= ${maxFractionDigits ?? 0} digits`);
+        const [, fraction = ''] = value.split('.');
+        return fraction.length <= maxFractionDigits;
+      },
+      `Fractional precision must be <= ${maxFractionDigits ?? 0} digits`,
+    );
 };
 
 export const SymbolSchema = z

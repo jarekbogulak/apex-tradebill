@@ -1,8 +1,16 @@
 import { SymbolSchema, TimeframeSchema } from '@apex-tradebill/types';
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import type { createSettingsService, SettingsPatchInput } from '../../services/settings/settingsService.js';
-import { createErrorResponse, errorResponseSchema, resolveUserId, sendValidationError } from '../http.js';
+import type {
+  createSettingsService,
+  SettingsPatchInput,
+} from '../../services/settings/settingsService.js';
+import {
+  createErrorResponse,
+  errorResponseSchema,
+  resolveUserId,
+  sendValidationError,
+} from '../http.js';
 import { serializeSettings } from './serialize.js';
 
 type SettingsService = ReturnType<typeof createSettingsService>;
@@ -16,9 +24,7 @@ const SettingsPatchSchema = z
     riskPercent: z.union([z.string(), z.number()]).optional(),
     atrMultiplier: z.union([z.string(), z.number()]).optional(),
     dataFreshnessThresholdMs: z.number().int().optional(),
-    rememberedMultiplierOptions: z
-      .array(z.union([z.string(), z.number()]))
-      .optional(),
+    rememberedMultiplierOptions: z.array(z.union([z.string(), z.number()])).optional(),
     defaultSymbol: z.string().optional(),
     defaultTimeframe: z.string().optional(),
   })
@@ -95,7 +101,9 @@ export const patchSettingsRoute: FastifyPluginAsync<PatchSettingsRouteOptions> =
     async (request, reply) => {
       const parseResult = SettingsPatchSchema.safeParse(request.body);
       if (!parseResult.success) {
-        const details = parseResult.error.issues.map((issue) => `${issue.path.join('.')} ${issue.message}`);
+        const details = parseResult.error.issues.map(
+          (issue) => `${issue.path.join('.')} ${issue.message}`,
+        );
         return sendValidationError(reply, 'Settings patch failed validation', details);
       }
 

@@ -7,6 +7,11 @@
     "noEmit": true,
     "isolatedModules": false
   },
-  "include": ["contract/**/*.ts", "integration/**/*.ts", "performance/**/*.ts", "reliability/**/*.ts"],
+  "include": [
+    "contract/**/*.ts",
+    "integration/**/*.ts",
+    "performance/**/*.ts",
+    "reliability/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }

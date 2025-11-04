@@ -26,7 +26,9 @@ export default function TabLayout() {
         name="trade-calculator"
         options={{
           title: 'Trade',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.xyaxis.line" color={color} />,
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="chart.xyaxis.line" color={color} />
+          ),
         }}
       />
       <Tabs.Screen

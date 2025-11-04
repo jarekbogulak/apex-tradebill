@@ -44,6 +44,8 @@ describe('Equity service', () => {
     };
 
     const service = createEquityService({ equityPort: port });
-    await expect(service.setManualEquity('user', '-1')).rejects.toThrow('Equity cannot be negative');
+    await expect(service.setManualEquity('user', '-1')).rejects.toThrow(
+      'Equity cannot be negative',
+    );
   });
 });

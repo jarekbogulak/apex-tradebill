@@ -20,12 +20,9 @@ import type { TradeCalculation } from '@apex-tradebill/types';
 import * as deviceCacheEntry from '../../storage/device-cache-entry.js';
 import { createCacheSyncWorker } from '../cacheSync.js';
 
-const mockListDeviceCacheEntries = deviceCacheEntry
-  .listDeviceCacheEntries as jest.Mock;
-const mockMarkDeviceCacheEntrySynced = deviceCacheEntry
-  .markDeviceCacheEntrySynced as jest.Mock;
-const mockRemoveDeviceCacheEntry = deviceCacheEntry
-  .removeDeviceCacheEntry as jest.Mock;
+const mockListDeviceCacheEntries = deviceCacheEntry.listDeviceCacheEntries as jest.Mock;
+const mockMarkDeviceCacheEntrySynced = deviceCacheEntry.markDeviceCacheEntrySynced as jest.Mock;
+const mockRemoveDeviceCacheEntry = deviceCacheEntry.removeDeviceCacheEntry as jest.Mock;
 const mockToTradeCalculation = deviceCacheEntry.toTradeCalculation as jest.Mock;
 
 const originalFetch = global.fetch;
@@ -178,10 +175,7 @@ describe('createCacheSyncWorker', () => {
 
     await worker.syncNow();
 
-    expect(warnSpy).toHaveBeenCalledWith(
-      'device-cache.sync.failed',
-      expect.any(Error),
-    );
+    expect(warnSpy).toHaveBeenCalledWith('device-cache.sync.failed', expect.any(Error));
     expect(mockMarkDeviceCacheEntrySynced).not.toHaveBeenCalled();
     expect(mockRemoveDeviceCacheEntry).not.toHaveBeenCalled();
   });

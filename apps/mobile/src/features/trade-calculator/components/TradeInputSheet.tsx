@@ -14,7 +14,10 @@ import {
 
 import { useTheme, type Theme } from '@apex-tradebill/ui';
 
-import type { TradeCalculatorInputState, TradeCalculatorStatus } from '@/src/state/tradeCalculatorStore';
+import type {
+  TradeCalculatorInputState,
+  TradeCalculatorStatus,
+} from '@/src/state/tradeCalculatorStore';
 
 interface TradeInputSheetProps {
   visible: boolean;
@@ -69,7 +72,13 @@ export const TradeInputSheet = ({
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose} presentationStyle="overFullScreen">
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={onClose}
+      presentationStyle="overFullScreen"
+    >
       <View style={styles.overlay}>
         <Pressable
           style={styles.backdrop}
@@ -156,7 +165,9 @@ export const TradeInputSheet = ({
                 <Switch value={input.useVolatilityStop} onValueChange={onVolatilityToggle} />
               </View>
 
-              {status === 'error' && errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+              {status === 'error' && errorMessage ? (
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              ) : null}
 
               <Pressable
                 style={[styles.primaryButton, isSubmitting && styles.primaryButtonDisabled]}
@@ -326,4 +337,4 @@ const createStyles = (theme: Theme) =>
     errorText: {
       color: theme.colors.error,
     },
-  } as const);
+  }) as const;

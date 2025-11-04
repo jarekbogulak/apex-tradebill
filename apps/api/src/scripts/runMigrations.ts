@@ -3,7 +3,11 @@ if (typeof process.loadEnvFile === 'function') {
 }
 
 import '../config/loadEnv.js';
-import { closeSharedDatabasePool, getSharedDatabasePool, runPendingMigrations } from '../infra/database/pool.js';
+import {
+  closeSharedDatabasePool,
+  getSharedDatabasePool,
+  runPendingMigrations,
+} from '../infra/database/pool.js';
 
 const run = async () => {
   const pool = await getSharedDatabasePool();

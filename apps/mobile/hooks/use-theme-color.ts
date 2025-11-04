@@ -11,11 +11,13 @@ const COLOR_TOKEN_MAP: Record<string, ThemeColorToken> = {
 
 type ThemeTokenName = ThemeColorToken | keyof typeof COLOR_TOKEN_MAP;
 
-export function useThemeColor(props: Partial<Record<'light' | 'dark', string>>, colorName: ThemeTokenName) {
+export function useThemeColor(
+  props: Partial<Record<'light' | 'dark', string>>,
+  colorName: ThemeTokenName,
+) {
   const theme = useTheme();
   const override = props[theme.scheme];
-  const resolvedToken =
-    COLOR_TOKEN_MAP[String(colorName)] ?? (colorName as ThemeColorToken);
+  const resolvedToken = COLOR_TOKEN_MAP[String(colorName)] ?? (colorName as ThemeColorToken);
 
   if (override) {
     return override;

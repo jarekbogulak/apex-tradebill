@@ -1,9 +1,11 @@
 # Apex TradeBill: End-to-End Setup & Troubleshooting
 
 ## Overview
+
 Apex TradeBill is delivered as a pnpm-managed Expo + Fastify monorepo. This guide walks through environment setup, local development workflows, validation gates, and common recovery steps so you can move from a clean checkout to a profiled build quickly.
 
 ## Prerequisites
+
 - Node.js 22 LTS (matching the repo `engines.node` constraint)
 - pnpm 9.12 or newer (`corepack enable` is recommended)
 - Xcode 16 / Android SDK 35 for device simulators
@@ -12,6 +14,7 @@ Apex TradeBill is delivered as a pnpm-managed Expo + Fastify monorepo. This guid
 - jq + curl for contract smoke checks (optional but useful)
 
 ## Initial Setup
+
 1. Install workspace dependencies:
    ```sh
    pnpm install
@@ -29,12 +32,14 @@ Apex TradeBill is delivered as a pnpm-managed Expo + Fastify monorepo. This guid
    ```
 
 ## Running the Stack
+
 - **API**: `pnpm --filter @apex-tradebill/api dev` (Fastify with live reload via `tsx`)
 - **Expo app**: `pnpm --filter @apex-tradebill/mobile start`
   - Use the QR code, iOS simulator (`i`), or Android emulator (`a`) from the Expo CLI prompt.
 - **Shared packages** auto-reload thanks to Metro and the configured TypeScript project references.
 
 ## Testing & Quality Gates
+
 - **Unit & integration**: `pnpm test` (runs all workspace suites)
 - **API unit target**: `pnpm --filter @apex-tradebill/api test`
 - **Mobile unit target**: `pnpm --filter @apex-tradebill/mobile test`
@@ -46,6 +51,7 @@ Apex TradeBill is delivered as a pnpm-managed Expo + Fastify monorepo. This guid
   - Dependency + OpenAPI scanning: `pnpm security:scan`
 
 ## Profiling Workflows
+
 - Capture latency samples (JSON array per channel) and point the test harness at them:
   ```sh
   APEX_LATENCY_SAMPLE_PATH=artifacts/latency.json pnpm --filter @apex-tradebill/tests test -- performance
@@ -57,6 +63,7 @@ Apex TradeBill is delivered as a pnpm-managed Expo + Fastify monorepo. This guid
 - Add artifacts under `tests/performance/fixtures/` for reproducible baselines.
 
 ## Troubleshooting
+
 - **`pnpm` not found**: ensure `corepack enable` and restart the shell; macOS users may need to relink `~/.local/share/pnpm`.
 - **Metro cannot resolve packages**: run `pnpm install`, clear cache (`pnpm --filter @apex-tradebill/mobile expo start -c`), and confirm the workspace symlinks under `node_modules`.
 - **Expo bundler hangs on secure store**: make sure the device/emulator has a screen lock configured; otherwise SecureStore initialization will block.
@@ -65,6 +72,7 @@ Apex TradeBill is delivered as a pnpm-managed Expo + Fastify monorepo. This guid
 - **Performance checks skip**: both harnesses look for JSON fixtures; capture fresh data and set `APEX_LATENCY_SAMPLE_PATH` / `APEX_FPS_TRACE_PATH`.
 
 ## Operational Notes
+
 - The realtime refresh cadence is fixed at 1s; verify both the API and mobile schedulers (`apps/api/src/realtime/refreshScheduler.ts`, `apps/mobile/src/features/stream/refreshScheduler.ts`) when tuning.
 - Keep the ApeX symbol allowlist (`configs/markets/allowlist.json`) synchronized with production; contract tests depend on the documented schema.
 - When publishing builds, run `pnpm security:scan` and ensure Spectral passes—CI expects clean output before promoting artifacts.

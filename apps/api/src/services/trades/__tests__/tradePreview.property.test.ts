@@ -1,4 +1,8 @@
-import type { MarketDataPort, MarketMetadataPort, SymbolMetadata } from '../../../domain/ports/tradebillPorts.js';
+import type {
+  MarketDataPort,
+  MarketMetadataPort,
+  SymbolMetadata,
+} from '../../../domain/ports/tradebillPorts.js';
 import { createInMemoryTradeCalculationRepository } from '../../../domain/trade-calculation/trade-calculation.entity.js';
 import { createTradePreviewService } from '../previewService.js';
 

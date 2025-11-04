@@ -6,7 +6,10 @@ import type { TradeWarningCode } from '@apex-tradebill/types';
 import { useTheme, type Theme } from '@apex-tradebill/ui';
 
 import { RiskVisualization } from '@/src/features/visualization/RiskVisualization';
-import type { TradeCalculatorInputState, TradeCalculatorState } from '@/src/state/tradeCalculatorStore';
+import type {
+  TradeCalculatorInputState,
+  TradeCalculatorState,
+} from '@/src/state/tradeCalculatorStore';
 
 import type { RiskTone } from '../hooks/useTradeCalculatorController';
 import { formatPriceValue } from '../utils/formatters';
@@ -38,7 +41,12 @@ const formatTimestamp = (value: string | null) => {
   }
 
   const date = new Date(value);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  return date.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
 };
 
 const formatRiskReward = (ratio: number | null) => {

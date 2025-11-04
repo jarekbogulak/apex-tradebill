@@ -138,7 +138,13 @@ const extractSymbolsFromRequest = async (
 
 export const marketDataStreamRoute: FastifyPluginAsync<MarketDataStreamRouteOptions> = async (
   app,
-  { marketData, metadata, ringBuffer, intervalMs = DEFAULT_INTERVAL_MS, samplingWindowMs = DEFAULT_SAMPLING_WINDOW_MS },
+  {
+    marketData,
+    metadata,
+    ringBuffer,
+    intervalMs = DEFAULT_INTERVAL_MS,
+    samplingWindowMs = DEFAULT_SAMPLING_WINDOW_MS,
+  },
 ) => {
   const wss = new WebSocketServer({ noServer: true });
 
@@ -209,7 +215,9 @@ export const marketDataStreamRoute: FastifyPluginAsync<MarketDataStreamRouteOpti
   app.get('/v1/stream/market-data', async (_request, reply) => {
     return reply
       .status(426)
-      .send(createErrorResponse('UPGRADE_REQUIRED', 'WebSocket upgrade required for this endpoint'));
+      .send(
+        createErrorResponse('UPGRADE_REQUIRED', 'WebSocket upgrade required for this endpoint'),
+      );
   });
 };
 

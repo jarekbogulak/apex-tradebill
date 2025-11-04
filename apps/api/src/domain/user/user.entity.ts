@@ -4,13 +4,7 @@ const now = () => new Date().toISOString();
 
 export const UserSchema = z.object({
   id: z.string().uuid(),
-  email: z
-    .string()
-    .email()
-    .trim()
-    .max(254)
-    .nullable()
-    .optional(),
+  email: z.string().email().trim().max(254).nullable().optional(),
   displayName: z.string().trim().min(1).max(64),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),

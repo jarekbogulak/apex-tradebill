@@ -56,14 +56,19 @@ describe('GET /v1/settings', () => {
     ).toBe('#/components/schemas/Symbol');
 
     expect(
-      defaultTimeframeProperty && '$ref' in defaultTimeframeProperty ? defaultTimeframeProperty.$ref : null,
+      defaultTimeframeProperty && '$ref' in defaultTimeframeProperty
+        ? defaultTimeframeProperty.$ref
+        : null,
     ).toBe('#/components/schemas/Timeframe');
 
     if (!isSchemaObject(rememberedOptionsProperty)) {
       throw new Error('Expected rememberedMultiplierOptions to be documented as an array');
     }
 
-    const rememberedOptionsArray = expectArraySchema(rememberedOptionsProperty, 'rememberedMultiplierOptions');
+    const rememberedOptionsArray = expectArraySchema(
+      rememberedOptionsProperty,
+      'rememberedMultiplierOptions',
+    );
     const itemSchema = rememberedOptionsArray.items;
     expectStringProperty(itemSchema);
   });

@@ -67,9 +67,7 @@ const clampArray = <T>(items: T[], max: number): void => {
   items.splice(0, items.length - max);
 };
 
-const resolveAggregateTimeframes = (
-  options: RingBufferOptions,
-): Timeframe[] => {
+const resolveAggregateTimeframes = (options: RingBufferOptions): Timeframe[] => {
   const requested = options.aggregateTimeframes ?? DEFAULT_AGGREGATE_TIMEFRAMES;
   return requested.filter((timeframe) => timeframe in TIMEFRAME_WINDOW_MS);
 };
@@ -196,9 +194,9 @@ export const createRingBuffer = (options: RingBufferOptions = {}): RingBuffer =>
     const snapshot: MarketSnapshot = {
       symbol,
       lastPrice: toPriceString(price),
-      bid: bid != null ? toPriceString(bid) : state.snapshot?.bid ?? null,
-      ask: ask != null ? toPriceString(ask) : state.snapshot?.ask ?? null,
-      atr13: atr != null ? toPriceString(atr) : state.snapshot?.atr13 ?? '0.00000000',
+      bid: bid != null ? toPriceString(bid) : (state.snapshot?.bid ?? null),
+      ask: ask != null ? toPriceString(ask) : (state.snapshot?.ask ?? null),
+      atr13: atr != null ? toPriceString(atr) : (state.snapshot?.atr13 ?? '0.00000000'),
       atrMultiplier: state.atrMultiplier,
       stale: false,
       source: 'stream',

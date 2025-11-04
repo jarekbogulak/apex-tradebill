@@ -74,7 +74,11 @@ export default function TradeCalculatorScreen() {
             isExecuting={isExecuting}
           />
         ) : (
-          <TradeBillEmptyCard status={status} errorMessage={errorMessage} onCreatePress={actions.openCreate} />
+          <TradeBillEmptyCard
+            status={status}
+            errorMessage={errorMessage}
+            onCreatePress={actions.openCreate}
+          />
         )}
 
         {shouldShowErrorBanner && errorMessage ? <TradeErrorBanner message={errorMessage} /> : null}
@@ -117,4 +121,4 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.lg,
       backgroundColor: theme.colors.surfaceAlt,
     },
-  } as const);
+  }) as const;

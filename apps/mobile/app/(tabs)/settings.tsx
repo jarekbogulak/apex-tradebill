@@ -73,7 +73,7 @@ export default function SettingsScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Risk Defaults</Text>
-      <View style={styles.field}> 
+      <View style={styles.field}>
         <Text style={styles.label}>Risk Percent</Text>
         <TextInput
           value={settings.riskPercent}
@@ -139,7 +139,9 @@ export default function SettingsScreen() {
         />
       </View>
       <Pressable style={styles.button} onPress={handleSave} disabled={updateMutation.isPending}>
-        <Text style={styles.buttonLabel}>{updateMutation.isPending ? 'Saving…' : 'Save Settings'}</Text>
+        <Text style={styles.buttonLabel}>
+          {updateMutation.isPending ? 'Saving…' : 'Save Settings'}
+        </Text>
       </Pressable>
       {statusMessage ? <Text style={styles.status}>{statusMessage}</Text> : null}
     </ScrollView>

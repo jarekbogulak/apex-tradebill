@@ -116,7 +116,9 @@ export const postPreviewRoute: FastifyPluginAsync<PostPreviewRouteOptions> = asy
     async (request, reply) => {
       const parseResult = TradeInputSchema.safeParse(request.body);
       if (!parseResult.success) {
-        const details = parseResult.error.issues.map((issue) => `${issue.path.join('.')} ${issue.message}`);
+        const details = parseResult.error.issues.map(
+          (issue) => `${issue.path.join('.')} ${issue.message}`,
+        );
         return sendValidationError(reply, 'Trade input failed validation', details);
       }
 
@@ -141,9 +143,7 @@ export const postPreviewRoute: FastifyPluginAsync<PostPreviewRouteOptions> = asy
           message.includes('No market snapshot') ||
           message.includes('not allowlisted')
         ) {
-          return reply
-            .status(404)
-            .send(createErrorResponse('NOT_FOUND', message));
+          return reply.status(404).send(createErrorResponse('NOT_FOUND', message));
         }
 
         return reply.status(400).send(createErrorResponse('PREVIEW_FAILED', message));

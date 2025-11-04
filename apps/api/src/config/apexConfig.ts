@@ -11,10 +11,7 @@ const normalizeEnvironment = (value: string | undefined): ApeXEnvironment => {
   return 'prod';
 };
 
-const pickFirstDefined = (
-  env: NodeJS.ProcessEnv,
-  keys: readonly string[],
-): string | undefined => {
+const pickFirstDefined = (env: NodeJS.ProcessEnv, keys: readonly string[]): string | undefined => {
   for (const key of keys) {
     const candidate = env[key];
     if (candidate && candidate.trim()) {

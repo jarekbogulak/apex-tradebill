@@ -79,10 +79,7 @@ const verifySignature = (payload: ActivationPayload, secret: string): void => {
   }
 };
 
-const createJwt = (
-  payload: Record<string, unknown>,
-  secret: string,
-): string => {
+const createJwt = (payload: Record<string, unknown>, secret: string): string => {
   const header = {
     alg: 'HS256',
     typ: 'JWT',

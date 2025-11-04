@@ -1,6 +1,10 @@
 import './config/loadEnv.js';
 import Fastify, { type FastifyInstance } from 'fastify';
-import { type MarketSnapshot, type Symbol as TradingSymbol, type Timeframe } from '@apex-tradebill/types';
+import {
+  type MarketSnapshot,
+  type Symbol as TradingSymbol,
+  type Timeframe,
+} from '@apex-tradebill/types';
 import { fileURLToPath } from 'node:url';
 import { createMarketMetadataService } from './services/markets/marketMetadataService.js';
 import {
@@ -89,10 +93,7 @@ const TIMEFRAME_MULTIPLIERS: Record<Timeframe, number> = {
   '4h': 240,
 };
 
-const aggregateCandles = (
-  series: MarketCandle[],
-  multiplier: number,
-): MarketCandle[] => {
+const aggregateCandles = (series: MarketCandle[], multiplier: number): MarketCandle[] => {
   if (multiplier <= 1) {
     return [...series];
   }
@@ -184,10 +185,7 @@ const createInMemoryMarketDataPort = (): MarketDataPort => {
 
   const appendSyntheticCandles = (state: SeriesState): void => {
     const now = Date.now();
-    const intervals = Math.max(
-      0,
-      Math.floor((now - state.lastTimestampMs) / CANDLE_INTERVAL_MS),
-    );
+    const intervals = Math.max(0, Math.floor((now - state.lastTimestampMs) / CANDLE_INTERVAL_MS));
 
     if (intervals === 0) {
       return;
@@ -232,7 +230,8 @@ const createInMemoryMarketDataPort = (): MarketDataPort => {
         return null;
       }
 
-      const lastClose = state.candles[state.candles.length - 1]?.close ?? BASE_PRICES[symbol] ?? 1_000;
+      const lastClose =
+        state.candles[state.candles.length - 1]?.close ?? BASE_PRICES[symbol] ?? 1_000;
       const drift = Math.sin(Date.now() / 60_000) * 25;
       return createSnapshot(symbol, lastClose + drift);
     },
@@ -257,7 +256,10 @@ const createInMemoryMarketDataPort = (): MarketDataPort => {
 };
 
 const createInMemoryEquityPort = (): AccountEquityPort => {
-  const store = new Map<string, { equity: string; lastSyncedAt: string; source: 'connected' | 'manual' }>();
+  const store = new Map<
+    string,
+    { equity: string; lastSyncedAt: string; source: 'connected' | 'manual' }
+  >();
 
   store.set(DEFAULT_USER_ID, {
     source: 'connected',
@@ -317,7 +319,8 @@ const createMarketInfrastructure = async (
   });
 
   const allowlisted = await marketMetadata.listAllowlistedSymbols();
-  const symbols = allowlisted.length > 0 ? allowlisted : (Object.keys(BASE_PRICES) as TradingSymbol[]);
+  const symbols =
+    allowlisted.length > 0 ? allowlisted : (Object.keys(BASE_PRICES) as TradingSymbol[]);
 
   const probeSymbol = symbols[0] ?? ('BTC-USDT' as TradingSymbol);
   try {
@@ -374,10 +377,7 @@ const resolveTradeCalculationRepository = async (
       pool,
     };
   } catch (error) {
-    app.log.warn(
-      { err: error },
-      'database.connection_failed_using_in_memory_repository',
-    );
+    app.log.warn({ err: error }, 'database.connection_failed_using_in_memory_repository');
     return {
       repository: createInMemoryTradeCalculationRepository(),
       pool: null,

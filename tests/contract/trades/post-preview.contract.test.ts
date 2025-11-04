@@ -27,7 +27,9 @@ describe('POST /v1/trades/preview', () => {
     expect(operation.requestBody.required).toBe(true);
 
     const bodySchema = operation.requestBody.content?.['application/json']?.schema;
-    expect(bodySchema && '$ref' in bodySchema ? bodySchema.$ref : null).toBe('#/components/schemas/TradeInput');
+    expect(bodySchema && '$ref' in bodySchema ? bodySchema.$ref : null).toBe(
+      '#/components/schemas/TradeInput',
+    );
   });
 
   test('returns trade output and market snapshot payloads', () => {

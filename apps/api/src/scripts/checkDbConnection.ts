@@ -3,10 +3,7 @@ if (typeof process.loadEnvFile === 'function') {
 }
 
 import '../config/loadEnv.js';
-import {
-  closeSharedDatabasePool,
-  getSharedDatabasePool,
-} from '../infra/database/pool.js';
+import { closeSharedDatabasePool, getSharedDatabasePool } from '../infra/database/pool.js';
 
 const resolveTarget = () => {
   const connectionString = process.env.SUPABASE_DB_URL ?? process.env.DATABASE_URL;

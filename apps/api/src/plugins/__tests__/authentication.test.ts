@@ -4,11 +4,7 @@ import { DEFAULT_USER_ID } from '../../routes/http.js';
 import { authenticationPlugin } from '../authentication.js';
 
 const toBase64Url = (value: Buffer) => {
-  return value
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+  return value.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 };
 
 const createToken = (claims: Record<string, unknown>, secret: string) => {

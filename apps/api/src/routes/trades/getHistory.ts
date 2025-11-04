@@ -1,6 +1,11 @@
 import type { FastifyPluginAsync } from 'fastify';
 import type { TradeHistoryService } from '../../services/trades/historyService.js';
-import { createErrorResponse, errorResponseSchema, resolveUserId, sendValidationError } from '../http.js';
+import {
+  createErrorResponse,
+  errorResponseSchema,
+  resolveUserId,
+  sendValidationError,
+} from '../http.js';
 
 interface GetHistoryRouteOptions {
   historyService: TradeHistoryService;

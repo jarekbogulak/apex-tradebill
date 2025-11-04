@@ -57,7 +57,10 @@ export interface ApiClient {
   getSettings(): Promise<SettingsResponse>;
   updateSettings(patch: Partial<SettingsResponse>): Promise<SettingsResponse>;
   getEquity(): Promise<EquityResponse>;
-  registerDevice(payload: { deviceId: string; activationCode: string }): Promise<DeviceRegisterResponse>;
+  registerDevice(payload: {
+    deviceId: string;
+    activationCode: string;
+  }): Promise<DeviceRegisterResponse>;
 }
 
 const createHeaders = (additional: Record<string, string> = {}) => {

@@ -66,4 +66,3 @@ Migrations are append-only. To revert, author a new migration that undoes the pr
 
 - If the script reports `pg module not available`, install dependencies in the api workspace: `pnpm --filter @apex-tradebill/api install`.
 - When running against Supabase-hosted instances, TLS is enabled automatically; set `SUPABASE_DB_SSL=disable` only for trusted local development containers.
-

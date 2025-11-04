@@ -51,11 +51,7 @@ export const resolveUserId = (request: FastifyRequest): string => {
   return header;
 };
 
-export const sendValidationError = (
-  reply: FastifyReply,
-  message: string,
-  details?: string[],
-) => {
+export const sendValidationError = (reply: FastifyReply, message: string, details?: string[]) => {
   return reply.status(400).send(createErrorResponse('VALIDATION_ERROR', message, details));
 };
 

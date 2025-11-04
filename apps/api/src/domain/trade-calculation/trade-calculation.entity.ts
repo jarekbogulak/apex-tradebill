@@ -72,7 +72,8 @@ export const createInMemoryTradeCalculationRepository = (
         (entry) => entry.userId === userId && (!cursor || entry.createdAt < cursor),
       );
       const items = sortedByCreatedAtDesc(entries).slice(0, limit);
-      const nextCursor = items.length === limit ? items[items.length - 1]?.createdAt ?? null : null;
+      const nextCursor =
+        items.length === limit ? (items[items.length - 1]?.createdAt ?? null) : null;
       return { items, nextCursor };
     },
   };

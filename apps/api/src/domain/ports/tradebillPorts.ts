@@ -27,11 +27,7 @@ export interface SymbolMetadata {
 
 export interface MarketDataPort {
   getLatestSnapshot(symbol: Symbol): Promise<MarketSnapshot | null>;
-  getRecentCandles(
-    symbol: Symbol,
-    timeframe: Timeframe,
-    lookback: number,
-  ): Promise<MarketCandle[]>;
+  getRecentCandles(symbol: Symbol, timeframe: Timeframe, lookback: number): Promise<MarketCandle[]>;
 }
 
 export interface MarketMetadataPort {

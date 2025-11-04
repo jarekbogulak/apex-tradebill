@@ -29,4 +29,4 @@ const createStyles = (theme: Theme) =>
       color: theme.colors.error,
       fontSize: 14,
     },
-  } as const);
+  }) as const;

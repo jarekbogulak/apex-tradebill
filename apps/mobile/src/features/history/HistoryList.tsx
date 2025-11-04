@@ -16,7 +16,12 @@ export interface HistoryListProps {
 
 const keyExtractor = (item: TradeCalculation) => item.id;
 
-export const HistoryList = ({ items, loading = false, onRefresh, onLoadMore }: HistoryListProps) => {
+export const HistoryList = ({
+  items,
+  loading = false,
+  onRefresh,
+  onLoadMore,
+}: HistoryListProps) => {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const data = useMemo(
@@ -152,4 +157,4 @@ const createStyles = (theme: Theme) =>
       color: theme.colors.textMuted,
       textAlign: 'center',
     },
-  } as const);
+  }) as const;

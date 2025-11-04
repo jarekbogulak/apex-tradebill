@@ -46,7 +46,12 @@ describe('PATCH /v1/settings', () => {
 
     const properties = schema.properties ?? {};
     expect(Object.keys(properties).sort()).toEqual(
-      ['atrMultiplier', 'dataFreshnessThresholdMs', 'rememberedMultiplierOptions', 'riskPercent'].sort(),
+      [
+        'atrMultiplier',
+        'dataFreshnessThresholdMs',
+        'rememberedMultiplierOptions',
+        'riskPercent',
+      ].sort(),
     );
 
     const riskPercentProperty = properties.riskPercent;
@@ -73,10 +78,15 @@ describe('PATCH /v1/settings', () => {
       throw new Error('Expected rememberedMultiplierOptions to be documented as an array');
     }
 
-    const rememberedOptionsArray = expectArraySchema(rememberedOptionsProperty, 'rememberedMultiplierOptions');
+    const rememberedOptionsArray = expectArraySchema(
+      rememberedOptionsProperty,
+      'rememberedMultiplierOptions',
+    );
     const itemSchema = rememberedOptionsArray.items;
     if (!isSchemaObject(itemSchema)) {
-      throw new Error('Expected rememberedMultiplierOptions array items to be inline schema definitions');
+      throw new Error(
+        'Expected rememberedMultiplierOptions array items to be inline schema definitions',
+      );
     }
     expect(itemSchema.type).toBe('string');
   });
@@ -132,7 +142,9 @@ describe('PATCH /v1/settings', () => {
     const optionsArray = expectArraySchema(rememberedOptions, 'rememberedMultiplierOptions');
     const itemSchema = optionsArray.items;
     if (!isSchemaObject(itemSchema)) {
-      throw new Error('Expected rememberedMultiplierOptions array items to be inline schema definitions');
+      throw new Error(
+        'Expected rememberedMultiplierOptions array items to be inline schema definitions',
+      );
     }
     expect(itemSchema.type).toBe('string');
   });
