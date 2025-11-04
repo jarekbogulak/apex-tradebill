@@ -170,8 +170,6 @@ const createStyles = (theme: Theme) =>
     errorCard: {
       width: '100%',
       borderRadius: theme.radii.lg,
-      borderWidth: 1,
-      borderColor: theme.colors.error,
       backgroundColor: theme.colors.errorSurface,
       paddingVertical: theme.spacing.lg,
       paddingHorizontal: theme.spacing.lg,
