@@ -13,7 +13,8 @@
     "lint": "eslint --config ../../configs/eslint/.eslintrc.cjs --ext .ts .",
     "test": "jest --passWithNoTests",
     "migrate": "tsx src/scripts/runMigrations.ts",
-    "db:check": "tsx src/scripts/checkDbConnection.ts"
+    "db:check": "tsx src/scripts/checkDbConnection.ts",
+    "auth:issue-device-code": "tsx src/scripts/issueDeviceCode.ts"
   },
   "engines": {
     "node": ">=22"

@@ -7,6 +7,7 @@ import 'react-native-reanimated';
 
 import { ThemeProvider as ApexThemeProvider } from '@apex-tradebill/ui';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import DeviceActivationGate from '@/src/DeviceActivationGate';
 import { createQueryClient } from '@/src/services/apiClient';
 
 export const unstable_settings = {
@@ -22,10 +23,14 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClientRef.current}>
       <ApexThemeProvider scheme={resolvedScheme}>
         <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          </Stack>
-          <StatusBar style="auto" />
+          <DeviceActivationGate>
+            <>
+              <Stack>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              </Stack>
+              <StatusBar style="auto" />
+            </>
+          </DeviceActivationGate>
         </NavigationThemeProvider>
       </ApexThemeProvider>
     </QueryClientProvider>

@@ -48,6 +48,8 @@ import {
   type ScheduledJobHandle,
 } from './jobs/pruneTradeHistory.js';
 import { resolveApeXCredentials } from './config/apexConfig.js';
+import { createDeviceAuthService } from './services/deviceAuthService.js';
+import postDeviceRegisterRoute from './routes/postDeviceRegister.js';
 
 const BASE_PRICES: Record<TradingSymbol, number> = {
   'BTC-USDT': 65_000,
@@ -454,6 +456,20 @@ export const buildServer = async (): Promise<FastifyInstance> => {
     marketData: infrastructure.marketData,
     tradeCalculations: tradeCalculationRepository,
   });
+  const activationSecret = process.env.APEX_OMNI_API_SECRET;
+  const deviceAuthService =
+    tradeCalculationPool != null && activationSecret
+      ? createDeviceAuthService({
+          pool: tradeCalculationPool,
+          activationSecret,
+          jwtSecret: jwtSecret ?? 'development-secret',
+          jwtIssuer: process.env.JWT_ISSUER,
+          jwtAudience: process.env.JWT_AUDIENCE,
+        })
+      : null;
+  if (tradeCalculationPool && !activationSecret) {
+    app.log.warn('APEX_OMNI_API_SECRET missing – device activation disabled');
+  }
 
   if (tradeCalculationPool) {
     const logger: PruneTradeHistoryJobLogger = {
@@ -504,6 +520,10 @@ export const buildServer = async (): Promise<FastifyInstance> => {
 
   await app.register(postExecuteRoute, {
     previewService: services.previewService,
+  });
+
+  await app.register(postDeviceRegisterRoute, {
+    deviceAuthService,
   });
 
   await app.register(postHistoryImportRoute, {

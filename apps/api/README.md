@@ -49,6 +49,25 @@ Database migrations live in `configs/db/migrations`. The helper script (`src/scr
 
 Use `pnpm --filter @apex-tradebill/api db:check` to confirm that the API can reach the database specified in `SUPABASE_DB_URL` (or `DATABASE_URL`). It issues a lightweight `SELECT 1` through the same pool used by the server and reports either success or the underlying connection error.
 
+## Device Provisioning & JWT Bootstrap
+
+The mobile client now authenticates each device with a signed JWT. Provisioning happens in two stages:
+
+1. **Issue an activation code** using the CLI (writes a record to `device_activation_codes`).
+
+   ```bash
+   pnpm --filter @apex-tradebill/api auth:issue-device-code --device my-test-device
+   ```
+
+   The command prints the device identifier, expiration, and activation code. Share that code with the corresponding device (paste, QR, etc.) before it expires.
+
+2. **Register the device** from the app. On launch the Expo client shows the device identifier and prompts for the activation code. Submitting the code calls `POST /v1/auth/device/register`, which:
+   - Validates and consumes the activation code
+   - Creates (or reuses) an `app_users` record and device binding
+   - Issues an HS256 JWT scoped to the user/device
+
+The JWT is stored in secure storage on the device and attached as a Bearer token on subsequent API requests. When registrations are in place, enable Supabase RLS with policies keyed to `user_id` so that history and settings are only returned for authenticated users.
+
 ## Additional References
 
 - Shared engineering guidelines: `../../AGENTS.md`

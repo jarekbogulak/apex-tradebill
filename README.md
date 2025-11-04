@@ -71,6 +71,20 @@ pnpm --filter @apex-tradebill/api migrate
 - Copy `apps/mobile/.env.example` to the appropriate `.env.<environment>` file (e.g., `.env.development`). The Expo app reads environment-specific values through `app.config.ts`.
 - Both workspaces respect `EXPO_PUBLIC_*` and `APEX_OMNI_*` variables documented in their respective README files.
 
+## Device Activation Flow
+
+Every device must register once to receive a JWT before the app will load trading features:
+
+1. Issue a short-lived activation code for a specific device ID:
+
+   ```bash
+   pnpm --filter @apex-tradebill/api auth:issue-device-code --device <your-device-id>
+   ```
+
+2. Launch the mobile app, note the displayed device ID, and enter the activation code on the activation screen. Successful registration stores the token securely and all future API calls include `Authorization: Bearer …` headers.
+
+Once the fleet is provisioned, enable Supabase row-level security with policies scoped to `trade_calculations.user_id` to keep history data private per authenticated user.
+
 ## Documentation & References
 
 - Workspace-specific details: `apps/api/README.md`, `apps/mobile/README.md`, `configs/db/migrations/README.md`

@@ -7,6 +7,7 @@ import type {
 } from '@apex-tradebill/types';
 import { QueryClient } from '@tanstack/react-query';
 import { env } from '../config/env';
+import { useAuthStore } from '@/src/state/authStore';
 
 export interface TradePreviewResponse {
   output: TradeOutput;
@@ -21,6 +22,13 @@ export interface TradeExecuteResponse extends TradePreviewResponse {
 export interface TradeHistoryResponse {
   items: TradeCalculation[];
   nextCursor: string | null;
+}
+
+export interface DeviceRegisterResponse {
+  userId: string;
+  deviceId: string;
+  token: string;
+  tokenExpiresAt: string;
 }
 
 export interface SettingsResponse {
@@ -49,11 +57,23 @@ export interface ApiClient {
   getSettings(): Promise<SettingsResponse>;
   updateSettings(patch: Partial<SettingsResponse>): Promise<SettingsResponse>;
   getEquity(): Promise<EquityResponse>;
+  registerDevice(payload: { deviceId: string; activationCode: string }): Promise<DeviceRegisterResponse>;
 }
 
-const createHeaders = () => ({
-  'Content-Type': 'application/json',
-});
+const createHeaders = (additional: Record<string, string> = {}) => {
+  const { token, userId } = useAuthStore.getState();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...additional,
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  if (userId) {
+    headers['x-user-id'] = userId;
+  }
+  return headers;
+};
 
 const parseJsonResponse = async <T>(response: Response): Promise<T> => {
   const text = await response.text();
@@ -122,6 +142,14 @@ export const createApiClient = (baseUrl: string = env.api.baseUrl): ApiClient =>
     async getEquity() {
       const response = await fetch(`${baseUrl}/v1/accounts/equity`, { headers: createHeaders() });
       return parseJsonResponse<EquityResponse>(response);
+    },
+    async registerDevice(payload) {
+      const response = await fetch(`${baseUrl}/v1/auth/device/register`, {
+        method: 'POST',
+        headers: createHeaders(),
+        body: JSON.stringify(payload),
+      });
+      return parseJsonResponse<DeviceRegisterResponse>(response);
     },
   };
 };

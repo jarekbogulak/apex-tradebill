@@ -19,11 +19,24 @@ import {
   useSettingsStore,
 } from '@/src/state/settingsStore';
 import { createCacheSyncWorker } from '@/src/sync/cacheSync';
+import { useAuthStore } from '@/src/state/authStore';
 
 import { useTradeHistory } from './useTradeHistory';
 
 const apiClient = createApiClient();
-const cacheSyncWorker = createCacheSyncWorker();
+const cacheSyncWorker = createCacheSyncWorker({
+  getHeaders: () => {
+    const { token, userId } = useAuthStore.getState();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    if (userId) {
+      headers['x-user-id'] = userId;
+    }
+    return headers;
+  },
+});
 
 type PreviewSource = 'manual' | 'live';
 

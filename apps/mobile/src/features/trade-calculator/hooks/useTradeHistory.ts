@@ -3,11 +3,26 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { createApiClient } from '@/src/services/apiClient';
+import { useAuthStore } from '@/src/state/authStore';
 
 const apiClient = createApiClient();
 
 export const useTradeHistory = () => {
   const [localItems, setLocalItems] = useState<TradeCalculation[]>([]);
+  const token = useAuthStore((state) => state.token);
+  const [hydrated, setHydrated] = useState(() => useAuthStore.persist?.hasHydrated?.() ?? false);
+
+  useEffect(() => {
+    if (hydrated) {
+      return;
+    }
+    const unsub = useAuthStore.persist?.onFinishHydration?.(() => {
+      setHydrated(true);
+    });
+    return () => {
+      unsub?.();
+    };
+  }, [hydrated]);
 
   const historyQuery = useQuery({
     queryKey: ['tradeHistory'],
@@ -17,9 +32,21 @@ export const useTradeHistory = () => {
       }),
     staleTime: 30_000,
     gcTime: 5 * 60_000,
+    enabled: hydrated && Boolean(token),
   });
 
   useEffect(() => {
+    if (hydrated && token) {
+      historyQuery.refetch().catch(() => undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, token]);
+
+  useEffect(() => {
+    if (!hydrated || !token) {
+      return;
+    }
+
     const remoteItems = historyQuery.data?.items ?? [];
     if (remoteItems.length === 0) {
       return;
@@ -28,7 +55,7 @@ export const useTradeHistory = () => {
     setLocalItems((current) =>
       current.filter((item) => !remoteItems.some((remote) => remote.id === item.id)),
     );
-  }, [historyQuery.data?.items]);
+  }, [historyQuery.data?.items, hydrated, token]);
 
   const addLocalItem = useCallback((item: TradeCalculation) => {
     setLocalItems((current) => {
