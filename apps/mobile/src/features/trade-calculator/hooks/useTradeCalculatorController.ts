@@ -64,6 +64,7 @@ interface UseTradeCalculatorControllerResult {
   marketStream: ReturnType<typeof useMarketStream>;
   historyItems: ReturnType<typeof useTradeHistory>['items'];
   historyQuery: ReturnType<typeof useTradeHistory>['query'];
+  historyError: ReturnType<typeof useTradeHistory>['error'];
   riskSummary: {
     tone: RiskTone;
     riskToReward: number | null;
@@ -179,7 +180,12 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
     onSnapshot: handleSnapshot,
   });
 
-  const { items: historyItems, query: historyQuery, addLocalItem } = useTradeHistory();
+  const {
+    items: historyItems,
+    query: historyQuery,
+    addLocalItem,
+    error: historyError,
+  } = useTradeHistory();
 
   const buildTradePayload = useCallback((): TradeInput | null => {
     const normalize = (value: string | null | undefined) => {
@@ -486,6 +492,7 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
     marketStream,
     historyItems,
     historyQuery,
+    historyError,
     riskSummary,
     derivedValues,
     shouldShowErrorBanner,

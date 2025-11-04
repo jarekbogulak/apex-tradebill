@@ -23,6 +23,7 @@ const MAPPING = {
   gearshape: 'settings',
   clock: 'history',
   'doc.text': 'description',
+  'exclamationmark.triangle': 'warning',
 } as IconMapping;
 
 /**

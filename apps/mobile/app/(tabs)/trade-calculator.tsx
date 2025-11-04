@@ -32,6 +32,7 @@ export default function TradeCalculatorScreen() {
     marketStream,
     historyItems,
     historyQuery,
+    historyError,
     riskSummary,
     derivedValues,
     shouldShowErrorBanner,
@@ -86,6 +87,7 @@ export default function TradeCalculatorScreen() {
         <TradeHistoryCard
           items={historyItems}
           isFetching={historyQuery.isFetching}
+          error={historyError}
           onRefresh={() => historyQuery.refetch()}
         />
       </ScrollView>

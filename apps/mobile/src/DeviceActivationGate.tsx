@@ -20,6 +20,7 @@ export const DeviceActivationGate = ({ children }: DeviceActivationGateProps) =>
   const ensureDeviceId = useAuthStore((state) => state.ensureDeviceId);
   const setCredentials = useAuthStore((state) => state.setCredentials);
   const clearAuth = useAuthStore((state) => state.clear);
+  const tokenExpiresAt = useAuthStore((state) => state.tokenExpiresAt);
   const [hydrated, setHydrated] = useState(() => useAuthStore.persist?.hasHydrated?.() ?? false);
 
   const [activationCode, setActivationCode] = useState('');
@@ -43,6 +44,18 @@ export const DeviceActivationGate = ({ children }: DeviceActivationGateProps) =>
       unsub?.();
     };
   }, [hydrated]);
+
+  useEffect(() => {
+    if (!hydrated || !token || !tokenExpiresAt) {
+      return;
+    }
+
+    const expiresAtMs = Date.parse(tokenExpiresAt);
+    if (Number.isFinite(expiresAtMs) && Date.now() >= expiresAtMs) {
+      console.warn('tradebill.auth.tokenExpired', { tokenExpiresAt });
+      clearAuth();
+    }
+  }, [clearAuth, hydrated, token, tokenExpiresAt]);
 
   const handleSubmit = useCallback(async () => {
     const trimmed = activationCode.trim();

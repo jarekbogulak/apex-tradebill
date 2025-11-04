@@ -2,7 +2,7 @@ import type { TradeCalculation } from '@apex-tradebill/types';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { createApiClient } from '@/src/services/apiClient';
+import { createApiClient, type TradeHistoryResponse } from '@/src/services/apiClient';
 import { useAuthStore } from '@/src/state/authStore';
 
 const apiClient = createApiClient();
@@ -10,6 +10,7 @@ const apiClient = createApiClient();
 export const useTradeHistory = () => {
   const [localItems, setLocalItems] = useState<TradeCalculation[]>([]);
   const token = useAuthStore((state) => state.token);
+  const [error, setError] = useState<Error | null>(null);
   const [hydrated, setHydrated] = useState(() => useAuthStore.persist?.hasHydrated?.() ?? false);
 
   useEffect(() => {
@@ -24,7 +25,7 @@ export const useTradeHistory = () => {
     };
   }, [hydrated]);
 
-  const historyQuery = useQuery({
+  const historyQuery = useQuery<TradeHistoryResponse, Error>({
     queryKey: ['tradeHistory'],
     queryFn: ({ signal }) =>
       apiClient.getTradeHistory({
@@ -41,6 +42,25 @@ export const useTradeHistory = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, token]);
+
+  useEffect(() => {
+    if (!hydrated || !token) {
+      if (!token) {
+        setError(null);
+      }
+      return;
+    }
+
+    const queryError = historyQuery.error;
+    if (queryError) {
+      setError(queryError);
+      return;
+    }
+
+    if (historyQuery.data) {
+      setError(null);
+    }
+  }, [historyQuery.data, historyQuery.error, hydrated, token]);
 
   useEffect(() => {
     if (!hydrated || !token) {
@@ -76,5 +96,6 @@ export const useTradeHistory = () => {
     items,
     query: historyQuery,
     addLocalItem,
+    error,
   };
 };

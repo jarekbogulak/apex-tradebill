@@ -12,6 +12,7 @@ export interface HistoryListProps {
   loading?: boolean;
   onRefresh?: () => void;
   onLoadMore?: () => void;
+  error?: Error | null;
 }
 
 const keyExtractor = (item: TradeCalculation) => item.id;
@@ -21,6 +22,7 @@ export const HistoryList = ({
   loading = false,
   onRefresh,
   onLoadMore,
+  error = null,
 }: HistoryListProps) => {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -30,6 +32,23 @@ export const HistoryList = ({
         return Boolean(item && item.input && item.output);
       }),
     [items],
+  );
+  const errorMessage = error?.message ?? 'Failed to load trade history.';
+  const renderErrorCard = () => (
+    <View style={styles.errorCard}>
+      <IconSymbol
+        name="exclamationmark.triangle"
+        size={28}
+        weight="semibold"
+        color={theme.colors.error}
+        style={styles.errorIcon}
+      />
+      <Text style={styles.errorTitle}>Unable to load history</Text>
+      <Text style={styles.errorCopy} numberOfLines={3}>
+        {errorMessage}
+      </Text>
+      <Text style={styles.errorHint}>Pull to refresh to try again.</Text>
+    </View>
   );
 
   return (
@@ -46,6 +65,11 @@ export const HistoryList = ({
       onEndReachedThreshold={0.75}
       onEndReached={() => onLoadMore?.()}
       scrollEnabled={false}
+      ListHeaderComponent={
+        error && data.length > 0 ? (
+          <View style={styles.errorHeader}>{renderErrorCard()}</View>
+        ) : null
+      }
       renderItem={({ item }) => {
         const ratio = Number(item.output.riskToReward);
         const riskRewardValue = Number.isFinite(ratio) ? ratio.toFixed(2) : '—';
@@ -73,17 +97,21 @@ export const HistoryList = ({
       }}
       ListEmptyComponent={
         <View style={styles.empty}>
-          <View style={styles.emptyPlaceholder}>
-            <IconSymbol
-              name="clock"
-              size={36}
-              weight="semibold"
-              color={theme.colors.textMuted}
-              style={styles.emptyIcon}
-            />
-            <Text style={styles.emptyTitle}>No recent calculations yet</Text>
-            <Text style={styles.emptyCopy}>Run a calculation and it will appear here.</Text>
-          </View>
+          {error ? (
+            <View style={styles.errorEmpty}>{renderErrorCard()}</View>
+          ) : (
+            <View style={styles.emptyPlaceholder}>
+              <IconSymbol
+                name="clock"
+                size={36}
+                weight="semibold"
+                color={theme.colors.textMuted}
+                style={styles.emptyIcon}
+              />
+              <Text style={styles.emptyTitle}>No recent calculations yet</Text>
+              <Text style={styles.emptyCopy}>Run a calculation and it will appear here.</Text>
+            </View>
+          )}
         </View>
       }
     />
@@ -132,6 +160,38 @@ const createStyles = (theme: Theme) =>
       paddingVertical: theme.spacing.lg,
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    errorHeader: {
+      marginBottom: theme.spacing.md,
+    },
+    errorEmpty: {
+      width: '100%',
+    },
+    errorCard: {
+      width: '100%',
+      borderRadius: theme.radii.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.error,
+      backgroundColor: theme.colors.errorSurface,
+      paddingVertical: theme.spacing.lg,
+      paddingHorizontal: theme.spacing.lg,
+      gap: theme.spacing.sm,
+    },
+    errorIcon: {
+      marginBottom: theme.spacing.xs,
+    },
+    errorTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.colors.error,
+    },
+    errorCopy: {
+      fontSize: 13,
+      color: theme.colors.error,
+    },
+    errorHint: {
+      fontSize: 12,
+      color: theme.colors.textMuted,
     },
     emptyPlaceholder: {
       width: '100%',

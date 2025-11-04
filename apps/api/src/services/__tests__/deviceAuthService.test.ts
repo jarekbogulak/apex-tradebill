@@ -1,6 +1,11 @@
 import crypto from 'node:crypto';
 import { createDeviceAuthService } from '../deviceAuthService.js';
-import type { DatabasePool, DatabaseClient } from '../../infra/database/pool.js';
+import type {
+  DatabasePool,
+  DatabaseClient,
+  QueryResult,
+  QueryResultRow,
+} from '../../infra/database/pool.js';
 
 interface ActivationRow {
   id: string;
@@ -62,16 +67,19 @@ const createFakePool = () => {
 
   class FakeClient implements DatabaseClient {
     inTransaction = false;
-    async query(sql: string, params: unknown[] = []) {
+    async query<T extends QueryResultRow = QueryResultRow>(
+      sql: string,
+      params: unknown[] = [],
+    ): Promise<QueryResult<T>> {
       const normalized = normalizeSql(sql);
 
       if (normalized === 'begin') {
         this.inTransaction = true;
-        return { rows: [], rowCount: 0 };
+        return { rows: [] as T[], rowCount: 0 };
       }
       if (normalized === 'commit' || normalized === 'rollback') {
         this.inTransaction = false;
-        return { rows: [], rowCount: 0 };
+        return { rows: [] as T[], rowCount: 0 };
       }
 
       if (
@@ -81,33 +89,35 @@ const createFakePool = () => {
       ) {
         const id = params[0] as string;
         const row = activationCodes.get(id);
+        const rows = row
+          ? [
+              {
+                device_id: row.deviceId,
+                expires_at: row.expiresAt,
+                signature: row.signature,
+                consumed_at: row.consumedAt,
+              },
+            ]
+          : [];
         return {
-          rows: row
-            ? [
-                {
-                  device_id: row.deviceId,
-                  expires_at: row.expiresAt,
-                  signature: row.signature,
-                  consumed_at: row.consumedAt,
-                },
-              ]
-            : [],
-          rowCount: row ? 1 : 0,
+          rows: rows as unknown as T[],
+          rowCount: rows.length,
         };
       }
 
       if (normalized.startsWith('select user_id from device_registrations')) {
         const deviceId = params[0] as string;
         const row = registrations.get(deviceId);
+        const rows = row
+          ? [
+              {
+                user_id: row.userId,
+              },
+            ]
+          : [];
         return {
-          rows: row
-            ? [
-                {
-                  user_id: row.userId,
-                },
-              ]
-            : [],
-          rowCount: row ? 1 : 0,
+          rows: rows as unknown as T[],
+          rowCount: rows.length,
         };
       }
 
@@ -121,7 +131,7 @@ const createFakePool = () => {
             lastSeenAt: now,
           });
         }
-        return { rows: [], rowCount: 1 };
+        return { rows: [] as T[], rowCount: 1 };
       }
 
       if (normalized.startsWith('insert into device_registrations')) {
@@ -134,7 +144,7 @@ const createFakePool = () => {
           registeredAt: now,
           lastSeenAt: now,
         });
-        return { rows: [], rowCount: 1 };
+        return { rows: [] as T[], rowCount: 1 };
       }
 
       if (normalized.startsWith('update device_registrations set last_seen_at')) {
@@ -144,7 +154,7 @@ const createFakePool = () => {
           row.lastSeenAt = new Date().toISOString();
           registrations.set(deviceId, row);
         }
-        return { rows: [], rowCount: row ? 1 : 0 };
+        return { rows: [] as T[], rowCount: row ? 1 : 0 };
       }
 
       if (normalized.startsWith('update device_activation_codes set consumed_at')) {
@@ -156,7 +166,7 @@ const createFakePool = () => {
           row.deviceId = deviceId;
           activationCodes.set(id, row);
         }
-        return { rows: [], rowCount: row ? 1 : 0 };
+        return { rows: [] as T[], rowCount: row ? 1 : 0 };
       }
 
       throw new Error(`Unhandled SQL in fake client: ${sql}`);
@@ -168,11 +178,19 @@ const createFakePool = () => {
   }
 
   const pool: DatabasePool = {
-    async connect() {
+    async connect(): Promise<DatabaseClient> {
       return new FakeClient();
     },
-    async query() {
-      throw new Error('Not implemented');
+    async query<T extends QueryResultRow = QueryResultRow>(
+      sql: string,
+      params: unknown[] = [],
+    ): Promise<QueryResult<T>> {
+      const client = new FakeClient();
+      try {
+        return await client.query<T>(sql, params);
+      } finally {
+        client.release();
+      }
     },
     async end() {},
     on() {},
@@ -223,7 +241,8 @@ describe('createDeviceAuthService', () => {
       consumedAt: null,
     });
 
-    jest.spyOn(crypto, 'randomUUID').mockReturnValue('user-uuid');
+    const generatedUserId = '123e4567-e89b-12d3-a456-426614174000';
+    jest.spyOn(crypto, 'randomUUID').mockReturnValue(generatedUserId);
 
     const service = createDeviceAuthService({
       pool,
@@ -236,7 +255,7 @@ describe('createDeviceAuthService', () => {
       activationCode,
     });
 
-    expect(result.userId).toBe('user-uuid');
+    expect(result.userId).toBe(generatedUserId);
     expect(result.deviceId).toBe(deviceId);
     expect(result.token).toMatch(/^[\w-]+\.[\w-]+\.[\w-]+$/);
     expect(new Date(result.tokenExpiresAt).getTime()).toBeGreaterThan(now.getTime());
@@ -244,15 +263,15 @@ describe('createDeviceAuthService', () => {
     const payload = JSON.parse(
       Buffer.from(result.token.split('.')[1], 'base64url').toString('utf8'),
     );
-    expect(payload.sub).toBe('user-uuid');
+    expect(payload.sub).toBe(generatedUserId);
     expect(payload.deviceId).toBe(deviceId);
 
     const storedActivation = activationCodes.get(codeId);
     expect(storedActivation?.consumedAt).not.toBeNull();
 
     const registration = registrations.get(deviceId);
-    expect(registration?.userId).toBe('user-uuid');
-    expect(users.has('user-uuid')).toBe(true);
+    expect(registration?.userId).toBe(generatedUserId);
+    expect(users.has(generatedUserId)).toBe(true);
   });
 
   it('throws when activation code is expired', async () => {
