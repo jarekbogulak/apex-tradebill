@@ -134,18 +134,18 @@ const createStyles = (theme: Theme) => ({
   container: {
     flex: 1,
     backgroundColor: theme.colors.surfaceAlt,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
     padding: theme.spacing.xl,
   },
   loadingContainer: {
     flex: 1,
     backgroundColor: theme.colors.surfaceAlt,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
   },
   card: {
-    width: '100%',
+    width: '100%' as const,
     maxWidth: 420,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radii.lg,
@@ -155,7 +155,7 @@ const createStyles = (theme: Theme) => ({
   },
   title: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     color: theme.colors.textPrimary,
   },
   copy: {
@@ -172,7 +172,7 @@ const createStyles = (theme: Theme) => ({
   },
   deviceIdLabel: {
     fontSize: 12,
-    textTransform: 'uppercase',
+    textTransform: 'uppercase' as const,
     color: theme.colors.textMuted,
     letterSpacing: 0.6,
   },
@@ -199,25 +199,25 @@ const createStyles = (theme: Theme) => ({
     paddingVertical: theme.spacing.md,
     borderRadius: theme.radii.lg,
     backgroundColor: theme.colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
   },
   buttonDisabled: {
     opacity: 0.5,
   },
   buttonLabel: {
     color: theme.colors.textInverted,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     fontSize: 16,
   },
   resetButton: {
-    alignItems: 'center',
+    alignItems: 'center' as const,
     paddingVertical: theme.spacing.sm,
   },
   resetLabel: {
     color: theme.colors.textMuted,
     fontSize: 13,
-    textDecorationLine: 'underline',
+    textDecorationLine: 'underline' as const,
   },
 });
 
