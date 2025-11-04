@@ -315,7 +315,7 @@ paths:
   /v1/trades/history:
     get:
       summary: Retrieve the authenticated user's recent trade calculations (30-day retention).
-      description: Requires `Authorization: Bearer` token and matching `x-user-id` header issued via `/v1/auth/device/register`.
+      description: "Requires `Authorization: Bearer` token and matching `x-user-id` header issued via `/v1/auth/device/register`."
       parameters:
         - name: limit
           in: query

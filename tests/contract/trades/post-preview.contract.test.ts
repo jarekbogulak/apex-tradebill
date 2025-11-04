@@ -81,7 +81,7 @@ describe('POST /v1/trades/preview', () => {
     const stopSchema = properties.stopPrice;
 
     if (isSchemaObject(stopSchema)) {
-      expect(stopSchema.nullable).toBe(true);
+      expect((stopSchema as { nullable?: boolean }).nullable).toBe(true);
     } else {
       throw new Error('Expected stopPrice property to be defined inline for schema validation');
     }
