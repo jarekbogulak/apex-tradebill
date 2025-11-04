@@ -5,12 +5,22 @@
 - Expo CLI tooling available (`npx expo start --version` > 6)
 - Xcode (iOS 16+ simulator) or Android Studio (Android 13+ emulator) for Expo testing
 - Optional for later phases: Supabase project (hosted or self-hosted PostgreSQL 16) once persistence tasks land
+- ApeX Omni API credentials stored server-side (`apps/api/.env`)
 
 ## Bootstrap (Stage 1 – Skeleton)
 1. `npx create-expo-app@latest mobile` (runs inside repo root; generates `mobile/`).
 2. `pnpm init -y` inside `api/` followed by `pnpm add fastify ws typescript tsx` to scaffold the Node service stub.
 3. From repo root, create a workspace `pnpm-workspace.yaml` (Task 001) so both `mobile` and `api` share dependencies; then run `pnpm install`.
-4. Copy `.env.example` → `.env` in `api/` once the environment template is authored (tasks TBD). Leave ApeX credentials empty until we wire the SDK.
+4. Copy `.env.example` → `.env` in `api/` once the environment template is authored (tasks TBD). Provide Supabase URL and ApeX Omni credentials so device registration and live data work.
+
+### Device Activation Flow (after migrations)
+1. Apply migrations: `pnpm --filter @apex-tradebill/api migrate`.
+2. Issue a device activation code for the ID shown in the app:
+   ```bash
+   pnpm --filter @apex-tradebill/api auth:issue-device-code -- --device <device-id>
+   ```
+3. Launch the Expo client; enter the activation code on first run. The API returns a JWT that the device stores in SecureStore and sends on every request (`Authorization: Bearer …`, `x-user-id`).
+4. Re-issue a code whenever the device ID changes (e.g., simulator reset) or the token expires.
 
 ## Bootstrap (Stage 2 – Live Data Wiring)
 1. Implement the Fastify server entry point with stubbed responses that satisfy contract placeholders.

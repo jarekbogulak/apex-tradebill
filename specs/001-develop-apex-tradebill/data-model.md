@@ -1,14 +1,33 @@
 # Phase 1 – Domain & Data Model
 
-## User
+## AppUser
 - **Fields**
   - `id: UUID`
-  - `email: string` (nullable until full auth rolls out)
-  - `displayName: string`
   - `createdAt: ISO8601 timestamp`
-  - `updatedAt: ISO8601 timestamp`
-- **Relationships**: One-to-one with `UserSettings`; one-to-many with `ConnectedAccount` and `TradeCalculation`.
-- **Validation Rules**: UUID v4 only; display name 1–64 ASCII/UTF-8 chars; timestamps immutable except `updatedAt`.
+  - `lastSeenAt: ISO8601 timestamp`
+- **Relationships**: One-to-one with `UserSettings`; one-to-many with `DeviceRegistration`, `TradeCalculation`, and (future) `ConnectedAccount`.
+- **Validation Rules**: UUID v4 only; `lastSeenAt` updated whenever the device refreshes credentials.
+
+## DeviceRegistration
+- **Fields**
+  - `deviceId: string` (expo-generated identifier)
+  - `userId: UUID`
+  - `registeredAt: ISO8601 timestamp`
+  - `lastSeenAt: ISO8601 timestamp`
+- **Relationships**: `deviceId` → `AppUser`.
+- **Validation Rules**: `deviceId` unique; `lastSeenAt` refreshed on each authenticated call.
+
+## DeviceActivationCode
+- **Fields**
+  - `id: UUID`
+  - `deviceId: string`
+  - `issuedAt: ISO8601 timestamp`
+  - `expiresAt: ISO8601 timestamp`
+  - `signature: string` (HMAC using ApeX Omni secret)
+  - `consumedAt: ISO8601 timestamp` (nullable)
+  - `consumedByDevice: string` (nullable)
+  - `createdAt: ISO8601 timestamp`
+- **Validation Rules**: Codes expire after 10 minutes; single-use enforced by `consumedAt`; `deviceId` must match the code payload.
 
 ## UserSettings
 - **Fields**
@@ -23,18 +42,6 @@
 - **Relationships**: Owned by `User`.
 - **Validation Rules**: `riskPercent` in (0, 1]; `atrMultiplier` in [0.5, 3]; freshness threshold between 1000 and 5000 ms; multiplier options deduplicated and sorted.
 
-## ConnectedAccount
-- **Fields**
-  - `id: UUID`
-  - `userId: UUID`
-  - `venue: enum` (`apex-omni` for launch)
-  - `accountId: string`
-  - `status: enum` (`linked`, `revoked`, `error`)
-  - `lastEquity: Decimal(18,2)`
-  - `lastSyncAt: ISO8601 timestamp`
-  - `createdAt`, `updatedAt`
-- **Validation Rules**: `accountId` must match venue format; `lastEquity ≥ 0`; status transitions: `linked → revoked|error`, `error → linked` after successful retry.
-
 ## TradeCalculation
 - **Fields**
   - `id: UUID`
@@ -46,7 +53,19 @@
   - `marketSnapshot: MarketSnapshot (JSONB)`
   - `source: enum` (`live`, `manual`)
   - `createdAt: ISO8601`
-- **Validation Rules**: Persist within 30-day retention window; `source` derived from snapshot context; `output.riskAmount ≤ input.accountSize * input.riskPercent`.
+- **Validation Rules**: Persist within 30-day retention window; `source` derived from snapshot context; `output.riskAmount ≤ input.accountSize * input.riskPercent`; `userId` derived from authenticated device.
+
+## ConnectedAccount (future)
+- **Fields**
+  - `id: UUID`
+  - `userId: UUID`
+  - `venue: enum` (`apex-omni` for launch)
+  - `accountId: string`
+  - `status: enum` (`linked`, `revoked`, `error`)
+  - `lastEquity: Decimal(18,2)`
+  - `lastSyncAt: ISO8601 timestamp`
+  - `createdAt`, `updatedAt`
+- **Validation Rules**: `accountId` must match venue format; `lastEquity ≥ 0`; status transitions: `linked → revoked|error`, `error → linked` after successful retry.
 
 ## DeviceCacheEntry (Expo)
 - **Fields**

@@ -266,9 +266,56 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /v1/auth/device/register:
+    post:
+      summary: Exchange an activation code for a device-scoped JWT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, activationCode]
+              properties:
+                deviceId:
+                  type: string
+                activationCode:
+                  type: string
+      responses:
+        '200':
+          description: Device registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [userId, deviceId, token, tokenExpiresAt]
+                properties:
+                  userId:
+                    type: string
+                    format: uuid
+                  deviceId:
+                    type: string
+                  token:
+                    type: string
+                  tokenExpiresAt:
+                    type: string
+                    format: date-time
+        '400':
+          description: Invalid activation payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Activation code expired or signature mismatch
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /v1/trades/history:
     get:
       summary: Retrieve the authenticated user's recent trade calculations (30-day retention).
+      description: Requires `Authorization: Bearer` token and matching `x-user-id` header issued via `/v1/auth/device/register`.
       parameters:
         - name: limit
           in: query
