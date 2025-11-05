@@ -24,13 +24,7 @@ export const createTradeHistoryService = ({
   ): Promise<TradeHistoryResult> => {
     const retentionThresholdIso = new Date(now().getTime() - THIRTY_DAYS_MS).toISOString();
 
-    const { items, nextCursor } = await tradeCalculations.listRecent(userId, limit, cursor);
-    const filtered = items.filter((item) => item.createdAt >= retentionThresholdIso);
-
-    return {
-      items: filtered,
-      nextCursor,
-    };
+    return tradeCalculations.listRecent(userId, limit, cursor, retentionThresholdIso);
   };
 
   return {

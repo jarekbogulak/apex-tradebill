@@ -46,6 +46,7 @@ export interface TradeCalculationRepository {
     userId: string,
     limit: number,
     cursor?: string | null,
+    since?: string | null,
   ): Promise<{ items: TradeCalculation[]; nextCursor: string | null }>;
 }
 
@@ -67,9 +68,12 @@ export const createInMemoryTradeCalculationRepository = (
       calculations.set(parsed.id, parsed);
       return parsed;
     },
-    async listRecent(userId, limit, cursor) {
+    async listRecent(userId, limit, cursor, since) {
       const entries = Array.from(calculations.values()).filter(
-        (entry) => entry.userId === userId && (!cursor || entry.createdAt < cursor),
+        (entry) =>
+          entry.userId === userId &&
+          (!cursor || entry.createdAt < cursor) &&
+          (!since || entry.createdAt >= since),
       );
       const items = sortedByCreatedAtDesc(entries).slice(0, limit);
       const nextCursor =

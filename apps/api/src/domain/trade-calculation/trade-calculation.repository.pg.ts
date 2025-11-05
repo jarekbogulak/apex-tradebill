@@ -92,21 +92,27 @@ export const createPostgresTradeCalculationRepository = (
       }
       return mapRowToTradeCalculation(row);
     },
-    async listRecent(userId, limit, cursor) {
+    async listRecent(userId, limit, cursor, since) {
       const values: Array<string | number> = [userId, limit];
-      let cursorClause = '';
+      const whereClauses = ['user_id = $1'];
 
       if (cursor) {
         values.push(cursor);
-        cursorClause = 'AND created_at < $3';
+        whereClauses.push(`created_at < $${values.length}`);
       }
+
+      if (since) {
+        values.push(since);
+        whereClauses.push(`created_at >= $${values.length}`);
+      }
+
+      const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
       const result = await pool.query<TradeCalculationRow>(
         `
           SELECT id, user_id, execution_method, executed_at, input, output, market_snapshot, source, created_at
           FROM trade_calculations
-          WHERE user_id = $1
-          ${cursorClause}
+          ${whereSql}
           ORDER BY created_at DESC
           LIMIT $2;
         `,
