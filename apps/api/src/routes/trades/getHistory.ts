@@ -42,7 +42,11 @@ export const getHistoryRoute: FastifyPluginAsync<GetHistoryRouteOptions> = async
             properties: {
               items: {
                 type: 'array',
-                items: { type: 'object' },
+                // Relaxing additionalProperties stopped Fastify from erasing the payload, but it’s really just a stop-gap. If we want strong guarantees, the response schema in apps/api/src/routes/trades/getHistory.ts (line 43) should mirror the exact TradeCalculation DTO (id, userId, executionMethod, …) plus nested input, output, and marketSnapshot shapes
+                items: {
+                  type: 'object',
+                  additionalProperties: true,
+                },
               },
               nextCursor: {
                 type: ['string', 'null'],
