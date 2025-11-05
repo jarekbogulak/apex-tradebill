@@ -7,9 +7,11 @@ import { useAuthStore } from '@/src/state/authStore';
 
 const apiClient = createApiClient();
 
+export const tradeHistoryQueryKey = (userId: string | null | undefined) =>
+  ['tradeHistory', userId ?? 'anonymous'] as const;
+
 export const useTradeHistory = () => {
   const queryClient = useQueryClient();
-  const token = useAuthStore((state) => state.token);
   const userId = useAuthStore((state) => state.userId);
   const [hydrated, setHydrated] = useState(() => useAuthStore.persist?.hasHydrated?.() ?? false);
 
@@ -25,9 +27,9 @@ export const useTradeHistory = () => {
     };
   }, [hydrated]);
 
-  const queryKey = useMemo(() => ['tradeHistory', userId ?? 'anonymous'], [userId]);
+  const queryKey = useMemo(() => tradeHistoryQueryKey(userId), [userId]);
 
-  const enabled = hydrated && Boolean(token);
+  const enabled = hydrated && Boolean(userId);
 
   const historyQuery = useQuery<TradeHistoryResponse, Error>({
     queryKey,
