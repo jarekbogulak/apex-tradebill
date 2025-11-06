@@ -1,6 +1,6 @@
 import type { Timeframe } from '@apex-tradebill/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useSettingsStore } from '@/src/state/settingsStore';
@@ -23,22 +23,25 @@ export default function SettingsScreen() {
   const setSettings = useSettingsStore((state) => state.setSettings);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  useQuery({
+  const { data: remoteSettings } = useQuery({
     queryKey: ['settings'],
     queryFn: () => apiClient.getSettings(),
-    onSuccess: (data) => {
-      setSettings({
-        riskPercent: data.riskPercent,
-        atrMultiplier: data.atrMultiplier,
-        dataFreshnessThresholdMs: data.dataFreshnessThresholdMs,
-        defaultSymbol: data.defaultSymbol,
-        defaultTimeframe: data.defaultTimeframe as typeof settings.defaultTimeframe,
-        rememberedMultiplierOptions: data.rememberedMultiplierOptions,
-        lastSyncedAt: new Date().toISOString(),
-      });
-    },
     staleTime: 30000,
   });
+
+  useEffect(() => {
+    if (remoteSettings) {
+      setSettings({
+        riskPercent: remoteSettings.riskPercent,
+        atrMultiplier: remoteSettings.atrMultiplier,
+        dataFreshnessThresholdMs: remoteSettings.dataFreshnessThresholdMs,
+        defaultSymbol: remoteSettings.defaultSymbol,
+        defaultTimeframe: remoteSettings.defaultTimeframe as typeof settings.defaultTimeframe,
+        rememberedMultiplierOptions: remoteSettings.rememberedMultiplierOptions,
+        lastSyncedAt: new Date().toISOString(),
+      });
+    }
+  }, [remoteSettings, setSettings]);
 
   const updateMutation = useMutation({
     mutationFn: apiClient.updateSettings,
