@@ -6,6 +6,7 @@ import type { TradeCalculation } from '@apex-tradebill/types';
 import { useTheme, type Theme } from '@apex-tradebill/ui';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { formatFriendlyError } from '@/src/utils/api-error';
 
 export interface HistoryListProps {
   items: TradeCalculation[];
@@ -33,7 +34,7 @@ export const HistoryList = ({
       }),
     [items],
   );
-  const errorMessage = error?.message ?? 'Failed to load trade history.';
+  const errorMessage = formatFriendlyError(error ?? null, 'Failed to load trade history.');
   const renderErrorCard = () => (
     <View style={styles.errorCard}>
       <IconSymbol

@@ -2,13 +2,19 @@ import { useCallback, useRef } from 'react';
 import type { TradeCalculation, TradeInput } from '@apex-tradebill/types';
 import { useMutation, type QueryClient } from '@tanstack/react-query';
 
-import { createApiClient } from '@/src/services/apiClient';
+import {
+  createApiClient,
+  type TradePreviewResponse,
+  type TradeExecuteResponse,
+} from '@/src/services/apiClient';
 import { tradeHistoryQueryKey } from './useTradeHistory';
 import {
   type TradeCalculatorInputState,
   type TradeCalculatorState,
   type TradeCalculatorStatus,
 } from '@/src/state/tradeCalculatorStore';
+import type { ApiError } from '@/src/utils/api-error';
+import { formatFriendlyError } from '@/src/utils/api-error';
 
 const apiClient = createApiClient();
 
@@ -16,6 +22,9 @@ type PreviewSource = 'manual' | 'live';
 
 const STOP_REQUIRED_ERROR = 'Stop price is required when volatility stop is disabled';
 const ACCOUNT_SIZE_REQUIRED_ERROR = 'Account size must be greater than zero';
+const PREVIEW_ERROR_FALLBACK =
+  'Unable to preview this trade. Double-check the form inputs and try again.';
+const EXECUTE_ERROR_FALLBACK = 'Unable to execute this trade. Please try again in a moment.';
 
 const normalizeNullable = (value: string | null | undefined) => {
   if (value == null) {
@@ -103,7 +112,7 @@ export const useTradeCalculatorOperations = ({
   const requestSourceRef = useRef<PreviewSource>('manual');
   const livePreviewActiveRef = useRef(false);
 
-  const previewMutation = useMutation({
+  const previewMutation = useMutation<TradePreviewResponse, ApiError, TradeInput>({
     mutationFn: (payload: TradeInput) => apiClient.previewTrade(payload),
     onMutate: () => {
       if (requestSourceRef.current === 'manual') {
@@ -118,12 +127,16 @@ export const useTradeCalculatorOperations = ({
         onManualPreviewSuccess();
       }
     },
-    onError: (error: Error) => {
-      setStatus('error', error.message);
+    onError: (error: ApiError) => {
+      if (requestSourceRef.current === 'live') {
+        livePreviewActiveRef.current = false;
+        return;
+      }
+      setStatus('error', formatFriendlyError(error, PREVIEW_ERROR_FALLBACK));
     },
   });
 
-  const executeMutation = useMutation({
+  const executeMutation = useMutation<TradeExecuteResponse, ApiError, TradeInput>({
     mutationFn: (payload: TradeInput) => apiClient.executeTrade(payload),
     onSuccess: (data) => {
       if (!data?.calculation) {
@@ -139,8 +152,8 @@ export const useTradeCalculatorOperations = ({
         refetchType: 'active',
       });
     },
-    onError: (error: Error) => {
-      setStatus('error', error.message);
+    onError: (error: ApiError) => {
+      setStatus('error', formatFriendlyError(error, EXECUTE_ERROR_FALLBACK));
     },
   });
 
@@ -163,6 +176,7 @@ export const useTradeCalculatorOperations = ({
       if (!payload) {
         if (source === 'live') {
           livePreviewActiveRef.current = false;
+          return;
         }
         setStatus('error', error ?? STOP_REQUIRED_ERROR);
         return;

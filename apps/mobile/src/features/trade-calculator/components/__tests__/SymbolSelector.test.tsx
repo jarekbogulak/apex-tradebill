@@ -84,9 +84,7 @@ describe('SymbolSelector', () => {
     const triggerChildren = Array.isArray(trigger.props.children)
       ? trigger.props.children
       : [trigger.props.children];
-    const triggerLabel = triggerChildren.find(
-      (child) => child?.props?.children === 'BTC/USDT',
-    );
+    const triggerLabel = triggerChildren.find((child) => child?.props?.children === 'BTC/USDT');
     expect(triggerLabel).toBeTruthy();
 
     act(() => {

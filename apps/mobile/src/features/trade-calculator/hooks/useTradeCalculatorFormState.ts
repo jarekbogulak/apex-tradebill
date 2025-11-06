@@ -43,6 +43,7 @@ export const useTradeCalculatorFormState = ({
   const setInput = useTradeCalculatorStore((state) => state.setInput);
   const setHasManualEntry = useTradeCalculatorStore((state) => state.setHasManualEntry);
   const hasManualEntry = useTradeCalculatorStore((state) => state.hasManualEntry);
+  const setStatus = useTradeCalculatorStore((state) => state.setStatus);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<'create' | 'edit'>(output ? 'edit' : 'create');
@@ -145,7 +146,8 @@ export const useTradeCalculatorFormState = ({
 
   const closeForm = useCallback(() => {
     setIsFormOpen(false);
-  }, []);
+    setStatus('idle', null);
+  }, [setStatus]);
 
   const onManualPreviewSuccess = useCallback(() => {
     setFormMode('edit');

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { createApiClient, type TradeHistoryResponse } from '@/src/services/apiClient';
 import { useAuthStore } from '@/src/state/authStore';
+import type { ApiError } from '@/src/utils/api-error';
 
 const apiClient = createApiClient();
 
@@ -31,7 +32,7 @@ export const useTradeHistory = () => {
 
   const enabled = hydrated && Boolean(userId);
 
-  const historyQuery = useQuery<TradeHistoryResponse, Error>({
+  const historyQuery = useQuery<TradeHistoryResponse, ApiError>({
     queryKey,
     queryFn: ({ signal }) =>
       apiClient.getTradeHistory({

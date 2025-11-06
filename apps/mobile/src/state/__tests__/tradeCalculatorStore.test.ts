@@ -101,8 +101,13 @@ describe('tradeCalculatorStore selectors and overrides', () => {
 
     store.setSymbol('ETH-USDT');
 
-    const { input, output: clearedOutput, status, error, hasManualEntry } =
-      useTradeCalculatorStore.getState();
+    const {
+      input,
+      output: clearedOutput,
+      status,
+      error,
+      hasManualEntry,
+    } = useTradeCalculatorStore.getState();
 
     expect(input.symbol).toBe('ETH-USDT');
     expect(input.entryPrice).toBeNull();

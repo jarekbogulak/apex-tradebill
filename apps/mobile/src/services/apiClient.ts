@@ -6,6 +6,8 @@ import type {
   TradeWarningCode,
 } from '@apex-tradebill/types';
 import { QueryClient } from '@tanstack/react-query';
+
+import { buildApiError, ApiError } from '@/src/utils/api-error';
 import { env } from '../config/env';
 import { useAuthStore } from '@/src/state/authStore';
 
@@ -81,13 +83,26 @@ const createHeaders = (additional: Record<string, string> = {}) => {
 const parseJsonResponse = async <T>(response: Response): Promise<T> => {
   const text = await response.text();
   if (!response.ok) {
-    throw new Error(`Request failed (${response.status}): ${text}`);
+    throw buildApiError({
+      status: response.status,
+      bodyText: text,
+      url: response.url,
+    });
   }
 
   try {
+    if (!text) {
+      return JSON.parse('null') as T;
+    }
     return JSON.parse(text) as T;
-  } catch (error) {
-    throw new Error(`Failed to parse response JSON: ${text}`, { cause: error });
+  } catch {
+    throw new ApiError({
+      status: response.status,
+      message: 'Failed to parse response JSON',
+      rawBody: text,
+      body: null,
+      url: response.url,
+    });
   }
 };
 
