@@ -4,13 +4,14 @@ import type {
   Direction,
   Timeframe,
   MarketSnapshot,
+  Symbol,
 } from '@apex-tradebill/types';
 import { create } from 'zustand';
 
 export type TradeCalculatorStatus = 'idle' | 'loading' | 'success' | 'error';
 
 export interface TradeCalculatorInputState {
-  symbol: string;
+  symbol: Symbol;
   direction: Direction;
   accountSize: string;
   entryPrice: string | null;
@@ -32,6 +33,7 @@ export interface TradeCalculatorState {
   error: string | null;
   lastUpdatedAt: string | null;
   hasManualEntry: boolean;
+  setSymbol: (symbol: Symbol) => void;
   setInput: (patch: Partial<TradeCalculatorInputState>) => void;
   setOutput: (
     output: TradeOutput,
@@ -45,7 +47,7 @@ export interface TradeCalculatorState {
 }
 
 const INITIAL_INPUT: TradeCalculatorInputState = {
-  symbol: 'BTC-USDT',
+  symbol: 'BTC-USDT' as Symbol,
   direction: 'long',
   accountSize: '0.00',
   entryPrice: null,
@@ -67,6 +69,25 @@ export const useTradeCalculatorStore = create<TradeCalculatorState>((set) => ({
   error: null,
   lastUpdatedAt: null,
   hasManualEntry: false,
+  setSymbol: (symbol) => {
+    set((state) => ({
+      ...state,
+      input: {
+        ...state.input,
+        symbol,
+        entryPrice: null,
+        stopPrice: null,
+        targetPrice: '0.00',
+      },
+      output: null,
+      snapshot: null,
+      warnings: [],
+      status: 'idle',
+      error: null,
+      lastUpdatedAt: null,
+      hasManualEntry: false,
+    }));
+  },
   setInput: (patch) => {
     set((state) => ({
       ...state,

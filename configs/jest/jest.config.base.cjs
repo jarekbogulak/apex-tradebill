@@ -16,6 +16,7 @@ const baseConfig = {
     '^@mobile/(.*)$': '<rootDir>/apps/mobile/$1',
     '^@api/(.*)$': '<rootDir>/apps/api/src/$1',
     '^@packages/(.*)$': '<rootDir>/packages/$1',
+    '^@apex-tradebill/ui$': '<rootDir>/packages/ui/src/index.ts',
     '^@apex-tradebill/types$': '<rootDir>/packages/types/src/index.ts',
     '^@apex-tradebill/utils$': '<rootDir>/packages/utils/src/index.ts',
     '^(\\.{1,2}/.*)\\.js$': '$1',

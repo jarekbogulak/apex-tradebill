@@ -3,9 +3,10 @@ import { ScrollView } from 'react-native';
 
 import { useTheme, type Theme } from '@apex-tradebill/ui';
 
+import { MARKET_ALLOWLIST } from '@/src/config/marketAllowlist';
 import StaleBanner from '@/src/features/stream/StaleBanner';
-
 import { MarketStatusCard } from '@/src/features/trade-calculator/components/MarketStatusCard';
+import { SymbolSelector } from '@/src/features/trade-calculator/components/SymbolSelector';
 import { TradeBillCard } from '@/src/features/trade-calculator/components/TradeBillCard';
 import { TradeBillEmptyCard } from '@/src/features/trade-calculator/components/TradeBillEmptyCard';
 import { TradeErrorBanner } from '@/src/features/trade-calculator/components/TradeErrorBanner';
@@ -47,6 +48,12 @@ export default function TradeCalculatorScreen() {
         showsVerticalScrollIndicator={false}
         testID="trade-calculator-scroll"
       >
+        <SymbolSelector
+          symbols={MARKET_ALLOWLIST}
+          selectedSymbol={input.symbol}
+          onSelect={actions.changeSymbol}
+        />
+
         <MarketStatusCard
           symbol={input.symbol}
           streamStatus={marketStream.status}

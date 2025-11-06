@@ -40,6 +40,7 @@ export const useMarketStream = ({
 
   const wsRef = useRef<MarketWebSocket | null>(null);
   const staleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipReconnectRef = useRef(false);
 
   const wsBaseUrl = useMemo(() => {
     const base = env.api.wsBaseUrl || env.api.baseUrl.replace(/^http/, 'ws');
@@ -77,6 +78,7 @@ export const useMarketStream = ({
   );
 
   const closeSocket = useCallback(() => {
+    skipReconnectRef.current = true;
     clearStaleTimer();
     wsRef.current?.close();
     wsRef.current = null;
@@ -141,9 +143,13 @@ export const useMarketStream = ({
           status: 'disconnected',
         }));
 
-        const nextAttempt = attempt + 1;
-        const delay = WS_RETRY_DELAYS[Math.min(attempt, WS_RETRY_DELAYS.length - 1)];
-        if (enabled) {
+        const shouldReconnect = !skipReconnectRef.current && enabled;
+
+        skipReconnectRef.current = false;
+
+        if (shouldReconnect) {
+          const nextAttempt = attempt + 1;
+          const delay = WS_RETRY_DELAYS[Math.min(attempt, WS_RETRY_DELAYS.length - 1)];
           setTimeout(() => connect(nextAttempt), delay);
         }
       };

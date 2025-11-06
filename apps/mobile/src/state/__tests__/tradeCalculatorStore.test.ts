@@ -84,4 +84,33 @@ describe('tradeCalculatorStore selectors and overrides', () => {
     expect(useTradeCalculatorStore.getState().hasManualEntry).toBe(false);
     expect(useTradeCalculatorStore.getState().error).toBeNull();
   });
+
+  test('setSymbol updates symbol and clears trade-derived state', () => {
+    const store = useTradeCalculatorStore.getState();
+    store.setInput({
+      symbol: 'BTC-USDT',
+      entryPrice: '50000.00',
+      stopPrice: '49000.00',
+      targetPrice: '52000.00',
+    });
+    store.setHasManualEntry(true);
+
+    const output = buildOutput();
+    const snapshot = buildSnapshot();
+    store.setOutput(output, snapshot, output.warningCodes, new Date().toISOString());
+
+    store.setSymbol('ETH-USDT');
+
+    const { input, output: clearedOutput, status, error, hasManualEntry } =
+      useTradeCalculatorStore.getState();
+
+    expect(input.symbol).toBe('ETH-USDT');
+    expect(input.entryPrice).toBeNull();
+    expect(input.stopPrice).toBeNull();
+    expect(input.targetPrice).toBe('0.00');
+    expect(hasManualEntry).toBe(false);
+    expect(status).toBe('idle');
+    expect(error).toBeNull();
+    expect(clearedOutput).toBeNull();
+  });
 });

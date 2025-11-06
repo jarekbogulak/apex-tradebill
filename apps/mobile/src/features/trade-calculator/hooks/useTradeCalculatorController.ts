@@ -1,4 +1,4 @@
-import type { MarketSnapshot } from '@apex-tradebill/types';
+import type { MarketSnapshot, Symbol } from '@apex-tradebill/types';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef } from 'react';
 
@@ -60,6 +60,7 @@ interface UseTradeCalculatorControllerResult {
     closeForm: () => void;
     submitForm: () => void;
     execute: () => void;
+    changeSymbol: (symbol: Symbol) => void;
   };
   fieldHandlers: {
     onAccountSizeChange: (value: string) => void;
@@ -88,6 +89,7 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
   const setInput = useTradeCalculatorStore((state) => state.setInput);
   const setOutput = useTradeCalculatorStore((state) => state.setOutput);
   const setStatus = useTradeCalculatorStore((state) => state.setStatus);
+  const setSymbol = useTradeCalculatorStore((state) => state.setSymbol);
 
   const queryClient = useQueryClient();
   const riskKey = useSettingsStore(selectRiskConfig);
@@ -150,30 +152,55 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
   });
 
   useEffect(() => {
-    if (
-      input.riskPercent !== settingsRiskPercent ||
-      input.atrMultiplier !== settingsAtrMultiplier ||
-      input.timeframe !== defaultTimeframe ||
-      input.symbol !== defaultSymbol
-    ) {
-      setInput({
-        riskPercent: settingsRiskPercent,
-        atrMultiplier: settingsAtrMultiplier,
-        timeframe: defaultTimeframe,
-        symbol: defaultSymbol,
-      });
+    const patch: Partial<TradeCalculatorInputState> = {};
+
+    if (input.riskPercent !== settingsRiskPercent) {
+      patch.riskPercent = settingsRiskPercent;
+    }
+    if (input.atrMultiplier !== settingsAtrMultiplier) {
+      patch.atrMultiplier = settingsAtrMultiplier;
+    }
+    if (input.timeframe !== defaultTimeframe) {
+      patch.timeframe = defaultTimeframe;
+    }
+
+    if (Object.keys(patch).length > 0) {
+      setInput(patch);
     }
   }, [
-    defaultSymbol,
     defaultTimeframe,
     input.atrMultiplier,
     input.riskPercent,
-    input.symbol,
     input.timeframe,
     setInput,
     settingsAtrMultiplier,
     settingsRiskPercent,
   ]);
+
+  const applySymbolChange = useRef(false);
+  const defaultSymbolRef = useRef(defaultSymbol);
+
+  useEffect(() => {
+    if (!applySymbolChange.current) {
+      applySymbolChange.current = true;
+      defaultSymbolRef.current = defaultSymbol;
+      if (input.symbol !== defaultSymbol) {
+        latestPriceRef.current = null;
+        setSymbol(defaultSymbol);
+      }
+      return;
+    }
+
+    if (defaultSymbol !== defaultSymbolRef.current) {
+      const previousDefault = defaultSymbolRef.current;
+      defaultSymbolRef.current = defaultSymbol;
+
+      if (input.symbol === previousDefault) {
+        latestPriceRef.current = null;
+        setSymbol(defaultSymbol);
+      }
+    }
+  }, [defaultSymbol, input.symbol, setSymbol]);
 
   const riskSummary = useMemo(() => {
     const riskToReward = output?.riskToReward ?? null;
@@ -248,6 +275,10 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
       closeForm,
       submitForm: operations.requestManualPreview,
       execute: operations.executeTrade,
+      changeSymbol: (symbol: Symbol) => {
+        latestPriceRef.current = null;
+        setSymbol(symbol);
+      },
     },
     fieldHandlers,
   };

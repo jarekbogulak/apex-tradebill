@@ -15,6 +15,56 @@ const apiClient = createApiClient();
 type PreviewSource = 'manual' | 'live';
 
 const STOP_REQUIRED_ERROR = 'Stop price is required when volatility stop is disabled';
+const ACCOUNT_SIZE_REQUIRED_ERROR = 'Account size must be greater than zero';
+
+const normalizeNullable = (value: string | null | undefined) => {
+  if (value == null) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+export const prepareTradePayload = ({
+  input,
+  settingsRiskPercent,
+  settingsAtrMultiplier,
+}: {
+  input: TradeCalculatorInputState;
+  settingsRiskPercent: string;
+  settingsAtrMultiplier: string;
+}): { payload: TradeInput | null; error: string | null } => {
+  const { stopPrice: inputStopPrice, ...restInput } = input;
+
+  const normalizedStop = normalizeNullable(inputStopPrice);
+  const normalizedEntry = normalizeNullable(restInput.entryPrice);
+  const normalizedAccountSize = normalizeNullable(restInput.accountSize);
+
+  if (!normalizedAccountSize) {
+    return { payload: null, error: ACCOUNT_SIZE_REQUIRED_ERROR };
+  }
+
+  const accountSizeValue = Number(normalizedAccountSize);
+  if (!Number.isFinite(accountSizeValue) || accountSizeValue <= 0) {
+    return { payload: null, error: ACCOUNT_SIZE_REQUIRED_ERROR };
+  }
+
+  if (!input.useVolatilityStop && normalizedStop == null) {
+    return { payload: null, error: STOP_REQUIRED_ERROR };
+  }
+
+  const payload: TradeInput = {
+    ...restInput,
+    accountSize: normalizedAccountSize,
+    entryPrice: normalizedEntry,
+    riskPercent: settingsRiskPercent,
+    atrMultiplier: settingsAtrMultiplier,
+    ...(normalizedStop != null ? { stopPrice: normalizedStop } : {}),
+  } as TradeInput;
+
+  return { payload, error: null };
+};
 
 interface UseTradeCalculatorOperationsOptions {
   input: TradeCalculatorInputState;
@@ -52,34 +102,6 @@ export const useTradeCalculatorOperations = ({
 }: UseTradeCalculatorOperationsOptions): UseTradeCalculatorOperationsResult => {
   const requestSourceRef = useRef<PreviewSource>('manual');
   const livePreviewActiveRef = useRef(false);
-
-  const buildTradePayload = useCallback((): TradeInput | null => {
-    const normalize = (value: string | null | undefined) => {
-      if (value == null) {
-        return null;
-      }
-
-      const trimmed = value.trim();
-      return trimmed.length > 0 ? trimmed : null;
-    };
-
-    const { stopPrice: inputStopPrice, ...restInput } = input;
-
-    const normalizedStop = normalize(inputStopPrice);
-    const normalizedEntry = normalize(restInput.entryPrice);
-
-    if (!input.useVolatilityStop && normalizedStop == null) {
-      return null;
-    }
-
-    return {
-      ...restInput,
-      entryPrice: normalizedEntry,
-      ...(normalizedStop != null ? { stopPrice: normalizedStop } : {}),
-      riskPercent: settingsRiskPercent,
-      atrMultiplier: settingsAtrMultiplier,
-    } as TradeInput;
-  }, [input, settingsAtrMultiplier, settingsRiskPercent]);
 
   const previewMutation = useMutation({
     mutationFn: (payload: TradeInput) => apiClient.previewTrade(payload),
@@ -132,19 +154,24 @@ export const useTradeCalculatorOperations = ({
         return;
       }
 
-      const payload = buildTradePayload();
+      const { payload, error } = prepareTradePayload({
+        input,
+        settingsRiskPercent,
+        settingsAtrMultiplier,
+      });
+
       if (!payload) {
         if (source === 'live') {
           livePreviewActiveRef.current = false;
         }
-        setStatus('error', STOP_REQUIRED_ERROR);
+        setStatus('error', error ?? STOP_REQUIRED_ERROR);
         return;
       }
 
       requestSourceRef.current = source;
       previewMutation.mutate(payload);
     },
-    [buildTradePayload, previewMutation, setStatus],
+    [input, previewMutation, setStatus, settingsAtrMultiplier, settingsRiskPercent],
   );
 
   const requestManualPreview = useCallback(() => {
@@ -160,14 +187,19 @@ export const useTradeCalculatorOperations = ({
       return;
     }
 
-    const payload = buildTradePayload();
+    const { payload, error } = prepareTradePayload({
+      input,
+      settingsRiskPercent,
+      settingsAtrMultiplier,
+    });
+
     if (!payload) {
-      setStatus('error', STOP_REQUIRED_ERROR);
+      setStatus('error', error ?? STOP_REQUIRED_ERROR);
       return;
     }
 
     executeMutation.mutate(payload);
-  }, [buildTradePayload, executeMutation, output, setStatus]);
+  }, [executeMutation, input, output, setStatus, settingsAtrMultiplier, settingsRiskPercent]);
 
   const canExecute = Boolean(output) && !executeMutation.isPending;
 

@@ -36,7 +36,7 @@ export default function SettingsScreen() {
         atrMultiplier: remoteSettings.atrMultiplier,
         dataFreshnessThresholdMs: remoteSettings.dataFreshnessThresholdMs,
         defaultSymbol: remoteSettings.defaultSymbol,
-        defaultTimeframe: remoteSettings.defaultTimeframe as typeof settings.defaultTimeframe,
+        defaultTimeframe: remoteSettings.defaultTimeframe as Timeframe,
         rememberedMultiplierOptions: remoteSettings.rememberedMultiplierOptions,
         lastSyncedAt: new Date().toISOString(),
       });
@@ -51,7 +51,7 @@ export default function SettingsScreen() {
         atrMultiplier: data.atrMultiplier,
         dataFreshnessThresholdMs: data.dataFreshnessThresholdMs,
         defaultSymbol: data.defaultSymbol,
-        defaultTimeframe: data.defaultTimeframe as typeof settings.defaultTimeframe,
+        defaultTimeframe: data.defaultTimeframe as Timeframe,
         rememberedMultiplierOptions: data.rememberedMultiplierOptions,
         lastSyncedAt: new Date().toISOString(),
       });
