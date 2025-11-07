@@ -91,12 +91,12 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.xs,
     },
     triggerLabel: {
-      fontSize: 16,
-      fontWeight: '600',
+      fontSize: 24,
+      fontWeight: '700',
       color: theme.colors.textPrimary,
     },
     triggerChevron: {
-      fontSize: 12,
+      fontSize: 24,
       color: theme.colors.textSecondary,
       marginTop: 2,
     },

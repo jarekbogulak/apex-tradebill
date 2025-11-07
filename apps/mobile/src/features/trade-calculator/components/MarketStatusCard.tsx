@@ -1,14 +1,18 @@
 import { useMemo } from 'react';
 import { Text, View } from 'react-native';
 
+import type { Symbol } from '@apex-tradebill/types';
 import { useTheme, type Theme } from '@apex-tradebill/ui';
 
 import type { StreamStatus } from '@/src/features/stream/useMarketStream';
 
 import { formatPriceValue } from '../utils/formatters';
+import { SymbolSelector } from './SymbolSelector';
 
 interface MarketStatusCardProps {
-  symbol: string;
+  symbols: readonly Symbol[];
+  selectedSymbol: Symbol;
+  onSelect: (symbol: Symbol) => void;
   streamStatus: StreamStatus;
   lastPrice?: string | null;
   lastUpdatedAt: number | null;
@@ -30,11 +34,6 @@ const createStyles = (theme: Theme) => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-    },
-    symbol: {
-      fontSize: 22,
-      fontWeight: '700',
-      color: theme.colors.textPrimary,
     },
     price: {
       fontSize: 24,
@@ -112,7 +111,9 @@ const formatUpdatedTime = (timestamp: number | null) => {
 };
 
 export const MarketStatusCard = ({
-  symbol,
+  symbols,
+  selectedSymbol,
+  onSelect,
   streamStatus,
   lastPrice,
   lastUpdatedAt,
@@ -124,7 +125,11 @@ export const MarketStatusCard = ({
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <Text style={styles.symbol}>{symbol}</Text>
+        <SymbolSelector
+          symbols={symbols}
+          selectedSymbol={selectedSymbol}
+          onSelect={onSelect}
+        />
         <Text style={styles.price}>{formatPriceValue(lastPrice)}</Text>
       </View>
       <View style={styles.statusRow}>
