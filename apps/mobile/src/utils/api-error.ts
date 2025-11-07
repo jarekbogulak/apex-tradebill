@@ -39,9 +39,9 @@ interface ApiErrorOptions {
   message?: string | null;
   code?: string | null;
   details?: ApiErrorDetailsInput | ApiErrorDetailsInput[];
-  rawBody?: string;
+  rawBody?: string | null;
   body?: unknown;
-  url?: string;
+  url?: string | null;
 }
 
 export class ApiError extends Error {
