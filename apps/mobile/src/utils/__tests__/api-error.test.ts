@@ -65,4 +65,16 @@ describe('formatFriendlyError', () => {
 
     expect(message).toBe(FALLBACK);
   });
+
+  test('filters out network-style detail payloads', () => {
+    const error = new ApiError({
+      status: 503,
+      message: 'database lookup failed: getaddrinfo ENOTFOUND',
+      details: ["errno: -3008 code: 'ENOTFOUND' syscall: 'getaddrinfo'"],
+    });
+
+    const message = formatFriendlyError(error, FALLBACK);
+
+    expect(message).toBe(FALLBACK);
+  });
 });

@@ -5,6 +5,7 @@ import { formatCurrency } from '@apex-tradebill/utils';
 import type { TradeCalculation } from '@apex-tradebill/types';
 import { useTheme, type Theme } from '@apex-tradebill/ui';
 
+import { ErrorMessageBlock } from '@/components/ui/ErrorMessageBlock';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { formatFriendlyError } from '@/src/utils/api-error';
 
@@ -36,20 +37,11 @@ export const HistoryList = ({
   );
   const errorMessage = formatFriendlyError(error ?? null, 'Failed to load trade history.');
   const renderErrorCard = () => (
-    <View style={styles.errorCard}>
-      <IconSymbol
-        name="exclamationmark.triangle"
-        size={28}
-        weight="semibold"
-        color={theme.colors.error}
-        style={styles.errorIcon}
-      />
-      <Text style={styles.errorTitle}>Unable to load history</Text>
-      <Text style={styles.errorCopy} numberOfLines={3}>
-        {errorMessage}
-      </Text>
-      <Text style={styles.errorHint}>Pull to refresh to try again.</Text>
-    </View>
+    <ErrorMessageBlock
+      title="Unable to load history"
+      message={errorMessage}
+      hint="Use the refresh button above to try again."
+    />
   );
 
   return (
@@ -167,30 +159,6 @@ const createStyles = (theme: Theme) =>
     },
     errorEmpty: {
       width: '100%',
-    },
-    errorCard: {
-      width: '100%',
-      borderRadius: theme.radii.lg,
-      backgroundColor: theme.colors.errorSurface,
-      paddingVertical: theme.spacing.lg,
-      paddingHorizontal: theme.spacing.lg,
-      gap: theme.spacing.sm,
-    },
-    errorIcon: {
-      marginBottom: theme.spacing.xs,
-    },
-    errorTitle: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: theme.colors.error,
-    },
-    errorCopy: {
-      fontSize: 13,
-      color: theme.colors.error,
-    },
-    errorHint: {
-      fontSize: 12,
-      color: theme.colors.textMuted,
     },
     emptyPlaceholder: {
       width: '100%',

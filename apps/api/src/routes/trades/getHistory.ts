@@ -54,6 +54,7 @@ export const getHistoryRoute: FastifyPluginAsync<GetHistoryRouteOptions> = async
             },
           },
           400: errorResponseSchema,
+          503: errorResponseSchema,
         },
       },
     },
@@ -68,14 +69,44 @@ export const getHistoryRoute: FastifyPluginAsync<GetHistoryRouteOptions> = async
         }
       }
 
+      if (!historyService.isPersistent) {
+        request.log.error('trade_history.persistence_unavailable');
+        return reply
+          .status(503)
+          .send(
+            createErrorResponse(
+              'HISTORY_UNAVAILABLE',
+              'Trade history is temporarily unavailable. Please try again later.',
+            ),
+          );
+      }
+
       try {
         const userId = resolveUserId(request);
         const history = await historyService.list(userId, limit, cursor ?? null);
+        request.log.info(
+          {
+            userId,
+            limit,
+            cursor,
+            itemCount: history.items.length,
+            nextCursor: history.nextCursor,
+          },
+          'trade_history.list_success',
+        );
         return reply.send({
           items: history.items,
           nextCursor: history.nextCursor,
         });
       } catch (error) {
+        request.log.error(
+          {
+            err: error,
+            limit,
+            cursor,
+          },
+          'trade_history.list_failed',
+        );
         const message = error instanceof Error ? error.message : 'Unable to load history';
         return reply.status(400).send(createErrorResponse('HISTORY_ERROR', message));
       }

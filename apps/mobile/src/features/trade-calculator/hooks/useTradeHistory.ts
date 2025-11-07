@@ -1,6 +1,6 @@
 import type { TradeCalculation } from '@apex-tradebill/types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { createApiClient, type TradeHistoryResponse } from '@/src/services/apiClient';
 import { useAuthStore } from '@/src/state/authStore';
@@ -43,6 +43,73 @@ export const useTradeHistory = () => {
     enabled,
   });
 
+  useEffect(() => {
+    if (enabled) {
+      return;
+    }
+
+    const reasons: string[] = [];
+    if (!hydrated) {
+      reasons.push('auth store not hydrated');
+    }
+    if (!userId) {
+      reasons.push('missing userId');
+    }
+
+    console.warn('[tradeHistory] query disabled', {
+      reasons,
+      hydrated,
+      userId,
+    });
+  }, [enabled, hydrated, userId]);
+
+  const lastLoggedErrorRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!historyQuery.isError) {
+      lastLoggedErrorRef.current = null;
+      return;
+    }
+
+    const payload = {
+      message: historyQuery.error?.message ?? 'Unknown error',
+      code: historyQuery.error?.code ?? null,
+      status: historyQuery.error?.status ?? null,
+      failureCount: historyQuery.failureCount,
+    };
+    const serialized = JSON.stringify(payload);
+
+    if (lastLoggedErrorRef.current === serialized) {
+      return;
+    }
+
+    lastLoggedErrorRef.current = serialized;
+    console.warn('[tradeHistory] fetch failed', payload);
+  }, [historyQuery.error, historyQuery.failureCount, historyQuery.isError]);
+
+  useEffect(() => {
+    const itemCount = historyQuery.data?.items?.length ?? 0;
+    console.log('[tradeHistory] query state', {
+      enabled,
+      status: historyQuery.status,
+      fetchStatus: historyQuery.fetchStatus,
+      isFetching: historyQuery.isFetching,
+      isLoading: historyQuery.isLoading,
+      isSuccess: historyQuery.isSuccess,
+      isError: historyQuery.isError,
+      itemCount,
+    });
+  }, [
+    enabled,
+    historyQuery.data?.items?.length,
+    historyQuery.fetchStatus,
+    historyQuery.isError,
+    historyQuery.isFetching,
+    historyQuery.isLoading,
+    historyQuery.isSuccess,
+    historyQuery.status,
+  ]);
+
   const addLocalItem = useCallback(
     (item: TradeCalculation) => {
       queryClient.setQueryData<TradeHistoryResponse>(queryKey, (current) => {
@@ -67,7 +134,10 @@ export const useTradeHistory = () => {
     return historyQuery.data?.items ?? [];
   }, [enabled, historyQuery.data?.items]);
 
-  const error = enabled ? (historyQuery.error ?? null) : null;
+  const error =
+    enabled && historyQuery.isError
+      ? (historyQuery.error ?? new Error('Failed to load trade history.'))
+      : null;
 
   return {
     items,

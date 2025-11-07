@@ -1,7 +1,9 @@
-import { useTheme, type Theme } from '@apex-tradebill/ui';
 import { useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
+import { useTheme, type Theme } from '@apex-tradebill/ui';
+
+import { InlineErrorMessage } from '@/components/ui/InlineErrorMessage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
 interface TradeBillEmptyCardProps {
@@ -43,9 +45,7 @@ export const TradeBillEmptyCard = ({
         </View>
       </View>
 
-      {status === 'error' && errorMessage ? (
-        <Text style={styles.errorText}>{errorMessage}</Text>
-      ) : null}
+      {status === 'error' && errorMessage ? <InlineErrorMessage message={errorMessage} /> : null}
     </View>
   );
 };
@@ -96,10 +96,6 @@ const createStyles = (theme: Theme) => {
       color: theme.colors.textMuted,
       fontSize: 13,
       textAlign: 'center',
-    },
-    errorText: {
-      color: theme.colors.error,
-      fontSize: 13,
     },
     primaryButton: {
       backgroundColor: theme.colors.accent,

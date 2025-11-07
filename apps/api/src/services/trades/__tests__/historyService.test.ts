@@ -65,5 +65,18 @@ describe('Trade history service', () => {
     const history = await service.list(USER_ID, 10);
     expect(history.items).toHaveLength(1);
     expect(history.items[0].id).toBe(recent.id);
+    expect(service.isPersistent).toBe(true);
+  });
+
+  test('marks service as non-persistent when configured', async () => {
+    const repository = createInMemoryTradeCalculationRepository([]);
+    const service = createTradeHistoryService({
+      tradeCalculations: repository,
+      isPersistent: false,
+    });
+
+    const history = await service.list(USER_ID, 10);
+    expect(history.items).toHaveLength(0);
+    expect(service.isPersistent).toBe(false);
   });
 });

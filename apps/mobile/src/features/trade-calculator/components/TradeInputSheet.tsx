@@ -18,6 +18,7 @@ import type {
   TradeCalculatorInputState,
   TradeCalculatorStatus,
 } from '@/src/state/tradeCalculatorStore';
+import { InlineErrorMessage } from '@/components/ui/InlineErrorMessage';
 
 interface TradeInputSheetProps {
   visible: boolean;
@@ -166,7 +167,7 @@ export const TradeInputSheet = ({
               </View>
 
               {status === 'error' && errorMessage ? (
-                <Text style={styles.errorText}>{errorMessage}</Text>
+                <InlineErrorMessage message={errorMessage} />
               ) : null}
 
               <Pressable
@@ -333,8 +334,5 @@ const createStyles = (theme: Theme) =>
     },
     segmentLabelActive: {
       color: theme.colors.textInverted,
-    },
-    errorText: {
-      color: theme.colors.error,
     },
   }) as const;

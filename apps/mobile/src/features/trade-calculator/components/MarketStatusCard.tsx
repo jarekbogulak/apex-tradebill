@@ -125,11 +125,7 @@ export const MarketStatusCard = ({
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <SymbolSelector
-          symbols={symbols}
-          selectedSymbol={selectedSymbol}
-          onSelect={onSelect}
-        />
+        <SymbolSelector symbols={symbols} selectedSymbol={selectedSymbol} onSelect={onSelect} />
         <Text style={styles.price}>{formatPriceValue(lastPrice)}</Text>
       </View>
       <View style={styles.statusRow}>

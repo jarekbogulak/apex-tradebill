@@ -389,10 +389,12 @@ const createServices = ({
   marketMetadata,
   marketData,
   tradeCalculations,
+  tradeCalculationsPersistent,
 }: {
   marketMetadata: MarketMetadataPort;
   marketData: MarketDataPort;
   tradeCalculations: TradeCalculationRepository;
+  tradeCalculationsPersistent: boolean;
 }) => {
   const previewService = createTradePreviewService({
     marketData,
@@ -402,6 +404,7 @@ const createServices = ({
 
   const historyService = createTradeHistoryService({
     tradeCalculations,
+    isPersistent: tradeCalculationsPersistent,
   });
 
   const userSettingsRepository = createInMemoryUserSettingsRepository();
@@ -455,6 +458,7 @@ export const buildServer = async (): Promise<FastifyInstance> => {
     marketMetadata: marketMetadataService,
     marketData: infrastructure.marketData,
     tradeCalculations: tradeCalculationRepository,
+    tradeCalculationsPersistent: tradeCalculationPool != null,
   });
   const activationSecret = process.env.APEX_OMNI_API_SECRET;
   const deviceAuthService =

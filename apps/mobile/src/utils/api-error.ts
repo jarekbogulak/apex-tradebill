@@ -1,5 +1,20 @@
 type ApiErrorDetailsInput = string | string[] | null | undefined;
 
+const NETWORK_ERROR_TOKENS = [
+  'ENOTFOUND',
+  'ECONN',
+  'ETIMEOUT',
+  'EHOST',
+  'ENET',
+  'network request failed',
+  'failed to fetch',
+] as const;
+
+const includesNetworkToken = (message: string): boolean => {
+  const normalized = message.toLowerCase();
+  return NETWORK_ERROR_TOKENS.some((needle) => normalized.includes(needle.toLowerCase()));
+};
+
 const sanitizeDetail = (detail: string): string | null => {
   const trimmed = detail.trim();
   if (!trimmed) {
@@ -128,24 +143,17 @@ export const formatFriendlyError = (error: unknown, fallback: string): string =>
     return fallback;
   }
 
-  const shouldFallbackForMessage = (message: string) =>
-    [
-      'ENOTFOUND',
-      'ECONN',
-      'ETIMEOUT',
-      'EHOST',
-      'ENET',
-      'network request failed',
-      'failed to fetch',
-    ].some((needle) => message.toLowerCase().includes(needle.toLowerCase()));
-
   if (isApiError(error)) {
-    if (error.details.length > 0) {
-      return error.details.join('\n');
+    const userFacingDetails = error.details.filter((detail) => !includesNetworkToken(detail));
+    if (userFacingDetails.length > 0) {
+      return userFacingDetails.join('\n');
     }
-    if (error.message.trim()) {
-      return shouldFallbackForMessage(error.message) ? fallback : error.message;
+
+    const trimmedMessage = error.message.trim();
+    if (trimmedMessage) {
+      return includesNetworkToken(trimmedMessage) ? fallback : trimmedMessage;
     }
+
     return fallback;
   }
 
@@ -154,7 +162,7 @@ export const formatFriendlyError = (error: unknown, fallback: string): string =>
     if (!trimmed) {
       return fallback;
     }
-    return shouldFallbackForMessage(trimmed) ? fallback : trimmed;
+    return includesNetworkToken(trimmed) ? fallback : trimmed;
   }
 
   if (error instanceof Error) {
@@ -162,7 +170,7 @@ export const formatFriendlyError = (error: unknown, fallback: string): string =>
     if (!trimmed) {
       return fallback;
     }
-    return shouldFallbackForMessage(trimmed) ? fallback : trimmed;
+    return includesNetworkToken(trimmed) ? fallback : trimmed;
   }
 
   return fallback;

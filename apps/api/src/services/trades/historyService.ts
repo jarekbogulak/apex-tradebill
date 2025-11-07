@@ -6,6 +6,7 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 export interface TradeHistoryServiceDeps {
   tradeCalculations: TradeCalculationRepository;
   now?: () => Date;
+  isPersistent?: boolean;
 }
 
 export interface TradeHistoryResult {
@@ -16,6 +17,7 @@ export interface TradeHistoryResult {
 export const createTradeHistoryService = ({
   tradeCalculations,
   now = () => new Date(),
+  isPersistent = true,
 }: TradeHistoryServiceDeps) => {
   const list = async (
     userId: string,
@@ -29,6 +31,7 @@ export const createTradeHistoryService = ({
 
   return {
     list,
+    isPersistent,
   };
 };
 
