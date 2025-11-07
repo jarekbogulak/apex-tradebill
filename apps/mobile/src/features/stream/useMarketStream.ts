@@ -25,6 +25,10 @@ type MarketWebSocket = Omit<WebSocket, 'ping'> & {
   ping?: () => void;
 };
 
+interface CloseSocketOptions {
+  skipAutoReconnect?: boolean;
+}
+
 export const useMarketStream = ({
   symbols,
   staleThresholdMs = DEFAULT_STALE_THRESHOLD_MS,
@@ -54,12 +58,12 @@ export const useMarketStream = ({
     return Array.from(new Set(symbols)).join(',');
   }, [symbols]);
 
-  const clearStaleTimer = () => {
+  const clearStaleTimer = useCallback(() => {
     if (staleTimerRef.current) {
       clearTimeout(staleTimerRef.current);
       staleTimerRef.current = null;
     }
-  };
+  }, []);
 
   const scheduleStaleCheck = useCallback(
     (timestamp: number) => {
@@ -74,15 +78,28 @@ export const useMarketStream = ({
         Math.max(0, staleThresholdMs - (Date.now() - timestamp)),
       );
     },
-    [staleThresholdMs],
+    [clearStaleTimer, staleThresholdMs],
   );
 
-  const closeSocket = useCallback(() => {
-    skipReconnectRef.current = true;
-    clearStaleTimer();
-    wsRef.current?.close();
-    wsRef.current = null;
-  }, []);
+  const closeSocket = useCallback(
+    ({ skipAutoReconnect = true }: CloseSocketOptions = {}) => {
+      if (skipAutoReconnect) {
+        skipReconnectRef.current = true;
+      }
+
+      const socket = wsRef.current;
+      clearStaleTimer();
+
+      if (socket) {
+        socket.close();
+        wsRef.current = null;
+      } else if (skipAutoReconnect) {
+        // Nothing to close, so reset the flag to avoid blocking future retries.
+        skipReconnectRef.current = false;
+      }
+    },
+    [clearStaleTimer],
+  );
 
   const connect = useCallback(
     (attempt = 0) => {
@@ -90,7 +107,7 @@ export const useMarketStream = ({
         return;
       }
 
-      closeSocket();
+      closeSocket({ skipAutoReconnect: false });
 
       const query = symbolQuery ? `?symbols=${symbolQuery}` : '';
       const socket = new WebSocket(`${wsBaseUrl}/v1/stream/market-data${query}`) as MarketWebSocket;
@@ -154,7 +171,7 @@ export const useMarketStream = ({
         }
       };
     },
-    [closeSocket, enabled, onSnapshot, scheduleStaleCheck, symbolQuery, wsBaseUrl],
+    [clearStaleTimer, closeSocket, enabled, onSnapshot, scheduleStaleCheck, symbolQuery, wsBaseUrl],
   );
 
   useEffect(() => {

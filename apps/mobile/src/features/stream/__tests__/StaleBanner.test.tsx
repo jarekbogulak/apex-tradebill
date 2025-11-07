@@ -1,3 +1,5 @@
+/// <reference lib="dom" />
+
 jest.mock('react-native', () => {
   const React = require('react');
   const sanitize = <T extends Record<string, unknown>>(props: T) => {
