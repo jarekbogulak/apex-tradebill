@@ -23,15 +23,6 @@ export const TradeHistoryCard = ({
   const styles = useMemo(() => createStyles(theme), [theme]);
   const shouldShowLoadingState = isFetching && !error && items.length === 0;
 
-  useEffect(() => {
-    console.log('[TradeHistoryCard] state snapshot', {
-      itemCount: items.length,
-      isFetching,
-      hasError: Boolean(error),
-      errorMessage: error?.message ?? null,
-    });
-  }, [items.length, isFetching, error]);
-
   return (
     <View style={styles.card}>
       <View style={styles.header}>
