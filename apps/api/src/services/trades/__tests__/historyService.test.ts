@@ -78,5 +78,8 @@ describe('Trade history service', () => {
     const history = await service.list(USER_ID, 10);
     expect(history.items).toHaveLength(0);
     expect(service.isPersistent).toBe(false);
+
+    service.setPersistent(true);
+    expect(service.isPersistent).toBe(true);
   });
 });

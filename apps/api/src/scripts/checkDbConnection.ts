@@ -1,14 +1,11 @@
-if (typeof process.loadEnvFile === 'function') {
-  process.loadEnvFile();
-}
-
-import '../config/loadEnv.js';
+import { buildDatabasePoolOptions } from '../config/database.js';
+import { env } from '../config/env.js';
 import { closeSharedDatabasePool, getSharedDatabasePool } from '../infra/database/pool.js';
 
 const resolveTarget = () => {
-  const connectionString = process.env.SUPABASE_DB_URL ?? process.env.DATABASE_URL;
+  const connectionString = env.database.url;
   if (!connectionString) {
-    return 'unknown (no SUPABASE_DB_URL or DATABASE_URL set)';
+    return 'in-memory (APEX_ALLOW_IN_MEMORY_DB=true)';
   }
 
   try {
@@ -26,7 +23,7 @@ const run = async () => {
   const target = resolveTarget();
   process.stdout.write(`Checking database connectivity for ${target} ...\n`);
 
-  const pool = await getSharedDatabasePool();
+  const pool = await getSharedDatabasePool(buildDatabasePoolOptions());
 
   try {
     const result = await pool.query<{ ok: number }>('SELECT 1 AS ok;');

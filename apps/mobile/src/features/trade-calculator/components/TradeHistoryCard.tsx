@@ -1,16 +1,20 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import type { TradeCalculation } from '@apex-tradebill/types';
 import { useTheme, type Theme } from '@apex-tradebill/ui';
 
 import { HistoryList } from '@/src/features/history/HistoryList';
+import { ErrorMessageBlock } from '@/components/ui/ErrorMessageBlock';
 
 interface TradeHistoryCardProps {
   items: TradeCalculation[];
   isFetching: boolean;
   onRefresh: () => void;
   error?: Error | null;
+  historyUnavailable?: boolean;
+  lastCheckedAt?: number | null;
+  autoRetryIntervalMs?: number;
 }
 
 export const TradeHistoryCard = ({
@@ -18,38 +22,72 @@ export const TradeHistoryCard = ({
   isFetching,
   onRefresh,
   error = null,
+  historyUnavailable = false,
+  lastCheckedAt = null,
+  autoRetryIntervalMs,
 }: TradeHistoryCardProps) => {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const shouldShowLoadingState = isFetching && !error && items.length === 0;
+  const refreshDisabled = isFetching;
+  const lastCheckedText = formatLastChecked(lastCheckedAt);
+  const autoRetryText =
+    historyUnavailable && autoRetryIntervalMs
+      ? `Auto retry every ${Math.round(autoRetryIntervalMs / 1000)}s.`
+      : null;
 
   return (
     <View style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.sectionTitle}>Recent History</Text>
         <Pressable
-          disabled={isFetching}
+          disabled={refreshDisabled}
           onPress={onRefresh}
           accessibilityRole="button"
           style={({ pressed }) => [
             styles.refreshButton,
-            pressed && !isFetching ? styles.refreshButtonPressed : null,
-            isFetching ? styles.refreshButtonDisabled : null,
+            pressed && !refreshDisabled ? styles.refreshButtonPressed : null,
+            refreshDisabled ? styles.refreshButtonDisabled : null,
           ]}
         >
-          <Text style={styles.refreshLabel}>{isFetching ? 'Refreshing...' : 'Refresh'}</Text>
+          <Text style={styles.refreshLabel}>{isFetching ? 'Refreshing…' : 'Refresh'}</Text>
         </Pressable>
       </View>
-      {shouldShowLoadingState ? (
+      {historyUnavailable ? (
+        <View style={styles.unavailableBlock}>
+          <ErrorMessageBlock
+            title="Trade history offline"
+            message="The server is running without its database, so your past calculations are momentarily hidden."
+            hint="Tap refresh to check again or wait for automatic retries."
+            testID="trade-history-unavailable"
+          />
+          <Text style={styles.metaText}>Last checked: {lastCheckedText}</Text>
+          {autoRetryText ? <Text style={styles.metaText}>{autoRetryText}</Text> : null}
+        </View>
+      ) : shouldShowLoadingState ? (
         <View style={styles.loadingState}>
           <ActivityIndicator size="small" color={theme.colors.accent} />
           <Text style={styles.loadingCopy}>Loading history…</Text>
         </View>
       ) : (
-        <HistoryList items={items} loading={isFetching} onRefresh={onRefresh} error={error} />
+        <>
+          <HistoryList items={items} loading={isFetching} onRefresh={onRefresh} error={error} />
+          <Text style={styles.metaText}>Last updated: {lastCheckedText}</Text>
+        </>
       )}
     </View>
   );
+};
+
+const formatLastChecked = (timestamp: number | null) => {
+  if (!timestamp) {
+    return '—';
+  }
+  return new Date(timestamp).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
 };
 
 const createStyles = (theme: Theme) => {
@@ -95,6 +133,10 @@ const createStyles = (theme: Theme) => {
       fontWeight: '600',
       color: theme.colors.textPrimary,
     },
+    unavailableBlock: {
+      width: '100%',
+      gap: theme.spacing.xs,
+    },
     loadingState: {
       minHeight: 160,
       borderRadius: theme.radii.lg,
@@ -107,6 +149,10 @@ const createStyles = (theme: Theme) => {
     },
     loadingCopy: {
       fontSize: 13,
+      color: theme.colors.textMuted,
+    },
+    metaText: {
+      fontSize: 12,
       color: theme.colors.textMuted,
     },
   } as const;

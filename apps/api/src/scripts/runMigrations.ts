@@ -1,8 +1,4 @@
-if (typeof process.loadEnvFile === 'function') {
-  process.loadEnvFile();
-}
-
-import '../config/loadEnv.js';
+import { buildDatabasePoolOptions } from '../config/database.js';
 import {
   closeSharedDatabasePool,
   getSharedDatabasePool,
@@ -10,7 +6,7 @@ import {
 } from '../infra/database/pool.js';
 
 const run = async () => {
-  const pool = await getSharedDatabasePool();
+  const pool = await getSharedDatabasePool(buildDatabasePoolOptions());
   const { applied, skipped } = await runPendingMigrations(pool);
 
   if (applied.length > 0) {

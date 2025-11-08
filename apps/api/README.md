@@ -22,13 +22,15 @@ Copy the template and tailor it to your environment:
 cp apps/api/.env.example apps/api/.env
 ```
 
-Key values in `.env`:
+Key values in `.env` (validated by `src/config/env.ts` at startup):
 
 - `SUPABASE_DB_URL` – PostgreSQL connection string (SSL toggled via `SUPABASE_DB_SSL`).
 - `SUPABASE_DB_POOL_MIN`, `SUPABASE_DB_POOL_MAX`, `SUPABASE_DB_IDLE_TIMEOUT_MS` – optional pool tuning knobs.
-- `JWT_SECRET`, `JWT_ISSUER`, `JWT_AUDIENCE` – enable signed client auth if required.
-- `APEX_TRADEBILL_AUTH_ALLOW_GUEST` – allow unauthenticated read-only clients in development.
-- `APEX_OMNI_*` – credentials, REST, and WebSocket endpoints for Apex Omni (`*_TESTNET_*` values support sandbox usage).
+- `JWT_SECRET`, `JWT_ISSUER`, `JWT_AUDIENCE` – required for signing/verifying API requests. If `JWT_SECRET` is omitted, the server reuses `APEX_OMNI_API_SECRET` (with a warning); `JWT_ISSUER` and `JWT_AUDIENCE` fall back to `apex-tradebill` / `apex-tradebill-clients` respectively.
+- `APEX_TRADEBILL_AUTH_ALLOW_GUEST` – allow unauthenticated read-only clients. Defaults to `true` outside production and `false` in production.
+- `APEX_ALLOW_IN_MEMORY_DB` – opt-in toggle for using the in-memory trade repository when Postgres is unavailable (defaults to `true` outside production).
+- `APEX_ALLOW_IN_MEMORY_MARKET_DATA` – opt-in toggle for synthetic market data when ApeX Omni credentials are missing (defaults to `true` outside production).
+- `APEX_OMNI_*` – credentials, REST, and WebSocket endpoints for ApeX Omni (`*_TESTNET_*` values support sandbox usage).
 
 ## Common Scripts
 

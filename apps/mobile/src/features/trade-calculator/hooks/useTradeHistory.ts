@@ -1,12 +1,13 @@
 import type { TradeCalculation } from '@apex-tradebill/types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { createApiClient, type TradeHistoryResponse } from '@/src/services/apiClient';
 import { useAuthStore } from '@/src/state/authStore';
-import type { ApiError } from '@/src/utils/api-error';
+import { isApiError, type ApiError } from '@/src/utils/api-error';
 
 const apiClient = createApiClient();
+const AUTO_REFETCH_INTERVAL_MS = 30_000;
 
 export const tradeHistoryQueryKey = (userId: string | null | undefined) =>
   ['tradeHistory', userId ?? 'anonymous'] as const;
@@ -15,6 +16,8 @@ export const useTradeHistory = () => {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.userId);
   const [hydrated, setHydrated] = useState(() => useAuthStore.persist?.hasHydrated?.() ?? false);
+  const [historyUnavailable, setHistoryUnavailable] = useState(false);
+  const [lastCheckedAt, setLastCheckedAt] = useState<number | null>(null);
 
   useEffect(() => {
     if (hydrated) {
@@ -30,7 +33,7 @@ export const useTradeHistory = () => {
 
   const queryKey = useMemo(() => tradeHistoryQueryKey(userId), [userId]);
 
-  const enabled = hydrated && Boolean(userId);
+  const enabled = hydrated;
 
   const historyQuery = useQuery<TradeHistoryResponse, ApiError>({
     queryKey,
@@ -41,9 +44,45 @@ export const useTradeHistory = () => {
     staleTime: 30_000,
     gcTime: 5 * 60_000,
     enabled,
+    retry: 0,
   });
 
-  const lastLoggedErrorRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (historyQuery.isFetching) {
+      return;
+    }
+
+    if (historyQuery.isSuccess) {
+      setHistoryUnavailable(false);
+      setLastCheckedAt(Date.now());
+      return;
+    }
+
+    if (historyQuery.isError) {
+      const unavailable = historyQuery.error
+        ? isApiError(historyQuery.error) &&
+          (historyQuery.error.code === 'HISTORY_UNAVAILABLE' || historyQuery.error.status === 503)
+        : false;
+      setHistoryUnavailable(unavailable);
+      setLastCheckedAt(Date.now());
+    }
+  }, [historyQuery.isError, historyQuery.isFetching, historyQuery.isSuccess, historyQuery.error]);
+
+  const { refetch } = historyQuery;
+
+  useEffect(() => {
+    if (!historyUnavailable) {
+      return () => undefined;
+    }
+
+    const id = setInterval(() => {
+      void refetch();
+    }, AUTO_REFETCH_INTERVAL_MS);
+
+    return () => {
+      clearInterval(id);
+    };
+  }, [historyUnavailable, refetch]);
 
   const addLocalItem = useCallback(
     (item: TradeCalculation) => {
@@ -69,15 +108,17 @@ export const useTradeHistory = () => {
     return historyQuery.data?.items ?? [];
   }, [enabled, historyQuery.data?.items]);
 
-  const error =
-    enabled && historyQuery.isError
-      ? (historyQuery.error ?? new Error('Failed to load trade history.'))
-      : null;
+  const error = historyQuery.isError
+    ? (historyQuery.error ?? new Error('Failed to load trade history.'))
+    : null;
 
   return {
     items,
     query: historyQuery,
     addLocalItem,
     error,
+    isUnavailable: historyUnavailable,
+    lastCheckedAt,
+    autoRetryIntervalMs: historyUnavailable ? AUTO_REFETCH_INTERVAL_MS : null,
   };
 };

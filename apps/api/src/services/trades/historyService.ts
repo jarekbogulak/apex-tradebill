@@ -19,6 +19,7 @@ export const createTradeHistoryService = ({
   now = () => new Date(),
   isPersistent = true,
 }: TradeHistoryServiceDeps) => {
+  let persistent = isPersistent;
   const list = async (
     userId: string,
     limit = 20,
@@ -31,7 +32,12 @@ export const createTradeHistoryService = ({
 
   return {
     list,
-    isPersistent,
+    get isPersistent() {
+      return persistent;
+    },
+    setPersistent(next: boolean) {
+      persistent = next;
+    },
   };
 };
 

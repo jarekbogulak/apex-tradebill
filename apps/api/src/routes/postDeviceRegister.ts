@@ -3,8 +3,12 @@ import type { FastifyPluginAsync } from 'fastify';
 import { createErrorResponse, errorResponseSchema } from './http.js';
 import type { DeviceAuthService } from '../services/deviceAuthService.js';
 
+export interface DeviceAuthServiceRef {
+  current: DeviceAuthService | null;
+}
+
 interface PostDeviceRegisterOptions {
-  deviceAuthService: DeviceAuthService | null;
+  deviceAuthServiceRef: DeviceAuthServiceRef;
 }
 
 const BodySchema = z.object({
@@ -14,7 +18,7 @@ const BodySchema = z.object({
 
 export const postDeviceRegisterRoute: FastifyPluginAsync<PostDeviceRegisterOptions> = async (
   app,
-  { deviceAuthService },
+  { deviceAuthServiceRef },
 ) => {
   app.post(
     '/v1/auth/device/register',
@@ -49,6 +53,7 @@ export const postDeviceRegisterRoute: FastifyPluginAsync<PostDeviceRegisterOptio
       },
     },
     async (request, reply) => {
+      const deviceAuthService = deviceAuthServiceRef.current;
       if (!deviceAuthService) {
         return reply
           .status(503)

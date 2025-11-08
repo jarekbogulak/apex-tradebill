@@ -50,6 +50,10 @@ export interface TradeCalculationRepository {
   ): Promise<{ items: TradeCalculation[]; nextCursor: string | null }>;
 }
 
+export interface SwappableTradeCalculationRepository extends TradeCalculationRepository {
+  swap(target: TradeCalculationRepository): void;
+}
+
 export const createInMemoryTradeCalculationRepository = (
   seed: TradeCalculation[] = [],
 ): TradeCalculationRepository => {
@@ -79,6 +83,27 @@ export const createInMemoryTradeCalculationRepository = (
       const nextCursor =
         items.length === limit ? (items[items.length - 1]?.createdAt ?? null) : null;
       return { items, nextCursor };
+    },
+  };
+};
+
+export const createSwappableTradeCalculationRepository = (
+  initial: TradeCalculationRepository,
+): SwappableTradeCalculationRepository => {
+  let current = initial;
+
+  return {
+    async findById(id) {
+      return current.findById(id);
+    },
+    async save(calculation) {
+      return current.save(calculation);
+    },
+    async listRecent(userId, limit, cursor, since) {
+      return current.listRecent(userId, limit, cursor, since);
+    },
+    swap(target) {
+      current = target;
     },
   };
 };

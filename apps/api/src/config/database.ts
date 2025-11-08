@@ -1,0 +1,20 @@
+import type { DatabasePoolOptions } from '../infra/database/pool.js';
+import { env } from './env.js';
+
+export const buildDatabasePoolOptions = (): DatabasePoolOptions => {
+  const options: DatabasePoolOptions = {
+    connectionString: env.database.url ?? undefined,
+    min: env.database.pool.min,
+    max: env.database.pool.max,
+    idleTimeoutMillis: env.database.pool.idleTimeoutMs,
+    applicationName: env.database.pool.applicationName,
+  };
+
+  if (env.database.sslMode === 'disable') {
+    options.ssl = false;
+  } else if (env.database.sslMode === 'require') {
+    options.ssl = { rejectUnauthorized: false };
+  }
+
+  return options;
+};

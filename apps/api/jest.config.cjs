@@ -8,6 +8,7 @@ const config = createBaseJestConfig({
     name: 'api',
     color: 'magenta',
   },
+  setupFiles: ['<rootDir>/apps/api/jest.env.cjs'],
   preset: 'ts-jest',
   testEnvironment: 'node',
   testMatch: [

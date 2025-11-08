@@ -42,6 +42,9 @@ interface UseTradeCalculatorControllerResult {
   historyItems: ReturnType<typeof useTradeHistory>['items'];
   historyQuery: ReturnType<typeof useTradeHistory>['query'];
   historyError: ReturnType<typeof useTradeHistory>['error'];
+  historyUnavailable: ReturnType<typeof useTradeHistory>['isUnavailable'];
+  historyLastCheckedAt: ReturnType<typeof useTradeHistory>['lastCheckedAt'];
+  historyAutoRetryIntervalMs: ReturnType<typeof useTradeHistory>['autoRetryIntervalMs'];
   riskSummary: {
     tone: RiskTone;
     riskToReward: number | null;
@@ -108,6 +111,9 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
     query: historyQuery,
     addLocalItem,
     error: historyError,
+    isUnavailable: historyUnavailable,
+    lastCheckedAt: historyLastCheckedAt,
+    autoRetryIntervalMs: historyAutoRetryIntervalMs,
   } = useTradeHistory();
 
   const {
@@ -266,6 +272,11 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
     historyItems,
     historyQuery,
     historyError,
+    historyUnavailable,
+    historyLastCheckedAt,
+    historyAutoRetryIntervalMs,
+    historyLastCheckedAt,
+    historyAutoRetryIntervalMs,
     riskSummary,
     derivedValues,
     shouldShowErrorBanner,

@@ -1,4 +1,3 @@
-import './config/loadEnv.js';
 import Fastify, { type FastifyInstance } from 'fastify';
 import {
   type MarketSnapshot,
@@ -9,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 import { createMarketMetadataService } from './services/markets/marketMetadataService.js';
 import {
   createInMemoryTradeCalculationRepository,
+  createSwappableTradeCalculationRepository,
+  type SwappableTradeCalculationRepository,
   type TradeCalculationRepository,
 } from './domain/trade-calculation/trade-calculation.entity.js';
 import { createPostgresTradeCalculationRepository } from './domain/trade-calculation/trade-calculation.repository.pg.js';
@@ -51,9 +52,10 @@ import {
   type PruneTradeHistoryJobLogger,
   type ScheduledJobHandle,
 } from './jobs/pruneTradeHistory.js';
-import { resolveApeXCredentials } from './config/apexConfig.js';
+import { env } from './config/env.js';
+import { buildDatabasePoolOptions } from './config/database.js';
 import { createDeviceAuthService } from './services/deviceAuthService.js';
-import postDeviceRegisterRoute from './routes/postDeviceRegister.js';
+import postDeviceRegisterRoute, { type DeviceAuthServiceRef } from './routes/postDeviceRegister.js';
 
 const BASE_PRICES: Record<TradingSymbol, number> = {
   'BTC-USDT': 65_000,
@@ -300,9 +302,11 @@ const createMarketInfrastructure = async (
   app: FastifyInstance,
   marketMetadata: MarketMetadataPort,
 ): Promise<MarketInfrastructure> => {
-  const credentials = resolveApeXCredentials();
+  const credentials = env.apex.credentials;
   if (!credentials) {
-    app.log.warn('ApeX Omni credentials missing – using in-memory market data');
+    app.log.warn(
+      'ApeX Omni credentials missing – using in-memory market data (APEX_ALLOW_IN_MEMORY_MARKET_DATA=true)',
+    );
     return {
       marketData: createInMemoryMarketDataPort(),
     };
@@ -364,7 +368,7 @@ const resolveTradeCalculationRepository = async (
   app: FastifyInstance,
 ): Promise<ResolvedRepository> => {
   try {
-    const pool = await getSharedDatabasePool();
+    const pool = await getSharedDatabasePool(buildDatabasePoolOptions());
     await runPendingMigrations(pool);
     app.log.info('database.connected');
 
@@ -378,6 +382,9 @@ const resolveTradeCalculationRepository = async (
     };
   } catch (error) {
     app.log.warn({ err: error }, 'database.connection_failed_using_in_memory_repository');
+    if (!env.database.allowInMemory) {
+      throw error;
+    }
     return {
       repository: createInMemoryTradeCalculationRepository(),
       pool: null,
@@ -426,10 +433,109 @@ const createServices = ({
   };
 };
 
+const DB_RECOVERY_INTERVAL_MS = 30_000;
+
+const createPruneJobLogger = (app: FastifyInstance): PruneTradeHistoryJobLogger => ({
+  info(message, context) {
+    if (context) {
+      app.log.info(context, message);
+    } else {
+      app.log.info(message);
+    }
+  },
+  error(message, context) {
+    if (context) {
+      app.log.error(context, message);
+    } else {
+      app.log.error(message);
+    }
+  },
+});
+
+const startTradeHistoryPruneJob = async (
+  app: FastifyInstance,
+  pool: DatabasePool,
+  previousHandle: ScheduledJobHandle | null,
+): Promise<ScheduledJobHandle> => {
+  previousHandle?.cancel();
+  const pruneJob = createPruneTradeHistoryJob(pool, { logger: createPruneJobLogger(app) });
+
+  try {
+    const result = await pruneJob.run();
+    app.log.info(
+      { removed: result.removed, cutoffIso: result.cutoffIso },
+      'trade_history.prune_startup_run',
+    );
+  } catch (error) {
+    app.log.error({ err: error }, 'trade_history.prune_startup_failed');
+  }
+
+  const handle = pruneJob.schedule();
+  app.addHook('onClose', (_instance, done) => {
+    handle.cancel();
+    done();
+  });
+  return handle;
+};
+
+interface DatabaseRecoveryOptions {
+  app: FastifyInstance;
+  repository: SwappableTradeCalculationRepository;
+  historyService: ReturnType<typeof createTradeHistoryService>;
+  onPersistentResourcesReady: (pool: DatabasePool) => Promise<void> | void;
+}
+
+const scheduleDatabaseRecovery = ({
+  app,
+  repository,
+  historyService,
+  onPersistentResourcesReady,
+}: DatabaseRecoveryOptions) => {
+  let timer: NodeJS.Timeout | null = null;
+  let recovered = false;
+
+  const attempt = async () => {
+    if (recovered) {
+      return;
+    }
+    try {
+      const pool = await getSharedDatabasePool(buildDatabasePoolOptions());
+      await runPendingMigrations(pool);
+      repository.swap(createPostgresTradeCalculationRepository(pool));
+      historyService.setPersistent(true);
+      await onPersistentResourcesReady(pool);
+      app.addHook('onClose', async () => {
+        await closeSharedDatabasePool();
+      });
+      recovered = true;
+      app.log.info('database.recovery_success');
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    } catch (error) {
+      app.log.warn({ err: error }, 'database.recovery_attempt_failed');
+    }
+  };
+
+  timer = setInterval(() => {
+    void attempt();
+  }, DB_RECOVERY_INTERVAL_MS);
+
+  void attempt();
+
+  app.addHook('onClose', () => {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+  });
+};
+
 export const buildServer = async (): Promise<FastifyInstance> => {
   const app = Fastify({
     logger: {
-      level: process.env.LOG_LEVEL ?? 'info',
+      level: env.server.logLevel,
     },
   });
 
@@ -437,14 +543,13 @@ export const buildServer = async (): Promise<FastifyInstance> => {
     return { status: 'ok' };
   });
 
-  const jwtSecret = process.env.JWT_SECRET;
-  const allowGuest =
-    jwtSecret == null || (process.env.APEX_TRADEBILL_AUTH_ALLOW_GUEST ?? 'true') === 'true';
+  const jwtSecret = env.auth.jwtSecret;
+  const allowGuest = env.auth.allowGuest;
 
   await app.register(authenticationPlugin, {
-    secret: jwtSecret ?? 'development-secret',
-    issuer: process.env.JWT_ISSUER,
-    audience: process.env.JWT_AUDIENCE,
+    secret: jwtSecret,
+    issuer: env.auth.issuer,
+    audience: env.auth.audience,
     allowGuest,
   });
 
@@ -454,63 +559,51 @@ export const buildServer = async (): Promise<FastifyInstance> => {
   const infrastructure = await createMarketInfrastructure(app, marketMetadataService);
   const { repository: tradeCalculationRepository, pool: tradeCalculationPool } =
     await resolveTradeCalculationRepository(app);
+  const tradeCalculations = createSwappableTradeCalculationRepository(tradeCalculationRepository);
   const services = createServices({
     marketMetadata: marketMetadataService,
     marketData: infrastructure.marketData,
-    tradeCalculations: tradeCalculationRepository,
+    tradeCalculations,
     tradeCalculationsPersistent: tradeCalculationPool != null,
   });
-  const activationSecret = process.env.APEX_OMNI_API_SECRET;
-  const deviceAuthService =
-    tradeCalculationPool != null && activationSecret
-      ? createDeviceAuthService({
-          pool: tradeCalculationPool,
-          activationSecret,
-          jwtSecret: jwtSecret ?? 'development-secret',
-          jwtIssuer: process.env.JWT_ISSUER,
-          jwtAudience: process.env.JWT_AUDIENCE,
-        })
-      : null;
-  if (tradeCalculationPool && !activationSecret) {
-    app.log.warn('APEX_OMNI_API_SECRET missing – device activation disabled');
-  }
+  const activationSecret = env.apex.credentials?.apiSecret;
+  const deviceAuthServiceRef: DeviceAuthServiceRef = {
+    current: null,
+  };
+
+  const attachDeviceAuthService = (pool: DatabasePool | null) => {
+    if (!pool) {
+      deviceAuthServiceRef.current = null;
+      return;
+    }
+    if (!activationSecret) {
+      app.log.warn('APEX_OMNI_API_SECRET missing – device activation disabled');
+      deviceAuthServiceRef.current = null;
+      return;
+    }
+    deviceAuthServiceRef.current = createDeviceAuthService({
+      pool,
+      activationSecret,
+      jwtSecret,
+      jwtIssuer: env.auth.issuer,
+      jwtAudience: env.auth.audience,
+    });
+  };
+
+  let pruneJobHandle: ScheduledJobHandle | null = null;
+  const onPersistentPoolReady = async (pool: DatabasePool) => {
+    attachDeviceAuthService(pool);
+    pruneJobHandle = await startTradeHistoryPruneJob(app, pool, pruneJobHandle);
+  };
 
   if (tradeCalculationPool) {
-    const logger: PruneTradeHistoryJobLogger = {
-      info(message, context) {
-        if (context) {
-          app.log.info(context, message);
-        } else {
-          app.log.info(message);
-        }
-      },
-      error(message, context) {
-        if (context) {
-          app.log.error(context, message);
-        } else {
-          app.log.error(message);
-        }
-      },
-    };
-
-    const pruneJob = createPruneTradeHistoryJob(tradeCalculationPool, { logger });
-    let pruneJobHandle: ScheduledJobHandle | null = null;
-
-    try {
-      const result = await pruneJob.run();
-      app.log.info(
-        { removed: result.removed, cutoffIso: result.cutoffIso },
-        'trade_history.prune_startup_run',
-      );
-    } catch (error) {
-      app.log.error({ err: error }, 'trade_history.prune_startup_failed');
-    }
-
-    pruneJobHandle = pruneJob.schedule();
-
-    app.addHook('onClose', (_instance, done) => {
-      pruneJobHandle?.cancel();
-      done();
+    await onPersistentPoolReady(tradeCalculationPool);
+  } else if (env.database.allowInMemory) {
+    scheduleDatabaseRecovery({
+      app,
+      repository: tradeCalculations,
+      historyService: services.historyService,
+      onPersistentResourcesReady: onPersistentPoolReady,
     });
   }
 
@@ -527,7 +620,7 @@ export const buildServer = async (): Promise<FastifyInstance> => {
   });
 
   await app.register(postDeviceRegisterRoute, {
-    deviceAuthService,
+    deviceAuthServiceRef,
   });
 
   await app.register(postHistoryImportRoute, {
@@ -559,11 +652,10 @@ export const buildServer = async (): Promise<FastifyInstance> => {
   return app;
 };
 
-const registerGracefulShutdown = (server: FastifyInstance): void => {
+const registerGracefulShutdown = (server: FastifyInstance, shutdownTimeoutMs: number): void => {
   const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM'];
   let closing = false;
   const listeners = new Map<NodeJS.Signals, () => void>();
-  const shutdownTimeoutMs = Number.parseInt(process.env.SHUTDOWN_TIMEOUT_MS ?? '', 10) || 1000;
 
   const shutdown = async (signal: NodeJS.Signals) => {
     if (closing) {
@@ -648,11 +740,10 @@ const registerGracefulShutdown = (server: FastifyInstance): void => {
 };
 
 const start = async () => {
-  const port = Number.parseInt(process.env.PORT ?? '4000', 10);
-  const host = process.env.HOST ?? '0.0.0.0';
+  const { port, host } = env.server;
 
   const server = await buildServer();
-  registerGracefulShutdown(server);
+  registerGracefulShutdown(server, env.server.shutdownTimeoutMs);
 
   try {
     await server.listen({ port, host });

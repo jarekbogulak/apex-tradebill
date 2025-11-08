@@ -1,9 +1,11 @@
 import Fastify from 'fastify';
-import postDeviceRegisterRoute from '../postDeviceRegister.js';
+import postDeviceRegisterRoute, { type DeviceAuthServiceRef } from '../postDeviceRegister.js';
 import type { DeviceAuthService } from '../../services/deviceAuthService.js';
 
 describe('postDeviceRegisterRoute', () => {
-  const toService = (value: Partial<DeviceAuthService> | null) => value as DeviceAuthService | null;
+  const toRef = (value: Partial<DeviceAuthService> | null): DeviceAuthServiceRef => ({
+    current: value as DeviceAuthService | null,
+  });
 
   it('returns 200 with device registration result', async () => {
     const app = Fastify();
@@ -15,7 +17,7 @@ describe('postDeviceRegisterRoute', () => {
     });
 
     await app.register(postDeviceRegisterRoute, {
-      deviceAuthService: toService({ registerDevice }),
+      deviceAuthServiceRef: toRef({ registerDevice }),
     });
 
     const response = await app.inject({
@@ -43,7 +45,7 @@ describe('postDeviceRegisterRoute', () => {
 
   it('returns 503 when device auth service unavailable', async () => {
     const app = Fastify();
-    await app.register(postDeviceRegisterRoute, { deviceAuthService: null });
+    await app.register(postDeviceRegisterRoute, { deviceAuthServiceRef: toRef(null) });
 
     const response = await app.inject({
       method: 'POST',
@@ -60,7 +62,7 @@ describe('postDeviceRegisterRoute', () => {
   it('returns 400 on validation error', async () => {
     const app = Fastify();
     await app.register(postDeviceRegisterRoute, {
-      deviceAuthService: toService({ registerDevice: jest.fn() }),
+      deviceAuthServiceRef: toRef({ registerDevice: jest.fn() }),
     });
 
     const response = await app.inject({
@@ -82,7 +84,7 @@ describe('postDeviceRegisterRoute', () => {
       .mockRejectedValue(new Error('Activation code has already been used'));
 
     await app.register(postDeviceRegisterRoute, {
-      deviceAuthService: toService({ registerDevice }),
+      deviceAuthServiceRef: toRef({ registerDevice }),
     });
 
     const response = await app.inject({

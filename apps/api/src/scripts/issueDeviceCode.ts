@@ -1,10 +1,6 @@
-if (typeof process.loadEnvFile === 'function') {
-  process.loadEnvFile();
-}
-
-import '../config/loadEnv.js';
-
 import crypto from 'node:crypto';
+import { buildDatabasePoolOptions } from '../config/database.js';
+import { env } from '../config/env.js';
 import { closeSharedDatabasePool, getSharedDatabasePool } from '../infra/database/pool.js';
 
 interface CliOptions {
@@ -99,7 +95,7 @@ const issueActivationCode = async ({
   deviceId: string;
   expiresInMinutes: number;
 }) => {
-  const secret = process.env.APEX_OMNI_API_SECRET;
+  const secret = env.apex.credentials?.apiSecret;
   if (!secret) {
     throw new Error('APEX_OMNI_API_SECRET is required to issue device codes.');
   }
@@ -123,7 +119,7 @@ const issueActivationCode = async ({
 
   const activationCode = `ATC1.${toBase64Url(JSON.stringify(payload))}`;
 
-  const pool = await getSharedDatabasePool();
+  const pool = await getSharedDatabasePool(buildDatabasePoolOptions());
   await pool.query(
     `
       INSERT INTO device_activation_codes (id, device_id, issued_at, expires_at, signature, created_at)

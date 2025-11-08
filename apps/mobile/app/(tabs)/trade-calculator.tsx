@@ -5,6 +5,7 @@ import { useTheme, type Theme } from '@apex-tradebill/ui';
 
 import { MARKET_ALLOWLIST } from '@/src/config/marketAllowlist';
 import StaleBanner from '@/src/features/stream/StaleBanner';
+import { BackendStatusBanner } from '@/src/features/trade-calculator/components/BackendStatusBanner';
 import { MarketStatusCard } from '@/src/features/trade-calculator/components/MarketStatusCard';
 import { TradeBillCard } from '@/src/features/trade-calculator/components/TradeBillCard';
 import { TradeBillEmptyCard } from '@/src/features/trade-calculator/components/TradeBillEmptyCard';
@@ -33,6 +34,9 @@ export default function TradeCalculatorScreen() {
     historyItems,
     historyQuery,
     historyError,
+    historyUnavailable,
+    historyLastCheckedAt,
+    historyAutoRetryIntervalMs,
     riskSummary,
     derivedValues,
     shouldShowErrorBanner,
@@ -56,12 +60,20 @@ export default function TradeCalculatorScreen() {
           lastUpdatedAt={marketStream.lastUpdatedAt}
         />
 
-        <StaleBanner
-          status={marketStream.status}
-          reconnectAttempts={marketStream.reconnectAttempts}
-          lastUpdatedAt={marketStream.lastUpdatedAt}
-          onReconnect={marketStream.reconnect}
-        />
+        {historyUnavailable ? (
+          <BackendStatusBanner
+            onRetry={() => historyQuery.refetch()}
+            disabled={historyQuery.isFetching}
+            autoRetryIntervalMs={historyAutoRetryIntervalMs ?? undefined}
+          />
+        ) : (
+          <StaleBanner
+            status={marketStream.status}
+            reconnectAttempts={marketStream.reconnectAttempts}
+            lastUpdatedAt={marketStream.lastUpdatedAt}
+            onReconnect={marketStream.reconnect}
+          />
+        )}
 
         {hasOutput && output ? (
           <TradeBillCard
@@ -90,6 +102,9 @@ export default function TradeCalculatorScreen() {
           items={historyItems}
           isFetching={historyQuery.isFetching}
           error={historyError}
+          historyUnavailable={historyUnavailable}
+          lastCheckedAt={historyLastCheckedAt}
+          autoRetryIntervalMs={historyAutoRetryIntervalMs ?? undefined}
           onRefresh={() => historyQuery.refetch()}
         />
       </ScrollView>
