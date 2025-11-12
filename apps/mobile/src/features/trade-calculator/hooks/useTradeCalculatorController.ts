@@ -275,8 +275,6 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
     historyUnavailable,
     historyLastCheckedAt,
     historyAutoRetryIntervalMs,
-    historyLastCheckedAt,
-    historyAutoRetryIntervalMs,
     riskSummary,
     derivedValues,
     shouldShowErrorBanner,

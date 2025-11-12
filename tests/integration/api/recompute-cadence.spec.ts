@@ -1,4 +1,4 @@
-import { createRefreshScheduler } from '../../../apps/api/src/realtime/refreshScheduler.js';
+import { createRefreshScheduler } from '../../../apps/api/src/adapters/streaming/realtime/refreshScheduler.js';
 
 describe('Recompute cadence telemetry', () => {
   beforeEach(() => {

@@ -3,7 +3,7 @@ import {
   closeSharedDatabasePool,
   getSharedDatabasePool,
   runPendingMigrations,
-} from '../infra/database/pool.js';
+} from '../adapters/persistence/providers/postgres/pool.js';
 
 const run = async () => {
   const pool = await getSharedDatabasePool(buildDatabasePoolOptions());

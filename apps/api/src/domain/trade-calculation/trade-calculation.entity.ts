@@ -48,6 +48,7 @@ export interface TradeCalculationRepository {
     cursor?: string | null,
     since?: string | null,
   ): Promise<{ items: TradeCalculation[]; nextCursor: string | null }>;
+  deleteOlderThan(cutoffIso: string): Promise<number>;
 }
 
 export interface SwappableTradeCalculationRepository extends TradeCalculationRepository {
@@ -84,6 +85,16 @@ export const createInMemoryTradeCalculationRepository = (
         items.length === limit ? (items[items.length - 1]?.createdAt ?? null) : null;
       return { items, nextCursor };
     },
+    async deleteOlderThan(cutoffIso) {
+      let removed = 0;
+      for (const [id, calculation] of calculations) {
+        if (calculation.createdAt < cutoffIso) {
+          calculations.delete(id);
+          removed += 1;
+        }
+      }
+      return removed;
+    },
   };
 };
 
@@ -101,6 +112,9 @@ export const createSwappableTradeCalculationRepository = (
     },
     async listRecent(userId, limit, cursor, since) {
       return current.listRecent(userId, limit, cursor, since);
+    },
+    async deleteOlderThan(cutoffIso) {
+      return current.deleteOlderThan(cutoffIso);
     },
     swap(target) {
       current = target;

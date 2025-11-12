@@ -1,38 +1,35 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import { fileURLToPath } from 'node:url';
-import { createMarketMetadataService } from './services/markets/marketMetadataService.js';
-import {
-  createSwappableTradeCalculationRepository,
-  type TradeCalculationRepository,
-} from './domain/trade-calculation/trade-calculation.entity.js';
-import { createTradePreviewService } from './services/trades/previewService.js';
-import { createTradeHistoryService } from './services/trades/historyService.js';
-import { createSettingsService } from './services/settings/settingsService.js';
-import { createInMemoryUserSettingsRepository } from './domain/user-settings/user-settings.entity.js';
-import { createEquityService } from './services/accounts/equityService.js';
-import type { MarketDataPort, MarketMetadataPort } from './domain/ports/tradebillPorts.js';
-import getSymbolRoute from './routes/markets/getSymbol.js';
-import postPreviewRoute from './routes/trades/postPreview.js';
-import postExecuteRoute from './routes/trades/postExecute.js';
-import getHistoryRoute from './routes/trades/getHistory.js';
-import postHistoryImportRoute from './routes/trades/postHistoryImport.js';
-import getSettingsRoute from './routes/settings/getSettings.js';
-import patchSettingsRoute from './routes/settings/patchSettings.js';
-import getEquityRoute from './routes/accounts/getEquity.js';
-import marketDataStreamRoute from './routes/stream/marketData.js';
-import { DEFAULT_USER_ID } from './routes/http.js';
+import { createMarketMetadataService } from './domain/markets/marketMetadataService.js';
+import { createSwappableTradeCalculationRepository } from './domain/trade-calculation/trade-calculation.entity.js';
+import getSymbolRoute from './adapters/http/fastify/markets/getSymbol.js';
+import postPreviewRoute from './adapters/http/fastify/trades/postPreview.js';
+import postExecuteRoute from './adapters/http/fastify/trades/postExecute.js';
+import getHistoryRoute from './adapters/http/fastify/trades/getHistory.js';
+import postHistoryImportRoute from './adapters/http/fastify/trades/postHistoryImport.js';
+import getSettingsRoute from './adapters/http/fastify/settings/getSettings.js';
+import patchSettingsRoute from './adapters/http/fastify/settings/patchSettings.js';
+import getEquityRoute from './adapters/http/fastify/accounts/getEquity.js';
+import marketDataStreamRoute from './adapters/http/fastify/stream/marketData.js';
+import postDeviceRegisterRoute, {
+  type DeviceAuthServiceRef,
+} from './adapters/http/fastify/auth/postDeviceRegister.js';
+import { DEFAULT_USER_ID } from './adapters/http/fastify/shared/http.js';
 import authenticationPlugin from './plugins/authentication.js';
 import observabilityPlugin from './plugins/observability.js';
 import marketStreamPlugin from './plugins/marketStream.js';
 import { env } from './config/env.js';
-import { createDeviceAuthService } from './services/deviceAuthService.js';
-import postDeviceRegisterRoute, { type DeviceAuthServiceRef } from './routes/postDeviceRegister.js';
-import { createMarketInfrastructure } from './infra/marketData/infrastructure.js';
-import { resolveTradeCalculationRepository } from './infra/database/tradeCalculations.js';
-import { scheduleDatabaseRecovery } from './infra/database/recovery.js';
-import { createJobScheduler, type TradeHistoryPruneJobHandle } from './jobs/scheduler.js';
-import { closeSharedDatabasePool, type DatabasePool } from './infra/database/pool.js';
-import { createInMemoryEquityPort } from './infra/accounts/inMemoryEquityPort.js';
+import { createDeviceAuthService } from './adapters/security/deviceAuthService.js';
+import { createMarketInfrastructure } from './adapters/streaming/marketData/infrastructure.js';
+import { resolveTradeCalculationRepository } from './adapters/persistence/trade-calculations/resolveTradeCalculationRepository.js';
+import { scheduleDatabaseRecovery } from './adapters/persistence/providers/postgres/recovery.js';
+import { createJobScheduler, type TradeHistoryPruneJobHandle } from './adapters/jobs/scheduler.js';
+import {
+  closeSharedDatabasePool,
+  type DatabasePool,
+} from './adapters/persistence/providers/postgres/pool.js';
+import { buildAppDeps } from './config/appDeps.js';
+import { makePruneTradeHistory } from './domain/trading/pruneTradeHistory.usecase.js';
 
 type LogContext = Record<string, unknown>;
 
@@ -66,46 +63,6 @@ const createAppLoggerFacade = (log: FastifyInstance['log']): AppLoggerFacade => 
   },
 });
 
-const createServices = ({
-  marketMetadata,
-  marketData,
-  tradeCalculations,
-  tradeCalculationsPersistent,
-}: {
-  marketMetadata: MarketMetadataPort;
-  marketData: MarketDataPort;
-  tradeCalculations: TradeCalculationRepository;
-  tradeCalculationsPersistent: boolean;
-}) => {
-  const previewService = createTradePreviewService({
-    marketData,
-    metadata: marketMetadata,
-    tradeCalculations,
-  });
-
-  const historyService = createTradeHistoryService({
-    tradeCalculations,
-    isPersistent: tradeCalculationsPersistent,
-  });
-
-  const userSettingsRepository = createInMemoryUserSettingsRepository();
-  const settingsService = createSettingsService({
-    repository: userSettingsRepository,
-    metadata: marketMetadata,
-  });
-
-  const equityPort = createInMemoryEquityPort({ seedUserId: DEFAULT_USER_ID });
-  const equityService = createEquityService({ equityPort });
-
-  return {
-    marketData,
-    previewService,
-    historyService,
-    settingsService,
-    equityService,
-    tradeCalculations,
-  };
-};
 export const buildServer = async (): Promise<FastifyInstance> => {
   const app = Fastify({
     logger: {
@@ -158,12 +115,14 @@ export const buildServer = async (): Promise<FastifyInstance> => {
       },
     });
   const tradeCalculations = createSwappableTradeCalculationRepository(tradeCalculationRepository);
-  const services = createServices({
+  const services = buildAppDeps({
     marketMetadata: marketMetadataService,
     marketData: infrastructure.marketData,
     tradeCalculations,
     tradeCalculationsPersistent: tradeCalculationPool != null,
+    seedEquityUserId: DEFAULT_USER_ID,
   });
+  const pruneTradeHistory = makePruneTradeHistory({ repository: tradeCalculations });
   const jobScheduler = createJobScheduler({
     logger: appLogger,
     registerShutdownHook,
@@ -195,7 +154,7 @@ export const buildServer = async (): Promise<FastifyInstance> => {
   let pruneJobHandle: TradeHistoryPruneJobHandle | null = null;
   let dbShutdownHookRegistered = false;
   const onPersistentPoolReady = async (pool: DatabasePool) => {
-    services.historyService.setPersistent(true);
+    services.tradeHistory.setPersistent(true);
     attachDeviceAuthService(pool);
     if (!dbShutdownHookRegistered) {
       registerShutdownHook(async () => {
@@ -203,7 +162,10 @@ export const buildServer = async (): Promise<FastifyInstance> => {
       });
       dbShutdownHookRegistered = true;
     }
-    pruneJobHandle = await jobScheduler.scheduleTradeHistoryPrune(pool, pruneJobHandle);
+    pruneJobHandle = await jobScheduler.scheduleTradeHistoryPrune(
+      pruneTradeHistory,
+      pruneJobHandle,
+    );
   };
 
   if (tradeCalculationPool) {
@@ -225,11 +187,11 @@ export const buildServer = async (): Promise<FastifyInstance> => {
   });
 
   await app.register(postPreviewRoute, {
-    previewService: services.previewService,
+    previewTrade: services.previewTrade,
   });
 
   await app.register(postExecuteRoute, {
-    previewService: services.previewService,
+    executeTrade: services.executeTrade,
   });
 
   await app.register(postDeviceRegisterRoute, {
@@ -237,23 +199,23 @@ export const buildServer = async (): Promise<FastifyInstance> => {
   });
 
   await app.register(postHistoryImportRoute, {
-    tradeCalculations: services.tradeCalculations,
+    importTradeHistory: services.importTradeHistory,
   });
 
   await app.register(getHistoryRoute, {
-    historyService: services.historyService,
+    tradeHistory: services.tradeHistory,
   });
 
   await app.register(getSettingsRoute, {
-    settingsService: services.settingsService,
+    getUserSettings: services.getUserSettings,
   });
 
   await app.register(patchSettingsRoute, {
-    settingsService: services.settingsService,
+    updateUserSettings: services.updateUserSettings,
   });
 
   await app.register(getEquityRoute, {
-    equityService: services.equityService,
+    getEquitySnapshot: services.getEquitySnapshot,
   });
 
   await app.register(marketDataStreamRoute, {

@@ -1,4 +1,4 @@
-import type { DatabasePoolOptions } from '../infra/database/pool.js';
+import type { DatabasePoolOptions } from '../adapters/persistence/providers/postgres/pool.js';
 import { env } from './env.js';
 
 export const buildDatabasePoolOptions = (): DatabasePoolOptions => {

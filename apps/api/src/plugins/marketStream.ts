@@ -1,7 +1,10 @@
 import { SymbolSchema, type Symbol } from '@apex-tradebill/types';
 import type { FastifyPluginAsync } from 'fastify';
-import type { ApeXOmniClient, MarketStreamConnection } from '../clients/apexOmniClient.js';
-import type { RingBuffer } from '../realtime/ringBuffer.js';
+import type {
+  ApeXOmniClient,
+  MarketStreamConnection,
+} from '../adapters/streaming/providers/apexOmni/client.js';
+import type { RingBuffer } from '../adapters/streaming/realtime/ringBuffer.js';
 
 export interface MarketStreamPluginOptions {
   client: ApeXOmniClient;

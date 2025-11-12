@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import fastify from 'fastify';
-import { DEFAULT_USER_ID } from '../../routes/http.js';
+import { DEFAULT_USER_ID } from '../../adapters/http/fastify/shared/http.js';
 import { authenticationPlugin } from '../authentication.js';
 
 const toBase64Url = (value: Buffer) => {

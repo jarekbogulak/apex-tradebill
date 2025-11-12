@@ -1,6 +1,9 @@
 import { buildDatabasePoolOptions } from '../config/database.js';
 import { env } from '../config/env.js';
-import { closeSharedDatabasePool, getSharedDatabasePool } from '../infra/database/pool.js';
+import {
+  closeSharedDatabasePool,
+  getSharedDatabasePool,
+} from '../adapters/persistence/providers/postgres/pool.js';
 
 const resolveTarget = () => {
   const connectionString = env.database.url;

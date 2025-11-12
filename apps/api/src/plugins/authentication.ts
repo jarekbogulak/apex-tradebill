@@ -1,6 +1,9 @@
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 import crypto from 'node:crypto';
-import { createErrorResponse, DEFAULT_USER_ID } from '../routes/http.js';
+import {
+  createErrorResponse,
+  DEFAULT_USER_ID,
+} from '../adapters/http/fastify/shared/http.js';
 
 type JwtHeader = {
   alg: string;

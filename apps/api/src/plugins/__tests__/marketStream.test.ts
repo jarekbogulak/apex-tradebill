@@ -1,6 +1,6 @@
 import fastify from 'fastify';
-import type { ApeXOmniClient } from '../../clients/apexOmniClient.js';
-import type { RingBuffer } from '../../realtime/ringBuffer.js';
+import type { ApeXOmniClient } from '../../adapters/streaming/providers/apexOmni/client.js';
+import type { RingBuffer } from '../../adapters/streaming/realtime/ringBuffer.js';
 import type { Observability } from '../observability.js';
 import { marketStreamPlugin } from '../marketStream.js';
 
