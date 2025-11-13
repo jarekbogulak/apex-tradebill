@@ -90,6 +90,7 @@ components:
         - riskAmount
         - riskToReward
         - suggestedStop
+        - atr13
         - warnings
       properties:
         positionSize:
@@ -112,11 +113,13 @@ components:
           type: string
           format: decimal
           pattern: "^\\d+(.\\d{1,8})?$"
+        atr13:
+          type: string
+          format: decimal
         warnings:
           type: array
           items:
-            type: string
-            example: MIN_LOT
+            $ref: '#/components/schemas/TradeWarningCode'
     MarketSnapshot:
       type: object
       required:
@@ -158,6 +161,9 @@ components:
       type: object
       required:
         - id
+        - userId
+        - executionMethod
+        - executedAt
         - input
         - output
         - marketSnapshot
@@ -167,6 +173,15 @@ components:
         id:
           type: string
           format: uuid
+        userId:
+          type: string
+          format: uuid
+        executionMethod:
+          type: string
+          enum: [execute-button, history-import]
+        executedAt:
+          type: string
+          format: date-time
         input:
           $ref: '#/components/schemas/TradeInput'
         output:
@@ -179,6 +194,16 @@ components:
         createdAt:
           type: string
           format: date-time
+    TradeWarningCode:
+      type: string
+      enum:
+        - ATR_STALE
+        - INSUFFICIENT_EQUITY
+        - MIN_LOT_SIZE
+        - MIN_NOTIONAL
+        - STOP_OUTSIDE_RANGE
+        - TARGET_OUTSIDE_RANGE
+        - VOLATILITY_STOP_GREATER
     ErrorResponse:
       type: object
       required: [code, message]
@@ -259,9 +284,49 @@ paths:
                   warnings:
                     type: array
                     items:
-                      type: string
+                      $ref: '#/components/schemas/TradeWarningCode'
         '400':
           description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/trades/execute:
+    post:
+      summary: Persist a trade execution and return the saved calculation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TradeInput'
+      responses:
+        '200':
+          description: Trade calculation persisted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [calculation, output, marketSnapshot]
+                properties:
+                  calculation:
+                    $ref: '#/components/schemas/TradeCalculation'
+                  output:
+                    $ref: '#/components/schemas/TradeOutput'
+                  marketSnapshot:
+                    $ref: '#/components/schemas/MarketSnapshot'
+                  warnings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TradeWarningCode'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Symbol metadata or market data unavailable
           content:
             application/json:
               schema:
@@ -347,6 +412,63 @@ paths:
                     nullable: true
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/trades/history/import:
+    post:
+      summary: Import cached trade calculations from a device and upsert them into history.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [entries]
+              properties:
+                entries:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [id, input, output, marketSnapshot, createdAt]
+                    properties:
+                      id:
+                        type: string
+                      input:
+                        $ref: '#/components/schemas/TradeInput'
+                      output:
+                        $ref: '#/components/schemas/TradeOutput'
+                      marketSnapshot:
+                        $ref: '#/components/schemas/MarketSnapshot'
+                      source:
+                        type: string
+                        enum: [live, manual]
+                      createdAt:
+                        type: string
+                        format: date-time
+                      executedAt:
+                        type: string
+                        format: date-time
+                      executionMethod:
+                        type: string
+                        enum: [execute-button, history-import]
+      responses:
+        '200':
+          description: Import accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [syncedIds]
+                properties:
+                  syncedIds:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          description: Validation error
           content:
             application/json:
               schema:

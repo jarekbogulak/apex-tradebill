@@ -14,6 +14,7 @@ const baseConfig = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   moduleNameMapper: {
     '^@mobile/(.*)$': '<rootDir>/apps/mobile/$1',
+    '^@api/(.*)\\.js$': '<rootDir>/apps/api/src/$1',
     '^@api/(.*)$': '<rootDir>/apps/api/src/$1',
     '^@packages/(.*)$': '<rootDir>/packages/$1',
     '^@apex-tradebill/ui$': '<rootDir>/packages/ui/src/index.ts',

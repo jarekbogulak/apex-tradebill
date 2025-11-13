@@ -6,6 +6,7 @@ import {
   getJsonSchemaFromResponseOrThrow,
   getOperationOrThrow,
   getResponseObjectOrThrow,
+  isReferenceObject,
   isSchemaObject,
 } from '../openapi';
 
@@ -55,10 +56,12 @@ describe('POST /v1/trades/preview', () => {
       const warningsArray = expectArraySchema(warningsProperty, 'warnings');
       const itemSchema = warningsArray.items;
 
-      if (isSchemaObject(itemSchema)) {
+      if (isReferenceObject(itemSchema)) {
+        expect(itemSchema.$ref).toBe('#/components/schemas/TradeWarningCode');
+      } else if (isSchemaObject(itemSchema)) {
         expect(itemSchema.type).toBe('string');
       } else {
-        throw new Error('Expected warnings array items to be inline schema definitions');
+        throw new Error('Expected warnings array items to be documented as schemas');
       }
     }
   });
