@@ -70,7 +70,15 @@ export const getHistoryRoute: FastifyPluginAsync<GetHistoryRouteOptions> = async
       }
 
       if (!tradeHistory.isPersistent) {
-        request.log.error('trade_history.persistence_unavailable');
+        request.log.warn(
+          {
+            limit,
+            cursor,
+            userId: request.auth?.userId ?? null,
+            historyPersistent: tradeHistory.isPersistent,
+          },
+          'trade_history.persistence_unavailable',
+        );
         return reply
           .status(503)
           .send(
@@ -99,19 +107,56 @@ export const getHistoryRoute: FastifyPluginAsync<GetHistoryRouteOptions> = async
           nextCursor: history.nextCursor,
         });
       } catch (error) {
+        const errorCode =
+          error && typeof error === 'object' && 'code' in error
+            ? String((error as { code?: unknown }).code)
+            : null;
+        const errorMessage = error instanceof Error ? error.message : `${error}`;
+        const isConnectivityIssue = isNetworkConnectivityError(errorCode, errorMessage);
+
         request.log.error(
           {
             err: error,
             limit,
             cursor,
+            userId: request.auth?.userId ?? null,
+            historyPersistent: tradeHistory.isPersistent,
+            errorCode,
+            errorName: error instanceof Error ? error.name : typeof error,
+            errorMessage,
+            connectivityIssue: isConnectivityIssue,
           },
           'trade_history.list_failed',
         );
-        const message = error instanceof Error ? error.message : 'Unable to load history';
-        return reply.status(400).send(createErrorResponse('HISTORY_ERROR', message));
+
+        if (isConnectivityIssue) {
+          return reply
+            .status(503)
+            .send(
+              createErrorResponse(
+                'HISTORY_UNAVAILABLE',
+                'Trade history is temporarily unavailable. Please try again later.',
+              ),
+            );
+        }
+
+        return reply.status(400).send(createErrorResponse('HISTORY_ERROR', errorMessage));
       }
     },
   );
+};
+
+const NETWORK_ERROR_TOKENS = [
+  'ENOTFOUND',
+  'EAI_AGAIN',
+  'ECONNREFUSED',
+  'ECONNRESET',
+  'getaddrinfo',
+];
+
+const isNetworkConnectivityError = (code: string | null, message: string | null): boolean => {
+  const haystack = [code ?? '', message ?? ''].join(' ').toLowerCase();
+  return NETWORK_ERROR_TOKENS.some((token) => haystack.includes(token.toLowerCase()));
 };
 
 export default getHistoryRoute;
