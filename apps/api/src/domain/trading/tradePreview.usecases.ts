@@ -47,8 +47,14 @@ export interface ExecuteTradeDeps extends PreviewTradeDeps {
   tradeCalculations: TradeCalculationRepository;
 }
 
-export type PreviewTradeUseCase = (userId: string, input: TradeInput) => Promise<TradePreviewResult>;
-export type ExecuteTradeUseCase = (userId: string, input: TradeInput) => Promise<TradeExecuteResult>;
+export type PreviewTradeUseCase = (
+  userId: string,
+  input: TradeInput,
+) => Promise<TradePreviewResult>;
+export type ExecuteTradeUseCase = (
+  userId: string,
+  input: TradeInput,
+) => Promise<TradeExecuteResult>;
 
 type DecimalLike = InstanceType<typeof Decimal>;
 
@@ -185,7 +191,9 @@ const makeTradeComputation = ({ marketData, metadata }: PreviewTradeDeps) => {
     const atrResult = calculateAtr(candles, 13);
     const atrValue = new Decimal(atrResult.value);
 
-    const entryPrice = input.entryPrice ? toDecimal(input.entryPrice) : toDecimal(snapshot.lastPrice);
+    const entryPrice = input.entryPrice
+      ? toDecimal(input.entryPrice)
+      : toDecimal(snapshot.lastPrice);
     const suggestedStop = computeSuggestedStop(input, entryPrice, atrValue);
     const manualStop = input.stopPrice ? toDecimal(input.stopPrice) : null;
 

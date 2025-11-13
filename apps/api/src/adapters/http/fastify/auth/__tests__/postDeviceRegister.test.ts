@@ -1,7 +1,5 @@
 import Fastify from 'fastify';
-import postDeviceRegisterRoute, {
-  type DeviceAuthServiceRef,
-} from '../postDeviceRegister.js';
+import postDeviceRegisterRoute, { type DeviceAuthServiceRef } from '../postDeviceRegister.js';
 import type { DeviceAuthService } from '../../../../security/deviceAuthService.js';
 
 describe('postDeviceRegisterRoute', () => {

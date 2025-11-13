@@ -43,28 +43,28 @@ Use a clear separation between **domain** and **adapters**:
 
 ### Domain Types & Entities
 
-- Use *noun* names for domain types and entities:
+- Use _noun_ names for domain types and entities:
   - `TradeCalculation`, `TradeCalculationId`, `Currency`, `TradeCalculationStatus`
 - File naming:
-  - `tradeCalculation.entity.ts` — domain *noun* concepts and entities
+  - `tradeCalculation.entity.ts` — domain _noun_ concepts and entities
   - `errors.ts` — domain error helpers and types
 
 ### Ports (Interfaces / Contracts)
 
-- Use *noun* or *noun phrase* with `Port` suffix:
+- Use _noun_ or _noun phrase_ with `Port` suffix:
   - `TradeCalculationRepositoryPort`, `AccountEquityPort`
 - Define all domain ports in `*.ports.ts` files:
   `tradeCalculation.ports.ts` — contains `TradeCalculationRepositoryPort`
 
-**Ports represent *what* the domain needs, described as *nouns*, not *how* they’re implemented.**
+**Ports represent _what_ the domain needs, described as _nouns_, not _how_ they’re implemented.**
 
 ---
 
 ### Use Cases (Application Services)
 
-- Use *verb phrase* names for use-case types:
+- Use _verb phrase_ names for use-case types:
   - `CreateTradePreview`, `GetSettings`
-- Use *verb* `make*` prefix for factory functions that create use cases:
+- Use _verb_ `make*` prefix for factory functions that create use cases:
   - `makeCreateTradePreview`
   - `makeGetSettings`
 - File naming:
@@ -73,23 +73,23 @@ Use a clear separation between **domain** and **adapters**:
 
 **Pattern:**
 
-- *Verb phrase* type for the use case, e.g. `CreateTradePreviewUseCase`.
-- *Verb* factory that builds it, `makeCreateTradePreview(deps)`.
+- _Verb phrase_ type for the use case, e.g. `CreateTradePreviewUseCase`.
+- _Verb_ factory that builds it, `makeCreateTradePreview(deps)`.
 
 ---
 
 ### Functions & Helpers
 
-- Use *verb* or *verb phrase* for all functions:
+- Use _verb_ or _verb phrase_ for all functions:
   - `createTradePreview`, `getSettings`, `mapDomainErrorToHttp`
-- For factories, always prefix with the *verb* `make`:
+- For factories, always prefix with the _verb_ `make`:
   - `makeInMemoryTradeCalculationRepository`
   - `makePgTradeCalculationRepository`
-- For mapping between domain and DTOs, use *verb* names like `to*` / `from*`:
+- For mapping between domain and DTOs, use _verb_ names like `to*` / `from*`:
   - `toTradeCalculationResponse`
   - `fromRequestBodyToCreateTradeCalculationInput`
 
-This keeps behavior as *verbs* and data as *nouns*.
+This keeps behavior as _verbs_ and data as _nouns_.
 
 ---
 
@@ -113,21 +113,21 @@ This keeps behavior as *verbs* and data as *nouns*.
 - File naming:
   `tradeCalculationRepository.inMemory.ts`
   `tradeCalculationRepository.pg.ts`
-- Export DI factories using *verb* `make*`:
+- Export DI factories using _verb_ `make*`:
   - `makeInMemoryTradeCalculationRepository`
   - `makePgTradeCalculationRepository`
 
-Each adapter returns an object implementing the relevant *Port* (e.g. `TradeCalculationRepositoryPort`).
+Each adapter returns an object implementing the relevant _Port_ (e.g. `TradeCalculationRepositoryPort`).
 
 ---
 
 ### Configuration / Wiring
 
-- Use *verb* `build*` or `create*` for composition root functions:
+- Use _verb_ `build*` or `create*` for composition root functions:
   - `buildAppDeps` — assembles repositories and use cases into a dependency graph.
   - `buildServer` — creates and configures the Fastify instance.
 
-Types for dependency graphs and configuration should be *nouns*:
+Types for dependency graphs and configuration should be _nouns_:
 
 - `AppDeps`, `ServerConfig`, `TradeCalculationDeps`
 
@@ -136,11 +136,10 @@ Types for dependency graphs and configuration should be *nouns*:
 ## Architectural Rules
 
 1. **Domain Layer (`src/domain`)**
-
    - Contains:
-     - *Noun* domain types (`TradeCalculation`, `TradeCalculationId`, `Currency`, etc.).
-     - *Noun* ports (`TradeCalculationRepositoryPort`).
-     - *Verb phrase* use cases (`CreateTradeCalculationUseCase`, `GetTradeCalculationUseCase`), built using *verb* factories like `makeCreateTradeCalculation`.
+     - _Noun_ domain types (`TradeCalculation`, `TradeCalculationId`, `Currency`, etc.).
+     - _Noun_ ports (`TradeCalculationRepositoryPort`).
+     - _Verb phrase_ use cases (`CreateTradeCalculationUseCase`, `GetTradeCalculationUseCase`), built using _verb_ factories like `makeCreateTradeCalculation`.
      - Domain-specific error helpers (`TradeCalculationNotFoundError`, `EntryPricePositiveError`, `DueDateInPastError`).
 
    - Must not:
@@ -149,7 +148,6 @@ Types for dependency graphs and configuration should be *nouns*:
      - Import configuration/env modules.
 
 2. **Adapters Layer (`src/adapters`)**
-
    - HTTP adapters:
      - Define Fastify routes (e.g. `POST /trades`, `GET /trades/:id`).
      - Map HTTP DTOs to domain inputs and vice versa.
@@ -160,14 +158,12 @@ Types for dependency graphs and configuration should be *nouns*:
      - Use concrete storage technologies (in-memory, Postgres, etc.).
 
 3. **Config Layer (`src/config`)**
-
    - Functions like `buildAppDeps`:
      - Create instances of repositories (e.g. `makeInMemoryTradeCalculationRepository`).
      - Create use cases via factories (`makeCreateTradeCalculation`, `makeGetSettings`).
      - Group them into `AppDeps` for consumption by the HTTP server.
 
 4. **Server (`src/server.ts`)**
-
    - Builds the Fastify instance with `buildServer`.
    - Registers HTTP plugins, injecting use cases from `AppDeps`.
    - Starts listening on configured host/port.
@@ -177,15 +173,13 @@ Types for dependency graphs and configuration should be *nouns*:
 ## Coding Style (Functional, TypeScript)
 
 - Prefer **pure functions** for all domain logic:
-
   - Example shape:
-    
+
         const makeCreateTradeCalculation = (deps) => async (input) => {
           // pure rules + injected side effects (repo, now, id)
         };
 
 - Inject side effects via dependencies (`deps`):
-
   - `now: () => Date`
   - `tradeCalculationRepository: TradeCalculationRepositoryPort`
 
@@ -198,17 +192,15 @@ Types for dependency graphs and configuration should be *nouns*:
 ## Error Handling
 
 - Domain errors are plain `Error` objects augmented with a typed `code`:
-
   - `TradeCalculationNotFoundError` → code `TRADE_CALCULATION_NOT_FOUND`
   - `PricePositiveError` → code `PRICE_NOT_POSITIVE`
 
 - HTTP adapter maps domain error codes to responses:
-
   - `TRADE_CALCULATION_NOT_FOUND` → HTTP 404
   - `PRICE_NOT_POSITIVE` → HTTP 400
   - Any other error → HTTP 500 (generic server error)
 
-The mapping is handled by a *verb* function like `mapDomainErrorToHttp`.
+The mapping is handled by a _verb_ function like `mapDomainErrorToHttp`.
 
 ---
 
@@ -226,8 +218,8 @@ The mapping is handled by a *verb* function like `mapDomainErrorToHttp`.
 
 ## Summary for the AI Agent
 
-- Separate **domain** (*nouns* and pure logic) from **adapters** (*verbs* interacting with external systems).
-- Use *noun* names for data structures and ports, *verb* names for functions and behaviors.
+- Separate **domain** (_nouns_ and pure logic) from **adapters** (_verbs_ interacting with external systems).
+- Use _noun_ names for data structures and ports, _verb_ names for functions and behaviors.
 - Implement all behavior as **pure functions with dependency injection** (`make*` factories).
 - Keep Hexagonal boundaries:
   - Domain: no frameworks.

@@ -25,7 +25,10 @@ export const makeRegisterDevice = ({
   generateUserId,
   tokenTtlDays = TOKEN_TTL_DAYS,
 }: RegisterDeviceDeps) => {
-  return async ({ deviceId, activationCode }: RegisterDeviceInput): Promise<RegisterDeviceResult> => {
+  return async ({
+    deviceId,
+    activationCode,
+  }: RegisterDeviceInput): Promise<RegisterDeviceResult> => {
     const payload = activation.decode(activationCode);
     activation.verifySignature(payload);
 

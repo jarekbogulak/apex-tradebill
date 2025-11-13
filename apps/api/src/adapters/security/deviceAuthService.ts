@@ -139,7 +139,10 @@ const createTokenFactory = ({ secret, issuer, audience }: JwtFactoryOptions): To
   };
 };
 
-const withTransaction = async <T>(pool: DatabasePool, fn: (client: DatabaseClient) => Promise<T>) => {
+const withTransaction = async <T>(
+  pool: DatabasePool,
+  fn: (client: DatabaseClient) => Promise<T>,
+) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -275,7 +278,11 @@ export const createDeviceAuthService = ({
     throw new Error('activationSecret is required to register devices');
   }
   const activation = createActivationVerifier(activationSecret);
-  const tokenFactory = createTokenFactory({ secret: jwtSecret, issuer: jwtIssuer, audience: jwtAudience });
+  const tokenFactory = createTokenFactory({
+    secret: jwtSecret,
+    issuer: jwtIssuer,
+    audience: jwtAudience,
+  });
 
   const registerDevice = async (input: RegisterDeviceInput): Promise<RegisterDeviceResult> => {
     return withTransaction(pool, async (client) => {

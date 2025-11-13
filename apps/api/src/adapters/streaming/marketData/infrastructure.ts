@@ -69,10 +69,10 @@ export const createMarketInfrastructure = async ({
       throw new Error(`Received empty snapshot for ${probeSymbol}`);
     }
   } catch (error) {
-    logger.warn(
-      'apex.omni.snapshot_failed_falling_back_to_in_memory_market_data',
-      { err: error, probeSymbol },
-    );
+    logger.warn('apex.omni.snapshot_failed_falling_back_to_in_memory_market_data', {
+      err: error,
+      probeSymbol,
+    });
     return {
       marketData: createInMemoryMarketDataProvider(),
     };

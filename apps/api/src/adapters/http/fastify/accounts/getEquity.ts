@@ -1,10 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
 import type { GetEquitySnapshotUseCase } from '../../../../domain/accounts/equity.usecases.js';
-import {
-  createErrorResponse,
-  errorResponseSchema,
-  resolveUserId,
-} from '../shared/http.js';
+import { createErrorResponse, errorResponseSchema, resolveUserId } from '../shared/http.js';
 
 interface GetEquityRouteOptions {
   getEquitySnapshot: GetEquitySnapshotUseCase;

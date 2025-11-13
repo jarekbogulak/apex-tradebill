@@ -2,7 +2,10 @@ import { SymbolSchema, type Symbol } from '@apex-tradebill/types';
 import type { FastifyBaseLogger, FastifyPluginAsync } from 'fastify';
 import type { IncomingMessage } from 'node:http';
 import { WebSocketServer, type WebSocket } from 'ws';
-import type { MarketDataPort, MarketMetadataPort } from '../../../../domain/ports/tradebillPorts.js';
+import type {
+  MarketDataPort,
+  MarketMetadataPort,
+} from '../../../../domain/ports/tradebillPorts.js';
 import type { RingBuffer } from '../../../streaming/realtime/ringBuffer.js';
 import type { SampledTick } from '../../../streaming/realtime/windowSampler.js';
 import { createErrorResponse } from '../shared/http.js';

@@ -1,4 +1,7 @@
-import type { PruneTradeHistoryUseCase, PruneTradeHistoryResult } from '../../domain/trading/pruneTradeHistory.usecase.js';
+import type {
+  PruneTradeHistoryUseCase,
+  PruneTradeHistoryResult,
+} from '../../domain/trading/pruneTradeHistory.usecase.js';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
