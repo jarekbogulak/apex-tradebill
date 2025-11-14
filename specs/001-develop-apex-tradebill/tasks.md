@@ -124,6 +124,21 @@
 - [x] T082 Add reliability monitoring tests covering 99.5% availability alert thresholds and reporting
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/reliability/uptime-monitor.spec.ts
   - Depends on: T010, T062
+- [x] T089 [P] Scaffold contract test for POST /v1/trades/execute validating persistence echo, warnings, and retained calculations
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/trades/post-execute.contract.test.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/contracts/openapi.yaml
+  - Depends on: T010, T012
+- [x] T090 [P] Scaffold contract test for POST /v1/auth/device/register covering activation code success, expiry, and signature errors
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/auth/post-device-register.contract.test.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/contracts/openapi.yaml
+  - Depends on: T010
+- [x] T091 [P] Scaffold contract test for POST /v1/trades/history/import enforcing entry schema, limits, and dedupe behavior
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/contract/trades/post-history-import.contract.test.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/contracts/openapi.yaml
+  - Depends on: T010, T024
+- [x] T092 [P] Author integration test for "Execute capture" quickstart scenario ensuring single history insert per press and optimistic UI states
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/integration/mobile/execute-capture.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/quickstart.md
+  - Depends on: T010, T024
+- [x] T093 [P] Author integration test for "Offline cache" quickstart scenario validating DeviceCache retention, sync, and duplicate prevention
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/tests/integration/mobile/offline-cache.spec.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/specs/001-develop-apex-tradebill/quickstart.md
+  - Depends on: T010, T029, T058
 
 
 ## Phase 3.3: Core Implementation (after tests are failing)
@@ -136,6 +151,12 @@
 - [x] T027 [P] Implement ConnectedAccount model with status transition enforcement
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/domain/connected-account/connected-account.entity.ts
   - Depends on: T011, T012, T013, T014, T015, T016, T017, T018, T019, T020, T021, T022, T023, T024
+- [x] T094 [P] Implement DeviceRegistration model handling unique device IDs, heartbeat timestamps, and linkage to AppUser
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/domain/device-registration/device-registration.entity.ts
+  - Depends on: T011, T012, T013, T014, T015, T016, T017, T018, T019, T020, T021, T022, T023, T024, T090
+- [x] T095 [P] Implement DeviceActivationCode model enforcing expiry, signature validation, and single-use constraints
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/domain/device-activation-code/device-activation-code.entity.ts
+  - Depends on: T011, T012, T013, T014, T015, T016, T017, T018, T019, T020, T021, T022, T023, T024, T090
 - [x] T028 [P] Implement TradeCalculation model persisting JSONB input/output payloads
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/domain/trade-calculation/trade-calculation.entity.ts
   - Depends on: T011, T012, T013, T014, T015, T016, T017, T018, T019, T020, T021, T022, T023, T024
@@ -169,6 +190,15 @@
 - [x] T037 [P] Implement market metadata service sourcing tick/step sizing
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/markets/marketMetadataService.ts
   - Depends on: T031
+- [x] T096 [P] Implement device registration service coordinating activation code verification, SecureStore metadata, and JWT issuance
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/auth/deviceRegistrationService.ts
+  - Depends on: T025, T027, T094, T095, T056, T090
+- [x] T097 [P] Implement trade execution service persisting calculations, emitting history events, and surfacing warnings
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/trades/executeService.ts
+  - Depends on: T028, T030, T033, T034, T024, T089, T092
+- [x] T098 [P] Implement trade history import service validating DeviceCache entries and deduplicating synced IDs
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/trades/historyImportService.ts
+  - Depends on: T029, T034, T091, T093
 - [x] T075 [P] Implement ApeX symbol allowlist enforcement and configuration surfaces for market metadata
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/markets/marketMetadataService.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/configs/markets/allowlist.json
   - Depends on: T074, T037
@@ -225,6 +255,15 @@
 - [x] T050 Implement WebSocket upgrade handler for /v1/stream/market-data publishing snapshots
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/routes/stream/marketData.ts
   - Depends on: T033, T043, T017
+- [x] T099 Implement Fastify route for POST /v1/trades/execute persisting trade calculations and returning saved payloads
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/routes/trades/postExecute.ts
+  - Depends on: T097, T089
+- [x] T100 Implement Fastify route for POST /v1/auth/device/register exchanging activation codes for JWTs
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/routes/auth/postDeviceRegister.ts
+  - Depends on: T096, T090
+- [x] T101 Implement Fastify route for POST /v1/trades/history/import ingesting DeviceCache entries
+  - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/routes/trades/postHistoryImport.ts
+  - Depends on: T098, T091
 
 ## Phase 3.5: Integration
 - [x] T051 Configure Supabase PostgreSQL connection pool and migration scaffolding for core entities (standard SQL only)
@@ -261,7 +300,7 @@
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/mobile/src/features/stream/StaleBanner.tsx
   - Depends on: T043, T022
 
-- [x] T086 [P] Implement volatility-stop optional handling across DTO validation and preview orchestration
+- [x] T086 Implement volatility-stop optional handling across DTO validation and preview orchestration
   - Files: /Users/booke/dev/nix-expo-ic/apex-tradebill/packages/types/src/trading.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/services/trades/previewService.ts, /Users/booke/dev/nix-expo-ic/apex-tradebill/apps/api/src/routes/trades/postPreview.ts
   - Depends on: T084, T030, T033
 - [x] T087 Implement entry auto-follow state management with manual override recovery
@@ -309,10 +348,10 @@ wait
 ```
 
 ## Validation Checklist
-- [ ] Every endpoint in contracts/openapi.yaml has a contract test and implementation task
-- [ ] Every entity in data-model.md has a model task flagged [P]
-- [ ] Every quickstart acceptance scenario has an integration test task
-- [ ] Tests (T011–T024) precede all implementation work
-- [ ] Parallel tasks only touch distinct files or directories
-- [ ] Logging, metrics, authentication, retention, and offline sync tasks are present
-- [ ] Documentation and security/audit polish tasks are queued for the final phase
+- [x] Every endpoint in contracts/openapi.yaml has a contract test and implementation task
+- [x] Every entity in data-model.md has a model task flagged [P]
+- [x] Every quickstart acceptance scenario has an integration test task
+- [x] Tests (T011–T024) precede all implementation work
+- [x] Parallel tasks only touch distinct files or directories
+- [x] Logging, metrics, authentication, retention, and offline sync tasks are present
+- [x] Documentation and security/audit polish tasks are queued for the final phase
