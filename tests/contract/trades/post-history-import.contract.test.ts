@@ -40,7 +40,11 @@ describe('POST /v1/trades/history/import', () => {
     const itemSchema = entriesArray.items;
     expectSchemaHasRequired(itemSchema, ['id', 'input', 'output', 'marketSnapshot', 'createdAt']);
     const { input, output, marketSnapshot } = itemSchema.properties ?? {};
-    if (!isReferenceObject(input) || !isReferenceObject(output) || !isReferenceObject(marketSnapshot)) {
+    if (
+      !isReferenceObject(input) ||
+      !isReferenceObject(output) ||
+      !isReferenceObject(marketSnapshot)
+    ) {
       throw new Error('Expected input/output/marketSnapshot to reference shared schemas');
     }
     expect(input.$ref).toBe('#/components/schemas/TradeInput');

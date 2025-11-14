@@ -207,7 +207,10 @@ describe('history routes integration', () => {
       headers: { 'x-user-id': USER_ID },
     });
 
-    const history = historyResponse.json() as { items: Array<{ id: string; input: TradeInput }>; nextCursor: null };
+    const history = historyResponse.json() as {
+      items: Array<{ id: string; input: TradeInput }>;
+      nextCursor: null;
+    };
     expect(history.items).toHaveLength(1);
     expect(history.items[0].input.targetPrice).toBe('130.00');
   });

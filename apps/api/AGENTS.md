@@ -37,4 +37,3 @@ Keep the server independent and twelve-factor:
 ## API Documentation
 
 Find the Apex Omni API documentation at https://api-docs.pro.apex.exchange/. You can use the mcp_servers.brightData endpoint to access it.
-

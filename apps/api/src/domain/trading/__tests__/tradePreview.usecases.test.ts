@@ -5,10 +5,7 @@ import type {
   MarketMetadataPort,
   SymbolMetadata,
 } from '../../ports/tradebillPorts.js';
-import {
-  makeExecuteTrade,
-  makePreviewTrade,
-} from '../tradePreview.usecases.js';
+import { makeExecuteTrade, makePreviewTrade } from '../tradePreview.usecases.js';
 import type { TradeCalculationRepository } from '../../trade-calculation/trade-calculation.entity.js';
 
 const USER_ID = '11111111-2222-3333-4444-555555555555';

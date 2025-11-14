@@ -18,9 +18,7 @@ export interface NewDeviceRegistrationInput {
   lastSeenAt?: string;
 }
 
-export const createDeviceRegistration = (
-  input: NewDeviceRegistrationInput,
-): DeviceRegistration => {
+export const createDeviceRegistration = (input: NewDeviceRegistrationInput): DeviceRegistration => {
   const registeredAt = input.registeredAt ?? now();
   return DeviceRegistrationSchema.parse({
     deviceId: input.deviceId,

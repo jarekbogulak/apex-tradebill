@@ -56,7 +56,11 @@ const createInMemoryRepository = (seedCodes: ActivationCodeRecord[] = []) => {
     async markCodeConsumed(codeId, deviceId) {
       const record = codes.get(codeId);
       if (record) {
-        const updated = markDeviceActivationCodeConsumed(record, deviceId, new Date().toISOString());
+        const updated = markDeviceActivationCodeConsumed(
+          record,
+          deviceId,
+          new Date().toISOString(),
+        );
         codes.set(codeId, updated);
       }
     },

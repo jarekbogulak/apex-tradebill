@@ -98,9 +98,7 @@ export const postHistoryImportRoute: FastifyPluginAsync<PostHistoryImportRouteOp
         result = await importTradeHistory(userId, normalizedEntries);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Invalid import payload';
-        return reply
-          .status(400)
-          .send(createErrorResponse('IMPORT_FAILED', message));
+        return reply.status(400).send(createErrorResponse('IMPORT_FAILED', message));
       }
 
       for (const failure of result.failures) {

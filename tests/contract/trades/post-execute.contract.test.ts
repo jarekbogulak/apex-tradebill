@@ -39,7 +39,11 @@ describe('POST /v1/trades/execute', () => {
 
     const { calculation, output, marketSnapshot, warnings } = schema.properties ?? {};
 
-    if (!isReferenceObject(calculation) || !isReferenceObject(output) || !isReferenceObject(marketSnapshot)) {
+    if (
+      !isReferenceObject(calculation) ||
+      !isReferenceObject(output) ||
+      !isReferenceObject(marketSnapshot)
+    ) {
       throw new Error('Expected calculation/output/marketSnapshot to reference shared schemas');
     }
 

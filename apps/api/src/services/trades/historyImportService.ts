@@ -22,7 +22,10 @@ const ensureIsoDate = (value: string, label: string): string => {
 const normalizeEntry = (
   entry: TradeHistoryImportEntry,
   options: { retentionCutoff: number },
-): TradeHistoryImportEntry & { executedAt: string; executionMethod: NonNullable<TradeHistoryImportEntry['executionMethod']> } => {
+): TradeHistoryImportEntry & {
+  executedAt: string;
+  executionMethod: NonNullable<TradeHistoryImportEntry['executionMethod']>;
+} => {
   const createdAtIso = ensureIsoDate(entry.createdAt, 'createdAt');
   const createdAtMs = Date.parse(createdAtIso);
   if (createdAtMs < options.retentionCutoff) {
