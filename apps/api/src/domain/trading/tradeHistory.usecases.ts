@@ -6,10 +6,7 @@ import type {
   TradeOutput,
   TradeSource,
 } from '@apex-tradebill/types';
-import {
-  createTradeCalculation,
-  type TradeCalculationRepository,
-} from '../trade-calculation/trade-calculation.entity.js';
+import type { TradeCalculationRepository } from '../trade-calculation/trade-calculation.entity.js';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -75,47 +72,7 @@ export interface ImportTradeHistoryResult {
   failures: Array<{ id: string; error: Error }>;
 }
 
-export interface ImportTradeHistoryDeps {
-  tradeCalculations: TradeCalculationRepository;
-}
-
 export type ImportTradeHistoryUseCase = (
   userId: string,
   entries: TradeHistoryImportEntry[],
 ) => Promise<ImportTradeHistoryResult>;
-
-export const makeImportTradeHistory = ({
-  tradeCalculations,
-}: ImportTradeHistoryDeps): ImportTradeHistoryUseCase => {
-  return async (userId, entries) => {
-    const syncedIds: string[] = [];
-    const failures: Array<{ id: string; error: Error }> = [];
-
-    for (const entry of entries) {
-      try {
-        const calculation = createTradeCalculation({
-          userId,
-          input: entry.input,
-          output: entry.output,
-          marketSnapshot: entry.marketSnapshot,
-          source: entry.source ?? 'manual',
-          createdAt: entry.createdAt,
-          executionMethod: entry.executionMethod ?? 'history-import',
-          executedAt: entry.executedAt ?? entry.createdAt,
-        });
-        await tradeCalculations.save(calculation);
-        syncedIds.push(entry.id);
-      } catch (cause) {
-        failures.push({
-          id: entry.id,
-          error: cause instanceof Error ? cause : new Error('Unknown import error'),
-        });
-      }
-    }
-
-    return {
-      syncedIds,
-      failures,
-    };
-  };
-};

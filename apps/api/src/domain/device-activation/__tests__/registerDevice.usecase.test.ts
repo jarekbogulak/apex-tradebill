@@ -1,4 +1,12 @@
 import { makeRegisterDevice } from '../registerDevice.usecase.js';
+import {
+  createDeviceActivationCode,
+  markDeviceActivationCodeConsumed,
+} from '../../device-activation-code/device-activation-code.entity.js';
+import {
+  createDeviceRegistration,
+  touchDeviceRegistration,
+} from '../../device-registration/device-registration.entity.js';
 import type {
   ActivationCodeVerifier,
   ActivationCodeRecord,
@@ -23,7 +31,7 @@ const createActivationVerifier = ({
         version: 1,
         codeId: payload.id,
         deviceId: payload.deviceId,
-        issuedAt: payload.expiresAt,
+        issuedAt: payload.issuedAt,
         expiresAt: payload.expiresAt,
         signature: payload.signature,
       };
@@ -48,9 +56,8 @@ const createInMemoryRepository = (seedCodes: ActivationCodeRecord[] = []) => {
     async markCodeConsumed(codeId, deviceId) {
       const record = codes.get(codeId);
       if (record) {
-        record.consumedAt = new Date().toISOString();
-        record.deviceId = deviceId;
-        codes.set(codeId, record);
+        const updated = markDeviceActivationCodeConsumed(record, deviceId, new Date().toISOString());
+        codes.set(codeId, updated);
       }
     },
     async getRegistration(deviceId) {
@@ -60,17 +67,30 @@ const createInMemoryRepository = (seedCodes: ActivationCodeRecord[] = []) => {
       users.add(userId);
     },
     async upsertRegistration(deviceId, userId) {
-      registrations.set(deviceId, {
+      const existing = registrations.get(deviceId);
+      const nowIso = new Date().toISOString();
+      if (existing) {
+        registrations.set(deviceId, {
+          ...existing,
+          userId,
+          lastSeenAt: nowIso,
+        });
+        return;
+      }
+      registrations.set(
         deviceId,
-        userId,
-        lastSeenAt: new Date().toISOString(),
-      });
+        createDeviceRegistration({
+          deviceId,
+          userId,
+          registeredAt: nowIso,
+          lastSeenAt: nowIso,
+        }),
+      );
     },
     async updateRegistrationLastSeen(deviceId) {
       const record = registrations.get(deviceId);
       if (record) {
-        record.lastSeenAt = new Date().toISOString();
-        registrations.set(deviceId, record);
+        registrations.set(deviceId, touchDeviceRegistration(record));
       }
     },
   };
@@ -80,7 +100,7 @@ const createInMemoryRepository = (seedCodes: ActivationCodeRecord[] = []) => {
 
 const createTokenFactory = (): TokenFactory => {
   return {
-    createToken({ userId, deviceId, expiresAtSeconds }) {
+    createToken({ userId, deviceId, issuedAtSeconds: _issuedAt, expiresAtSeconds }) {
       return {
         token: `${userId}.${deviceId}.${expiresAtSeconds}`,
         expiresAtIso: new Date(expiresAtSeconds * 1000).toISOString(),
@@ -102,13 +122,16 @@ describe('registerDevice.usecase', () => {
   });
 
   it('registers new devices and emits tokens', async () => {
-    const code: ActivationCodeRecord = {
-      id: 'code-1',
+    const code: ActivationCodeRecord = createDeviceActivationCode({
+      id: '11111111-1111-1111-1111-111111111111',
       deviceId: 'device-alpha',
+      issuedAt: now.toISOString(),
       expiresAt: new Date(now.getTime() + 10 * 60_000).toISOString(),
       signature: 'signature',
+      createdAt: now.toISOString(),
       consumedAt: null,
-    };
+      consumedByDevice: null,
+    });
     const activation = createActivationVerifier({ payload: code });
     const { repository, registrations, users } = createInMemoryRepository([code]);
     const registerDevice = makeRegisterDevice({
@@ -116,26 +139,29 @@ describe('registerDevice.usecase', () => {
       activation,
       tokenFactory: createTokenFactory(),
       now: () => now,
-      generateUserId: () => 'user-123',
+      generateUserId: () => '00000000-0000-0000-0000-000000000123',
     });
 
     const result = await registerDevice({ deviceId: 'device-alpha', activationCode: 'ATC1.valid' });
 
-    expect(result.userId).toBe('user-123');
+    expect(result.userId).toBe('00000000-0000-0000-0000-000000000123');
     expect(result.deviceId).toBe('device-alpha');
-    expect(result.token).toContain('user-123');
-    expect(registrations.get('device-alpha')?.userId).toBe('user-123');
-    expect(users.has('user-123')).toBe(true);
+    expect(result.token).toContain('00000000-0000-0000-0000-000000000123');
+    expect(registrations.get('device-alpha')?.userId).toBe('00000000-0000-0000-0000-000000000123');
+    expect(users.has('00000000-0000-0000-0000-000000000123')).toBe(true);
   });
 
   it('rejects expired codes', async () => {
-    const expired: ActivationCodeRecord = {
-      id: 'code-expired',
+    const expired: ActivationCodeRecord = createDeviceActivationCode({
+      id: '22222222-2222-2222-2222-222222222222',
       deviceId: 'device-beta',
+      issuedAt: new Date(now.getTime() - 10 * 60_000).toISOString(),
       expiresAt: new Date(now.getTime() - 5 * 60_000).toISOString(),
       signature: 'sig',
+      createdAt: now.toISOString(),
       consumedAt: null,
-    };
+      consumedByDevice: null,
+    });
     const activation = createActivationVerifier({ payload: expired });
     const { repository } = createInMemoryRepository([expired]);
     const registerDevice = makeRegisterDevice({
@@ -143,7 +169,7 @@ describe('registerDevice.usecase', () => {
       activation,
       tokenFactory: createTokenFactory(),
       now: () => now,
-      generateUserId: () => 'user-abc',
+      generateUserId: () => '00000000-0000-0000-0000-000000000abc',
     });
 
     await expect(

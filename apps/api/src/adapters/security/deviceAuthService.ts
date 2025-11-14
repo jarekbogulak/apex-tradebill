@@ -16,6 +16,8 @@ import type {
   TokenFactory,
   TokenPayload,
 } from '../../domain/device-activation/types.js';
+import { createDeviceActivationCode } from '../../domain/device-activation-code/device-activation-code.entity.js';
+import { createDeviceRegistration } from '../../domain/device-registration/device-registration.entity.js';
 
 const ACTIVATION_PREFIX = 'ATC1.';
 
@@ -160,30 +162,40 @@ const withTransaction = async <T>(
 interface ActivationCodeRow extends QueryResultRow {
   id: string;
   device_id: string;
+  issued_at: string;
   expires_at: string;
   signature: string;
   consumed_at: string | null;
+  consumed_by_device: string | null;
+  created_at: string;
 }
 
 interface RegistrationRow extends QueryResultRow {
   device_id: string;
   user_id: string;
+  registered_at: string;
   last_seen_at: string;
 }
 
-const mapActivationRow = (row: ActivationCodeRow): ActivationCodeRecord => ({
-  id: row.id,
-  deviceId: row.device_id,
-  expiresAt: row.expires_at,
-  signature: row.signature,
-  consumedAt: row.consumed_at,
-});
+const mapActivationRow = (row: ActivationCodeRow): ActivationCodeRecord =>
+  createDeviceActivationCode({
+    id: row.id,
+    deviceId: row.device_id,
+    issuedAt: row.issued_at,
+    expiresAt: row.expires_at,
+    signature: row.signature,
+    consumedAt: row.consumed_at,
+    consumedByDevice: row.consumed_by_device,
+    createdAt: row.created_at,
+  });
 
-const mapRegistrationRow = (row: RegistrationRow): DeviceRegistrationRecord => ({
-  deviceId: row.device_id,
-  userId: row.user_id,
-  lastSeenAt: row.last_seen_at,
-});
+const mapRegistrationRow = (row: RegistrationRow): DeviceRegistrationRecord =>
+  createDeviceRegistration({
+    deviceId: row.device_id,
+    userId: row.user_id,
+    registeredAt: row.registered_at,
+    lastSeenAt: row.last_seen_at,
+  });
 
 const createPgDeviceActivationRepository = (
   client: DatabaseClient,
@@ -191,7 +203,15 @@ const createPgDeviceActivationRepository = (
   async getCodeById(codeId: string) {
     const { rows } = await client.query<ActivationCodeRow>(
       `
-        SELECT id, device_id, expires_at, signature, consumed_at
+        SELECT
+          id,
+          device_id,
+          issued_at,
+          expires_at,
+          signature,
+          consumed_at,
+          consumed_by_device,
+          created_at
         FROM device_activation_codes
         WHERE id = $1
         FOR UPDATE;
@@ -215,7 +235,7 @@ const createPgDeviceActivationRepository = (
   async getRegistration(deviceId: string) {
     const { rows } = await client.query<RegistrationRow>(
       `
-        SELECT device_id, user_id, last_seen_at
+        SELECT device_id, user_id, registered_at, last_seen_at
         FROM device_registrations
         WHERE device_id = $1
         FOR UPDATE;

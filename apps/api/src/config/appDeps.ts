@@ -7,7 +7,6 @@ import {
   type PreviewTradeUseCase,
 } from '../domain/trading/tradePreview.usecases.js';
 import {
-  makeImportTradeHistory,
   makeTradeHistoryManager,
   type ImportTradeHistoryUseCase,
   type TradeHistoryManager,
@@ -26,6 +25,7 @@ import {
   type GetEquitySnapshotUseCase,
   type SetManualEquityUseCase,
 } from '../domain/accounts/equity.usecases.js';
+import { makeHistoryImportService } from '../services/trades/historyImportService.js';
 
 export interface AppDeps {
   marketData: MarketDataPort;
@@ -71,9 +71,7 @@ export const buildAppDeps = ({
     isPersistent: tradeCalculationsPersistent,
   });
 
-  const importTradeHistory = makeImportTradeHistory({
-    tradeCalculations,
-  });
+  const importTradeHistory = makeHistoryImportService({ tradeCalculations });
 
   const userSettingsRepository = createInMemoryUserSettingsRepository();
   const getUserSettings = makeGetUserSettings({

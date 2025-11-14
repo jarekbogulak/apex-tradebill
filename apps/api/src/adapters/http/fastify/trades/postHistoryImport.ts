@@ -8,6 +8,7 @@ import {
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import type {
+  ImportTradeHistoryResult,
   ImportTradeHistoryUseCase,
   TradeHistoryImportEntry,
 } from '@api/domain/trading/tradeHistory.usecases.js';
@@ -91,7 +92,16 @@ export const postHistoryImportRoute: FastifyPluginAsync<PostHistoryImportRouteOp
           },
         }),
       );
-      const result = await importTradeHistory(userId, normalizedEntries);
+
+      let result: ImportTradeHistoryResult;
+      try {
+        result = await importTradeHistory(userId, normalizedEntries);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Invalid import payload';
+        return reply
+          .status(400)
+          .send(createErrorResponse('IMPORT_FAILED', message));
+      }
 
       for (const failure of result.failures) {
         app.log.warn(

@@ -1,3 +1,6 @@
+import type { DeviceActivationCode } from '../device-activation-code/device-activation-code.entity.js';
+import type { DeviceRegistration } from '../device-registration/device-registration.entity.js';
+
 export interface ActivationPayload {
   version: number;
   codeId: string;
@@ -34,19 +37,8 @@ export interface DeviceActivationRepository {
   updateRegistrationLastSeen(deviceId: string): Promise<void>;
 }
 
-export interface ActivationCodeRecord {
-  id: string;
-  deviceId: string;
-  expiresAt: string;
-  signature: string;
-  consumedAt: string | null;
-}
-
-export interface DeviceRegistrationRecord {
-  deviceId: string;
-  userId: string;
-  lastSeenAt: string;
-}
+export type ActivationCodeRecord = DeviceActivationCode;
+export type DeviceRegistrationRecord = DeviceRegistration;
 
 export interface TokenFactory {
   createToken(payload: TokenPayload): { token: string; expiresAtIso: string };

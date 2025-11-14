@@ -4,10 +4,10 @@ import postHistoryImportRoute from '../postHistoryImport.js';
 import getHistoryRoute from '../getHistory.js';
 import { createInMemoryTradeCalculationRepository } from '@api/domain/trade-calculation/trade-calculation.entity.js';
 import {
-  makeImportTradeHistory,
   makeTradeHistoryManager,
   type TradeHistoryImportEntry,
 } from '@api/domain/trading/tradeHistory.usecases.js';
+import { makeHistoryImportService } from '@api/services/trades/historyImportService.js';
 import type { MarketSnapshot, TradeInput, TradeOutput } from '@apex-tradebill/types';
 
 const USER_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
@@ -74,12 +74,13 @@ const buildImportEntry = (overrides: ImportEntryOverrides = {}): TradeHistoryImp
 
 const buildTestServer = async (now: Date = DEFAULT_NOW): Promise<FastifyInstance> => {
   const tradeCalculations = createInMemoryTradeCalculationRepository();
+  const nowProvider = () => new Date(now.getTime());
   const tradeHistory = makeTradeHistoryManager({
     tradeCalculations,
-    now: () => new Date(now.getTime()),
+    now: nowProvider,
     isPersistent: true,
   });
-  const importTradeHistory = makeImportTradeHistory({ tradeCalculations });
+  const importTradeHistory = makeHistoryImportService({ tradeCalculations, now: nowProvider });
 
   const app = Fastify();
   await app.register(postHistoryImportRoute, { importTradeHistory });
@@ -171,5 +172,43 @@ describe('history routes integration', () => {
     expect(history.items).toHaveLength(1);
     expect(history.items[0].createdAt).toBe(freshCreatedAt);
     expect(history.items[0].id).toBeDefined();
+  });
+
+  test('deduplicates duplicate entry ids and rejects stale records', async () => {
+    const app = await buildTestServer();
+    servers.push(app);
+
+    const duplicateId = 'duplicate-entry';
+    const staleCreatedAt = new Date(DEFAULT_NOW.getTime() - 35 * 24 * 60 * 60 * 1000).toISOString();
+
+    const entries = [
+      buildImportEntry({ id: duplicateId, createdAt: '2025-02-01T00:10:00.000Z' }),
+      buildImportEntry({
+        id: duplicateId,
+        createdAt: '2025-02-01T00:15:00.000Z',
+        input: { targetPrice: '150.00' },
+      }),
+      buildImportEntry({ id: 'stale-entry', createdAt: staleCreatedAt }),
+    ];
+
+    const importResponse = await app.inject({
+      method: 'POST',
+      url: '/v1/trades/history/import',
+      payload: { entries },
+      headers: { 'x-user-id': USER_ID },
+    });
+
+    expect(importResponse.statusCode).toBe(200);
+    expect(importResponse.json()).toEqual({ syncedIds: [duplicateId] });
+
+    const historyResponse = await app.inject({
+      method: 'GET',
+      url: '/v1/trades/history',
+      headers: { 'x-user-id': USER_ID },
+    });
+
+    const history = historyResponse.json() as { items: Array<{ id: string; input: TradeInput }>; nextCursor: null };
+    expect(history.items).toHaveLength(1);
+    expect(history.items[0].input.targetPrice).toBe('130.00');
   });
 });
