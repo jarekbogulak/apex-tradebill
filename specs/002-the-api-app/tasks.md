@@ -14,10 +14,10 @@
 ```
 
 ## Phase 3.1: Setup
-- [ ] T001 Update `apps/api/package.json` and `pnpm-lock.yaml` to add `@google-cloud/secret-manager`, `prom-client`, `tweetnacl`, and `@types/tweetnacl`, then expose `GCP_PROJECT_ID`, `OMNI_BREAKGLASS_PUBLIC_KEY`, and `OMNI_CACHE_TTL_SECONDS` via `apps/api/src/config/env.ts`.
-- [ ] T002 Document required GSM IAM roles plus new env vars in `apps/api/.env.example` and `apps/api/README.md` (startup instructions + failure modes).
-- [ ] T003 [P] Create Jest/Supertest harness `apps/api/tests/setup/omniTestContext.ts` and register it in `apps/api/jest.config.cjs` so Omni contract/integration suites share Fastify + GSM mocks.
-- [ ] T004 Configure CI to run automated secrets scanning (e.g., gitleaks) and dependency audits (`pnpm audit`) for `apps/api`, documenting these guards in `apps/api/README.md` with references to constitution Security/Test-First principles.
+- [X] T001 Update `apps/api/package.json` and `pnpm-lock.yaml` to add `@google-cloud/secret-manager`, `prom-client`, and `tweetnacl-ts`, then expose `GCP_PROJECT_ID`, `OMNI_BREAKGLASS_PUBLIC_KEY`, and `OMNI_CACHE_TTL_SECONDS` via `apps/api/src/config/env.ts`.
+- [X] T002 Document required GSM IAM roles plus new env vars in `apps/api/.env.example` and `apps/api/README.md` (startup instructions + failure modes).
+- [X] T003 [P] Create Jest/Supertest harness `apps/api/tests/setup/omniTestContext.ts` and register it in `apps/api/jest.config.cjs` so Omni contract/integration suites share Fastify + GSM mocks.
+- [X] T004 Configure CI to run automated secrets scanning (e.g., gitleaks) and dependency audits (`pnpm audit`) for `apps/api`, documenting these guards in `apps/api/README.md` with references to constitution Security/Test-First principles.
 
 ## Phase 3.2: Tests First (TDD)
 - [ ] T005 [P] Author failing contract test for `GET /ops/apex-omni/secrets/status` in `apps/api/tests/contracts/omniStatus.contract.test.ts` that asserts auth scope, metadata response, and hidden secret values.

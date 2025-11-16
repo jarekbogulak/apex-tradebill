@@ -26,7 +26,10 @@ const config = createBaseJestConfig({
       },
     ],
   },
-  setupFilesAfterEnv: ['<rootDir>/apps/api/jest.setup.cjs'],
+  setupFilesAfterEnv: [
+    '<rootDir>/apps/api/jest.setup.cjs',
+    '<rootDir>/apps/api/tests/setup/omniTestContext.ts',
+  ],
 });
 
 module.exports = config;

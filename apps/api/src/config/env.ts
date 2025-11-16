@@ -157,6 +157,9 @@ const envSchema = z.object({
   supabaseDbIdleTimeoutMs: z.number().int().positive(),
   supabaseDbApplication: z.string(),
   supabaseDbSsl: z.enum(['auto', 'disable', 'require']),
+  gcpProjectId: z.string().min(1).optional(),
+  omniBreakglassPublicKey: z.string().min(1).optional(),
+  omniCacheTtlSeconds: z.number().int().positive(),
 });
 
 const parseEnv = () => {
@@ -188,6 +191,9 @@ const parseEnv = () => {
     supabaseDbIdleTimeoutMs: toInteger(process.env.SUPABASE_DB_IDLE_TIMEOUT_MS, 30_000),
     supabaseDbApplication: process.env.SUPABASE_DB_APPLICATION ?? 'apex-tradebill-api',
     supabaseDbSsl: normalizeSslMode(process.env.SUPABASE_DB_SSL),
+    gcpProjectId: process.env.GCP_PROJECT_ID,
+    omniBreakglassPublicKey: process.env.OMNI_BREAKGLASS_PUBLIC_KEY,
+    omniCacheTtlSeconds: toInteger(process.env.OMNI_CACHE_TTL_SECONDS, 300),
   });
 };
 
@@ -231,12 +237,19 @@ export interface ApexConfig {
   allowInMemoryMarketData: boolean;
 }
 
+export interface OmniSecretsConfig {
+  gcpProjectId: string | null;
+  breakglassPublicKey: string | null;
+  cacheTtlSeconds: number;
+}
+
 export interface AppEnv {
   nodeEnv: 'development' | 'test' | 'production';
   server: ServerConfig;
   auth: AuthConfig;
   database: DatabaseConfig;
   apex: ApexConfig;
+  omniSecrets: OmniSecretsConfig;
 }
 
 const buildEnv = (): AppEnv => {
@@ -306,6 +319,21 @@ const buildEnv = (): AppEnv => {
     );
   }
 
+  const resolvedCacheTtlSeconds = parsed.omniCacheTtlSeconds;
+  const resolvedGcpProjectId = parsed.gcpProjectId ?? null;
+  const resolvedBreakglassKey = parsed.omniBreakglassPublicKey ?? null;
+
+  if (parsed.nodeEnv === 'production') {
+    if (!resolvedGcpProjectId) {
+      throw new ConfigError('GCP_PROJECT_ID is required in production to access Google Secret Manager.');
+    }
+    if (!resolvedBreakglassKey) {
+      throw new ConfigError(
+        'OMNI_BREAKGLASS_PUBLIC_KEY is required in production for encrypted break-glass overrides.',
+      );
+    }
+  }
+
   return {
     nodeEnv: parsed.nodeEnv,
     server: {
@@ -334,6 +362,11 @@ const buildEnv = (): AppEnv => {
     apex: {
       credentials: apexCredentials,
       allowInMemoryMarketData: resolvedAllowInMemoryMarketData,
+    },
+    omniSecrets: {
+      gcpProjectId: resolvedGcpProjectId,
+      breakglassPublicKey: resolvedBreakglassKey,
+      cacheTtlSeconds: resolvedCacheTtlSeconds,
     },
   };
 };
