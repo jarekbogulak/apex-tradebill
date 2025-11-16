@@ -33,21 +33,21 @@
 - [X] T015 [P] Add integration test `apps/api/tests/integration/omniRotationPolicy.int.test.ts` simulating overdue metadata and asserting rotation monitors emit alerts/log entries before the 12-month window elapses.
 
 ## Phase 3.3: Core Implementation
-- [ ] T016 [P] Create migration `apps/api/src/db/migrations/2025111501_create_omni_secret_metadata.ts` defining the `OmniSecretMetadata` table (unique secret type, rotation fields, break-glass timestamp).
-- [ ] T017 [P] Create migration `apps/api/src/db/migrations/2025111502_create_omni_secret_access_events.ts` for the audit table capturing action, actor, result, and duration_ms.
-- [ ] T018 [P] Implement seed script `apps/api/src/scripts/seedOmniSecrets.ts` plus `package.json` script `db:seed:omni-secrets` that inserts the predefined catalog.
-- [ ] T019 [P] Define domain types + Zod validators for `OmniSecretMetadata`, `OmniSecretAccessEvent`, and `OmniSecretCacheState` in `apps/api/src/modules/omniSecrets/types.ts`.
-- [ ] T020 Build repository helpers in `apps/api/src/modules/omniSecrets/repository.ts` (CRUD for metadata + append-only access-event logger) wired to the new tables.
-- [ ] T021 Implement `GsmSecretManagerClient` wrapper in `apps/api/src/modules/omniSecrets/gsmClient.ts` with Workload Identity auth, retries, and metrics hooks.
-- [ ] T022 Implement `OmniSecretCache` in `apps/api/src/modules/omniSecrets/cache.ts` (startup hydrate, 5-minute TTL, manual refresh, break-glass override, emitting cache events).
-- [ ] T023 Implement `OmniSecretService` in `apps/api/src/modules/omniSecrets/service.ts` orchestrating metadata, GSM reads, cache refresh, status summaries, and FR-012 degrade handling.
-- [ ] T024 Implement environment guard logic (config validator or service hook) in `apps/api/src/modules/omniSecrets/service.ts` that rejects mismatched environment/GSM project pairs and logs constitution references.
-- [ ] T025 Build CLI `apps/api/src/scripts/breakglassOmni.ts` that encrypts payloads with the API public key, posts to `/ops/apex-omni/secrets/break-glass`, and validates TTL <=30m.
-- [ ] T026 Implement Fastify route module `apps/api/src/routes/ops/apexOmni/status.ts` wiring GET `/ops/apex-omni/secrets/status` to `OmniSecretService.status()` and hiding secret values.
-- [ ] T027 Implement Fastify route module `apps/api/src/routes/ops/apexOmni/rotationPreview.ts` wiring POST `/ops/.../rotation-preview` to service validation logic + conflict guard.
-- [ ] T028 Implement Fastify route module `apps/api/src/routes/internal/apexOmni/cacheRefresh.ts` wiring POST `/internal/.../cache/refresh` to schedule refresh work and emit events.
-- [ ] T029 Implement Fastify route module `apps/api/src/routes/ops/apexOmni/breakGlass.ts` to persist ciphertext payloads, update metadata, and schedule auto-expiry handling.
-- [ ] T030 Add scheduled rotation monitor in `apps/api/src/jobs/omniRotationMonitor.ts` (or equivalent) that scans `rotation_due_at`, emits alerts/logs for overdue entries, and exposes status via metrics.
+- [X] T016 [P] Create migration `apps/api/src/db/migrations/2025111501_create_omni_secret_metadata.ts` defining the `OmniSecretMetadata` table (unique secret type, rotation fields, break-glass timestamp).
+- [X] T017 [P] Create migration `apps/api/src/db/migrations/2025111502_create_omni_secret_access_events.ts` for the audit table capturing action, actor, result, and duration_ms.
+- [X] T018 [P] Implement seed script `apps/api/src/scripts/seedOmniSecrets.ts` plus `package.json` script `db:seed:omni-secrets` that inserts the predefined catalog.
+- [X] T019 [P] Define domain types + Zod validators for `OmniSecretMetadata`, `OmniSecretAccessEvent`, and `OmniSecretCacheState` in `apps/api/src/modules/omniSecrets/types.ts`.
+- [X] T020 Build repository helpers in `apps/api/src/modules/omniSecrets/repository.ts` (CRUD for metadata + append-only access-event logger) wired to the new tables.
+- [X] T021 Implement `GsmSecretManagerClient` wrapper in `apps/api/src/modules/omniSecrets/gsmClient.ts` with Workload Identity auth, retries, and metrics hooks.
+- [X] T022 Implement `OmniSecretCache` in `apps/api/src/modules/omniSecrets/cache.ts` (startup hydrate, 5-minute TTL, manual refresh, break-glass override, emitting cache events).
+- [X] T023 Implement `OmniSecretService` in `apps/api/src/modules/omniSecrets/service.ts` orchestrating metadata, GSM reads, cache refresh, status summaries, and FR-012 degrade handling.
+- [X] T024 Implement environment guard logic (config validator or service hook) in `apps/api/src/modules/omniSecrets/service.ts` that rejects mismatched environment/GSM project pairs and logs constitution references.
+- [X] T025 Build CLI `apps/api/src/scripts/breakglassOmni.ts` that encrypts payloads with the API public key, posts to `/ops/apex-omni/secrets/break-glass`, and validates TTL <=30m.
+- [X] T026 Implement Fastify route module `apps/api/src/routes/ops/apexOmni/status.ts` wiring GET `/ops/apex-omni/secrets/status` to `OmniSecretService.status()` and hiding secret values.
+- [X] T027 Implement Fastify route module `apps/api/src/routes/ops/apexOmni/rotationPreview.ts` wiring POST `/ops/.../rotation-preview` to service validation logic + conflict guard.
+- [X] T028 Implement Fastify route module `apps/api/src/routes/internal/apexOmni/cacheRefresh.ts` wiring POST `/internal/.../cache/refresh` to schedule refresh work and emit events.
+- [X] T029 Implement Fastify route module `apps/api/src/routes/ops/apexOmni/breakGlass.ts` to persist ciphertext payloads, update metadata, and schedule auto-expiry handling.
+- [X] T030 Add scheduled rotation monitor in `apps/api/src/jobs/omniRotationMonitor.ts` (or equivalent) that scans `rotation_due_at`, emits alerts/logs for overdue entries, and exposes status via metrics.
 
 ## Phase 3.4: Integration & Observability
 - [ ] T031 Register an `omniSecrets` Fastify plugin in `apps/api/src/plugins/omniSecrets.ts` and mount it from `apps/api/src/server.ts`, injecting service + cache instances via DI and exposing health/readiness hooks.

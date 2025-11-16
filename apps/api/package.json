@@ -14,7 +14,9 @@
     "test": "jest --passWithNoTests",
     "migrate": "tsx src/scripts/runMigrations.ts",
     "db:check": "tsx src/scripts/checkDbConnection.ts",
+    "db:seed:omni-secrets": "tsx src/scripts/seedOmniSecrets.ts",
     "auth:issue-device-code": "tsx src/scripts/issueDeviceCode.ts",
+    "breakglass:omni": "tsx src/scripts/breakglassOmni.ts",
     "security:secrets": "pnpm dlx gitleaks@8.18.1 detect --source . --no-banner --redact",
     "security:audit": "pnpm audit --prod --dev",
     "security:scan": "pnpm run security:secrets && pnpm run security:audit"

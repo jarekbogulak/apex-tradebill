@@ -241,6 +241,7 @@ export interface OmniSecretsConfig {
   gcpProjectId: string | null;
   breakglassPublicKey: string | null;
   cacheTtlSeconds: number;
+  environment: 'production' | 'test';
 }
 
 export interface AppEnv {
@@ -322,6 +323,10 @@ const buildEnv = (): AppEnv => {
   const resolvedCacheTtlSeconds = parsed.omniCacheTtlSeconds;
   const resolvedGcpProjectId = parsed.gcpProjectId ?? null;
   const resolvedBreakglassKey = parsed.omniBreakglassPublicKey ?? null;
+  const omniEnvironment =
+    parsed.nodeEnv === 'production' || process.env.APEX_OMNI_ENVIRONMENT === 'prod'
+      ? 'production'
+      : 'test';
 
   if (parsed.nodeEnv === 'production') {
     if (!resolvedGcpProjectId) {
@@ -332,6 +337,12 @@ const buildEnv = (): AppEnv => {
         'OMNI_BREAKGLASS_PUBLIC_KEY is required in production for encrypted break-glass overrides.',
       );
     }
+  }
+
+  if (parsed.nodeEnv !== 'production' && omniEnvironment === 'production' && resolvedGcpProjectId) {
+    throw new ConfigError(
+      'Non-production environments cannot point at production Google Secret Manager secrets. Update GCP_PROJECT_ID or APEX_OMNI_ENVIRONMENT.',
+    );
   }
 
   return {
@@ -367,6 +378,7 @@ const buildEnv = (): AppEnv => {
       gcpProjectId: resolvedGcpProjectId,
       breakglassPublicKey: resolvedBreakglassKey,
       cacheTtlSeconds: resolvedCacheTtlSeconds,
+      environment: omniEnvironment,
     },
   };
 };
