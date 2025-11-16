@@ -20,17 +20,17 @@
 - [X] T004 Configure CI to run automated secrets scanning (e.g., gitleaks) and dependency audits (`pnpm audit`) for `apps/api`, documenting these guards in `apps/api/README.md` with references to constitution Security/Test-First principles.
 
 ## Phase 3.2: Tests First (TDD)
-- [ ] T005 [P] Author failing contract test for `GET /ops/apex-omni/secrets/status` in `apps/api/tests/contracts/omniStatus.contract.test.ts` that asserts auth scope, metadata response, and hidden secret values.
-- [ ] T006 [P] Author failing contract test for `POST /ops/apex-omni/secrets/rotation-preview` in `apps/api/tests/contracts/omniRotationPreview.contract.test.ts` covering happy path + 409 conflict.
-- [ ] T007 [P] Author failing contract test for `POST /internal/apex-omni/secrets/cache/refresh` in `apps/api/tests/contracts/omniCacheRefresh.contract.test.ts` ensuring targeted/all refresh behavior and queued request IDs.
-- [ ] T008 [P] Author failing contract test for `POST /ops/apex-omni/secrets/break-glass` in `apps/api/tests/contracts/omniBreakGlass.contract.test.ts` enforcing TTL <=30m and audit log emission.
-- [ ] T009 [P] Add integration test `apps/api/tests/integration/omniMetadataSeed.int.test.ts` that runs the new seed script and asserts `OmniSecretMetadata` rows + rotation deadlines exist.
-- [ ] T010 [P] Add integration test `apps/api/tests/integration/omniCacheHydration.int.test.ts` simulating server startup to verify GSM fetch happens <1s and Omni routes degrade when cache empty per FR-012.
-- [ ] T011 [P] Add integration test `apps/api/tests/integration/omniRotationFlow.int.test.ts` covering rotation preview success and conflict (busy status) with mocked GSM responses.
-- [ ] T012 [P] Add integration test `apps/api/tests/integration/omniCacheFailure.int.test.ts` that stubs GSM outage, expects cache refresh endpoint to emit alerts/logs, and ensures Omni endpoints return 503.
-- [ ] T013 [P] Add integration test `apps/api/tests/integration/omniBreakGlassFlow.int.test.ts` invoking the CLI helper to push a ciphertext and asserting `/ops/.../status` returns `cacheSource="break_glass"` until TTL expiry.
-- [ ] T014 [P] Add integration test `apps/api/tests/integration/omniEnvGuards.int.test.ts` proving non-production configs pointing at production GSM IDs fail startup with explicit errors and logs.
-- [ ] T015 [P] Add integration test `apps/api/tests/integration/omniRotationPolicy.int.test.ts` simulating overdue metadata and asserting rotation monitors emit alerts/log entries before the 12-month window elapses.
+- [X] T005 [P] Author failing contract test for `GET /ops/apex-omni/secrets/status` in `apps/api/tests/contracts/omniStatus.contract.test.ts` that asserts auth scope, metadata response, and hidden secret values.
+- [X] T006 [P] Author failing contract test for `POST /ops/apex-omni/secrets/rotation-preview` in `apps/api/tests/contracts/omniRotationPreview.contract.test.ts` covering happy path + 409 conflict.
+- [X] T007 [P] Author failing contract test for `POST /internal/apex-omni/secrets/cache/refresh` in `apps/api/tests/contracts/omniCacheRefresh.contract.test.ts` ensuring targeted/all refresh behavior and queued request IDs.
+- [X] T008 [P] Author failing contract test for `POST /ops/apex-omni/secrets/break-glass` in `apps/api/tests/contracts/omniBreakGlass.contract.test.ts` enforcing TTL <=30m and audit log emission.
+- [X] T009 [P] Add integration test `apps/api/tests/integration/omniMetadataSeed.int.test.ts` that runs the new seed script and asserts `OmniSecretMetadata` rows + rotation deadlines exist.
+- [X] T010 [P] Add integration test `apps/api/tests/integration/omniCacheHydration.int.test.ts` simulating server startup to verify GSM fetch happens <1s and Omni routes degrade when cache empty per FR-012.
+- [X] T011 [P] Add integration test `apps/api/tests/integration/omniRotationFlow.int.test.ts` covering rotation preview success and conflict (busy status) with mocked GSM responses.
+- [X] T012 [P] Add integration test `apps/api/tests/integration/omniCacheFailure.int.test.ts` that stubs GSM outage, expects cache refresh endpoint to emit alerts/logs, and ensures Omni endpoints return 503.
+- [X] T013 [P] Add integration test `apps/api/tests/integration/omniBreakGlassFlow.int.test.ts` invoking the CLI helper to push a ciphertext and asserting `/ops/.../status` returns `cacheSource="break_glass"` until TTL expiry.
+- [X] T014 [P] Add integration test `apps/api/tests/integration/omniEnvGuards.int.test.ts` proving non-production configs pointing at production GSM IDs fail startup with explicit errors and logs.
+- [X] T015 [P] Add integration test `apps/api/tests/integration/omniRotationPolicy.int.test.ts` simulating overdue metadata and asserting rotation monitors emit alerts/log entries before the 12-month window elapses.
 
 ## Phase 3.3: Core Implementation
 - [ ] T016 [P] Create migration `apps/api/src/db/migrations/2025111501_create_omni_secret_metadata.ts` defining the `OmniSecretMetadata` table (unique secret type, rotation fields, break-glass timestamp).
