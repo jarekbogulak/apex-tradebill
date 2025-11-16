@@ -1,5 +1,6 @@
 import type { CacheSource, OmniSecretMetadata } from './types.js';
-import { GsmSecretManagerClient, type SecretFetchResult } from './gsmClient.js';
+import type { GsmSecretManagerClient } from './gsmClient.js';
+import type { SecretFetchResult } from './gsmClient.js';
 
 export interface OmniSecretCacheOptions {
   ttlMs: number;

@@ -1,5 +1,4 @@
 import type { OmniSecretService } from '@api/modules/omniSecrets/service.js';
-import type { DatabasePool } from '../adapters/persistence/providers/postgres/pool.js';
 
 const CHECK_INTERVAL_MS = 15 * 60 * 1000;
 

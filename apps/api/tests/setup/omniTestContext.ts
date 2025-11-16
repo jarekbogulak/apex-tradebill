@@ -60,7 +60,6 @@ export const createOmniTestContext = async (
 };
 
 declare global {
-  // eslint-disable-next-line no-var
   var createOmniTestContext: typeof createOmniTestContext;
 }
 
