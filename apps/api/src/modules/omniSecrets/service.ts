@@ -1,5 +1,5 @@
 import type { OmniSecretRepository, OmniSecretMetadataUpdates } from './repository.js';
-import type { OmniSecretCache, CachedSecret } from './cache.js';
+import type { OmniSecretCache, CachedSecret, CacheFetchResult } from './cache.js';
 import type { GsmSecretManagerClient } from './gsmClient.js';
 import {
   CacheSourceSchema,
@@ -7,6 +7,8 @@ import {
   type OmniSecretMetadata,
   SecretTypeSchema,
 } from './types.js';
+import type { OmniSecretsTelemetry } from '@api/observability/omniSecretsTelemetry.js';
+import type { OmniSecretsAlerts } from '@api/observability/alerts/omniSecrets.js';
 
 export interface OmniSecretServiceDeps {
   repository: OmniSecretRepository;
@@ -16,6 +18,8 @@ export interface OmniSecretServiceDeps {
     info(message: string, context?: Record<string, unknown>): void;
     warn(message: string, context?: Record<string, unknown>): void;
   };
+  telemetry?: OmniSecretsTelemetry;
+  alerts?: OmniSecretsAlerts;
 }
 
 export interface StatusEntry {
@@ -89,12 +93,17 @@ export class InvalidBreakGlassTtlError extends Error {
 
 const MAX_BREAK_GLASS_TTL_MS = 30 * 60 * 1000;
 
-const mapCacheToStatus = (metadata: OmniSecretMetadata, cached: CachedSecret | null): StatusEntry => {
+const mapCacheToStatus = (
+  metadata: OmniSecretMetadata,
+  cached: CachedSecret | null,
+  telemetry?: OmniSecretsTelemetry,
+): StatusEntry => {
   const cacheAgeSeconds =
     cached && cached.fetchedAt ? Math.max(0, Math.floor((Date.now() - cached.fetchedAt) / 1000)) : null;
 
   const cacheSource = cached?.source ?? metadata.cacheSource ?? 'empty';
   const safeSource = CacheSourceSchema.safeParse(cacheSource).success ? (cacheSource as CacheSource) : 'empty';
+  telemetry?.setCacheAge(metadata.secretType, safeSource, cacheAgeSeconds);
   return {
     secretType: metadata.secretType,
     status: metadata.status,
@@ -113,6 +122,8 @@ export const createOmniSecretService = ({
   cache,
   gsmClient,
   logger,
+  telemetry,
+  alerts,
 }: OmniSecretServiceDeps) => {
   const log = logger ?? {
     info: () => {},
@@ -136,7 +147,7 @@ export const createOmniSecretService = ({
     const entries = await repository.listMetadata();
     const data = entries.map((metadata) => {
       const cached = cache.getCached(metadata.secretType);
-      return mapCacheToStatus(metadata, cached);
+      return mapCacheToStatus(metadata, cached, telemetry);
     });
     return {
       data,
@@ -166,7 +177,7 @@ export const createOmniSecretService = ({
     });
 
     await repository.recordAccessEvent({
-      secretType,
+      secretType: metadata.secretType,
       action: 'rotation_preview',
       actorType: 'operator_cli',
       actorId: 'omni-ops',
@@ -188,12 +199,15 @@ export const createOmniSecretService = ({
 
     for (const entry of entries) {
       try {
-        const cached = await cache.refresh(entry);
+        const { entry: cached, durationMs }: CacheFetchResult = await cache.refresh(entry);
         refreshed.push(entry.secretType);
         await updateMetadata(entry.secretType, {
           cacheSource: cached.source,
           cacheVersion: cached.version,
         });
+        telemetry?.recordSecretRead(entry.secretType, cached.source, durationMs);
+        telemetry?.setCacheAge(entry.secretType, cached.source, 0);
+        alerts?.resetFailure(entry.secretType);
         await repository.recordAccessEvent({
           secretType: entry.secretType,
           action: 'cache_refresh',
@@ -201,7 +215,7 @@ export const createOmniSecretService = ({
           actorId: 'omni-cache',
           result: 'success',
           gcpSecretVersion: cached.version,
-          durationMs: cached.expiresAt - cached.fetchedAt,
+          durationMs,
         });
       } catch (error) {
         log.warn?.('omni.cache_refresh_failed', { err: error, secretType: entry.secretType });
@@ -210,6 +224,8 @@ export const createOmniSecretService = ({
           cacheSource: 'empty',
           cacheVersion: null,
         });
+        telemetry?.recordSecretFailure(entry.secretType, 'gsm_unavailable');
+        alerts?.recordCacheFailure(entry.secretType, 'gsm_unavailable');
         await repository.recordAccessEvent({
           secretType: entry.secretType,
           action: 'cache_refresh',
@@ -249,6 +265,9 @@ export const createOmniSecretService = ({
       cacheSource: cached.source,
       cacheVersion: cached.version,
     });
+    telemetry?.recordSecretRead(secretType, 'break_glass');
+    telemetry?.setCacheAge(secretType, 'break_glass', ttlMs / 1000);
+    alerts?.recordBreakGlass(secretType, expiresAtDate.toISOString());
 
     await repository.recordAccessEvent({
       secretType: metadata.secretType,

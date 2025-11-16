@@ -17,6 +17,8 @@ import postDeviceRegisterRoute, {
 import { DEFAULT_USER_ID } from './adapters/http/fastify/shared/http.js';
 import authenticationPlugin from './plugins/authentication.js';
 import observabilityPlugin from './plugins/observability.js';
+import omniSecretsPlugin from './plugins/omniSecrets.js';
+import errorHandlerPlugin from './plugins/errorHandler.js';
 import marketStreamPlugin from './plugins/marketStream.js';
 import { env } from './config/env.js';
 import { createDeviceAuthService } from './adapters/security/deviceAuthService.js';
@@ -91,6 +93,7 @@ export const buildServer = async (): Promise<FastifyInstance> => {
   });
 
   await app.register(observabilityPlugin);
+  await app.register(omniSecretsPlugin);
 
   const marketMetadataService = createMarketMetadataService();
   const infrastructure = await createMarketInfrastructure({
@@ -197,6 +200,8 @@ export const buildServer = async (): Promise<FastifyInstance> => {
   await app.register(postDeviceRegisterRoute, {
     deviceAuthServiceRef,
   });
+
+  await app.register(errorHandlerPlugin);
 
   await app.register(postHistoryImportRoute, {
     importTradeHistory: services.importTradeHistory,

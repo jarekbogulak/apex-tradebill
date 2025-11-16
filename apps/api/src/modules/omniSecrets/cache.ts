@@ -18,6 +18,11 @@ export interface CachedSecret {
   expiresAt: number;
 }
 
+export interface CacheFetchResult {
+  entry: CachedSecret;
+  durationMs: number;
+}
+
 export class OmniSecretCache {
   private readonly entries = new Map<string, CachedSecret>();
   private readonly ttlMs: number;
@@ -54,7 +59,7 @@ export class OmniSecretCache {
     return null;
   }
 
-  async fetchFromGsm(metadata: OmniSecretMetadata): Promise<CachedSecret> {
+  async fetchFromGsm(metadata: OmniSecretMetadata): Promise<CacheFetchResult> {
     const secret: SecretFetchResult = await this.gsmClient.accessSecretVersion(
       metadata.gcpSecretId,
       metadata.gcpVersionAlias ?? 'latest',
@@ -69,7 +74,7 @@ export class OmniSecretCache {
       expiresAt: now + this.ttlMs,
     };
     this.setEntry(metadata.secretType, entry);
-    return entry;
+    return { entry, durationMs: secret.durationMs };
   }
 
   async getOrFetch(metadata: OmniSecretMetadata): Promise<CachedSecret> {
@@ -77,10 +82,11 @@ export class OmniSecretCache {
     if (cached) {
       return cached;
     }
-    return this.fetchFromGsm(metadata);
+    const result = await this.fetchFromGsm(metadata);
+    return result.entry;
   }
 
-  async refresh(metadata: OmniSecretMetadata): Promise<CachedSecret> {
+  async refresh(metadata: OmniSecretMetadata): Promise<CacheFetchResult> {
     this.entries.delete(metadata.secretType);
     return this.fetchFromGsm(metadata);
   }

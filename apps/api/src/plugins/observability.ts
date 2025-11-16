@@ -1,3 +1,4 @@
+import { Registry } from 'prom-client';
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 
 export interface MetricLabels {
@@ -42,6 +43,7 @@ export interface ObservabilitySnapshot {
 declare module 'fastify' {
   interface FastifyInstance {
     observability: Observability;
+    metricsRegistry: Registry;
   }
 
   interface FastifyRequest {
@@ -227,6 +229,13 @@ export const observabilityPlugin: FastifyPluginAsync<ObservabilityPluginOptions>
 ) => {
   const observability = createObservability(histogramSize);
   app.decorate('observability', observability);
+  const metricsRegistry = new Registry();
+  app.decorate('metricsRegistry', metricsRegistry);
+
+  app.get('/metrics', async (_request, reply) => {
+    reply.header('Content-Type', metricsRegistry.contentType);
+    return reply.send(await metricsRegistry.metrics());
+  });
 
   const handleUncaughtException = (error: unknown) => {
     app.log.error({ err: error }, 'process.uncaught_exception');

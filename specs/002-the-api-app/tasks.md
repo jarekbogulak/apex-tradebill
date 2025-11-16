@@ -50,11 +50,11 @@
 - [X] T030 Add scheduled rotation monitor in `apps/api/src/jobs/omniRotationMonitor.ts` (or equivalent) that scans `rotation_due_at`, emits alerts/logs for overdue entries, and exposes status via metrics.
 
 ## Phase 3.4: Integration & Observability
-- [ ] T031 Register an `omniSecrets` Fastify plugin in `apps/api/src/plugins/omniSecrets.ts` and mount it from `apps/api/src/server.ts`, injecting service + cache instances via DI and exposing health/readiness hooks.
-- [ ] T032 Add structured logging + Prometheus metrics in `apps/api/src/observability/omniSecretsTelemetry.ts` (counters `omni_secret_reads_total`, `omni_secret_failures_total`, cache age gauge, rotation-overdue gauge) and export them through the existing metrics endpoint.
-- [ ] T033 Wire `OmniSecretAccessEvent` publishing + alert hooks in `apps/api/src/observability/alerts/omniSecrets.ts` so consecutive failures or overdue rotations trigger PagerDuty/Grafana rules per spec.
-- [ ] T034 Update Fastify error handling in `apps/api/src/plugins/errorHandler.ts` to map Omni-specific errors to 503/422 with explicit JSON payloads and log correlation IDs.
-- [ ] T035 Document and expose manual cache refresh + break-glass + rotation-monitor runbooks in `apps/api/docs/omni-secrets.md`, referencing new metrics and CLI usage.
+- [X] T031 Register an `omniSecrets` Fastify plugin in `apps/api/src/plugins/omniSecrets.ts` and mount it from `apps/api/src/server.ts`, injecting service + cache instances via DI and exposing health/readiness hooks.
+- [X] T032 Add structured logging + Prometheus metrics in `apps/api/src/observability/omniSecretsTelemetry.ts` (counters `omni_secret_reads_total`, `omni_secret_failures_total`, cache age gauge, rotation-overdue gauge) and export them through the existing metrics endpoint.
+- [X] T033 Wire `OmniSecretAccessEvent` publishing + alert hooks in `apps/api/src/observability/alerts/omniSecrets.ts` so consecutive failures or overdue rotations trigger PagerDuty/Grafana rules per spec.
+- [X] T034 Update Fastify error handling in `apps/api/src/plugins/errorHandler.ts` to map Omni-specific errors to 503/422 with explicit JSON payloads and log correlation IDs.
+- [X] T035 Document and expose manual cache refresh + break-glass + rotation-monitor runbooks in `apps/api/docs/omni-secrets.md`, referencing new metrics and CLI usage.
 
 ## Phase 3.5: Polish & Validation
 - [ ] T036 [P] Add unit tests for `GsmSecretManagerClient` retry/backoff logic in `apps/api/tests/unit/gsmClient.test.ts` (mocking Google SDK).
