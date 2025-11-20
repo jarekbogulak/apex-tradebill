@@ -1,5 +1,4 @@
-import { Counter, Gauge } from 'prom-client';
-import type { Registry } from 'prom-client';
+import { Counter, Gauge, Registry } from 'prom-client';
 import type { CacheSource } from '@api/modules/omniSecrets/types.js';
 
 export interface OmniSecretsTelemetry {
@@ -9,7 +8,9 @@ export interface OmniSecretsTelemetry {
   registry: Registry;
 }
 
-export const createOmniSecretsTelemetry = (registry: Registry): OmniSecretsTelemetry => {
+export const createOmniSecretsTelemetry = (providedRegistry?: Registry): OmniSecretsTelemetry => {
+  const registry = providedRegistry ?? new Registry();
+
   const secretReads = new Counter({
     name: 'omni_secret_reads_total',
     help: 'Total number of Apex Omni secret reads grouped by secret type and source.',

@@ -1,7 +1,6 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import ts from 'typescript';
 import type { DatabaseClient, DatabasePool } from '../pool.js';
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- need module function signatures for manual loader
@@ -14,39 +13,12 @@ let withTransaction: PoolModule['withTransaction'];
 let getSharedDatabasePool: PoolModule['getSharedDatabasePool'];
 
 beforeAll(async () => {
-  const sourcePath = path.resolve(
-    process.cwd(),
-    'src/adapters/persistence/providers/postgres/pool.ts',
-  );
-  const source = await fs.readFile(sourcePath, 'utf-8');
-  const transpiled = ts
-    .transpileModule(source, {
-      compilerOptions: {
-        module: ts.ModuleKind.CommonJS,
-        target: ts.ScriptTarget.ES2022,
-        esModuleInterop: true,
-      },
-      fileName: sourcePath,
-    })
-    .outputText.replace(/import\.meta\.url/g, 'new URL("file://" + __filename).href');
-
-  const module = { exports: {} as Record<string, unknown> };
-  const evaluator = new Function(
-    'exports',
-    'require',
-    'module',
-    '__filename',
-    '__dirname',
-    transpiled,
-  );
-  evaluator(module.exports, require, module, sourcePath, path.dirname(sourcePath));
-
-  createDatabasePool = module.exports.createDatabasePool as typeof createDatabasePool;
-  closeSharedDatabasePool = module.exports
-    .closeSharedDatabasePool as typeof closeSharedDatabasePool;
-  runPendingMigrations = module.exports.runPendingMigrations as typeof runPendingMigrations;
-  withTransaction = module.exports.withTransaction as typeof withTransaction;
-  getSharedDatabasePool = module.exports.getSharedDatabasePool as typeof getSharedDatabasePool;
+  const module = await import('../pool.js');
+  createDatabasePool = module.createDatabasePool;
+  closeSharedDatabasePool = module.closeSharedDatabasePool;
+  runPendingMigrations = module.runPendingMigrations;
+  withTransaction = module.withTransaction;
+  getSharedDatabasePool = module.getSharedDatabasePool;
 });
 
 const mockPoolConfigs: unknown[] = [];

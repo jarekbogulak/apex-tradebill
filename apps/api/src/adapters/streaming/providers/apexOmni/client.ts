@@ -21,6 +21,28 @@ export interface ApeXOmniClientConfig {
   wsHeartbeatIntervalMs?: number;
   wsMaxReconnectAttempts?: number;
   defaultAtrMultiplier?: string;
+  /**
+   * Test hook: provide a prebuilt Omni client to avoid hitting the real network.
+   */
+  omniClient?: {
+    publicApi: {
+      tickers: (symbol: string) => Promise<unknown>;
+      depth: (symbol: string, limit: number) => Promise<unknown>;
+      klines: (
+        symbol: string,
+        interval: OmniInterval,
+        start?: string,
+        end?: string,
+        limit?: number,
+      ) => Promise<unknown>;
+    };
+  };
+  /**
+   * Test hook: override WebSocket client construction.
+   */
+  wsClientFactory?: (
+    options: ConstructorParameters<typeof WSClient>[0],
+  ) => Pick<WSClient, 'subscribePublic' | 'close'>;
 }
 
 export interface MarketStreamConnectOptions {
@@ -165,9 +187,11 @@ export const createApeXOmniClient = ({
   wsHeartbeatIntervalMs,
   wsMaxReconnectAttempts,
   defaultAtrMultiplier = DEFAULT_ATR_MULTIPLIER,
+  omniClient: injectedOmniClient,
+  wsClientFactory,
 }: ApeXOmniClientConfig): ApeXOmniClient => {
   const resolvedEnv = createEnv(environment, restBaseUrl, restNetworkId);
-  const omniClient = ApexClient.createOmniClient(resolvedEnv);
+  const omniClient = injectedOmniClient ?? ApexClient.createOmniClient(resolvedEnv);
   const endpoint = sanitizeUrl(wsBaseUrl) ?? (resolvedEnv.isProd ? WS_PROD : WS_QA);
   const publicWsUrl = `${endpoint}${PUBLIC_WSS}`;
   const privateWsUrl = `${endpoint}${PRIVATE_WSS}`;
@@ -193,10 +217,19 @@ export const createApeXOmniClient = ({
     const apiSymbol = toApiSymbol(symbol);
 
     try {
+      const tickerPromise = omniClient.publicApi.tickers(apiSymbol);
+      const depthPromise: Promise<OmniDepth | null> = omniClient.publicApi
+        .depth(apiSymbol, 5)
+        .then((response) => response as OmniDepth)
+        .catch<OmniDepth | null>(() => null);
+      const candlesPromise = fetchKlines(symbol, '1', DEFAULT_KLINE_LOOKBACK).catch<
+        MarketCandle[]
+      >(() => []);
+
       const [tickerResponse, depthResponse, candles] = await Promise.all([
-        omniClient.publicApi.tickers(apiSymbol),
-        omniClient.publicApi.depth(apiSymbol, 5).catch<OmniDepth | null>(() => null),
-        fetchKlines(symbol, '1', DEFAULT_KLINE_LOOKBACK).catch<MarketCandle[]>(() => []),
+        tickerPromise,
+        depthPromise,
+        candlesPromise,
       ]);
 
       const ticker = (tickerResponse as OmniTicker[])[0];
@@ -263,7 +296,12 @@ export const createApeXOmniClient = ({
   }: MarketStreamConnectOptions): MarketStreamConnection => {
     const shouldUsePrivateAuth = Boolean(passphrase && apiKey && apiSecret);
 
-    const wsClient = new WSClient({
+    const buildWsClient =
+      wsClientFactory ??
+      ((options: ConstructorParameters<typeof WSClient>[0]) =>
+        new WSClient(options as ConstructorParameters<typeof WSClient>[0]));
+
+    const wsClient = buildWsClient({
       endPoint: endpoint,
       publicUrl: publicWsUrl,
       privateUrl: privateWsUrl,

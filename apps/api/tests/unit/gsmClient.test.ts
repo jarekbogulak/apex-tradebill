@@ -2,14 +2,9 @@ import { jest } from '@jest/globals';
 import { GsmSecretManagerClient } from '../../src/modules/omniSecrets/gsmClient.js';
 
 const accessSecretVersionMock = jest.fn();
-
-jest.mock('@google-cloud/secret-manager', () => {
-  return {
-    SecretManagerServiceClient: jest.fn(() => ({
-      accessSecretVersion: accessSecretVersionMock,
-    })),
-  };
-});
+const fakeClient = {
+  accessSecretVersion: accessSecretVersionMock,
+};
 
 describe('GsmSecretManagerClient', () => {
   beforeEach(() => {
@@ -24,7 +19,7 @@ describe('GsmSecretManagerClient', () => {
       },
     ]);
     const logger = { warn: jest.fn(), info: jest.fn(), error: jest.fn() };
-    const client = new GsmSecretManagerClient({ logger });
+    const client = new GsmSecretManagerClient({ logger, client: fakeClient });
 
     const result = await client.accessSecretVersion('projects/demo/secrets/foo', '7');
 
@@ -41,7 +36,7 @@ describe('GsmSecretManagerClient', () => {
     const error = new Error('boom');
     accessSecretVersionMock.mockRejectedValue(error);
     const logger = { warn: jest.fn(), info: jest.fn(), error: jest.fn() };
-    const client = new GsmSecretManagerClient({ logger });
+    const client = new GsmSecretManagerClient({ logger, client: fakeClient });
 
     await expect(client.accessSecretVersion('projects/demo/secrets/foo', 'latest')).rejects.toThrow(
       'boom',

@@ -6,12 +6,11 @@ describe('GET /ops/apex-omni/secrets/status (contract)', () => {
   it('rejects requests without operator authorization', async () => {
     const ctx = await globalThis.createOmniTestContext({ env: defaultTestEnv });
     try {
-      const response = await ctx.request.get(path);
+      const response = await ctx.request.get(path).send();
       expect(response.status).toBe(401);
-      expect(response.body).toMatchObject({
-        error: expect.objectContaining({
-          code: 'UNAUTHENTICATED',
-        }),
+        expect(response.body).toMatchObject({
+        code: 'UNAUTHENTICATED',
+        message: expect.any(String),
       });
     } finally {
       await ctx.close();
@@ -27,7 +26,8 @@ describe('GET /ops/apex-omni/secrets/status (contract)', () => {
       const response = await ctx.request
         .get(path)
         .set('Authorization', `Bearer ${token}`)
-        .set('x-device-id', 'ops-console');
+        .set('x-device-id', 'ops-console')
+        .send();
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body.data)).toBe(true);

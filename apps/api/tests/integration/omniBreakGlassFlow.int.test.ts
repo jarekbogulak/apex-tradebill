@@ -21,9 +21,13 @@ describe('Omni break-glass flow', () => {
 
       const statusResponse = await ctx.request
         .get('/ops/apex-omni/secrets/status')
-        .set('Authorization', `Bearer ${statusToken}`);
+        .set('Authorization', `Bearer ${statusToken}`)
+        .send();
 
-      expect(statusResponse.body.cacheSource).toBe('break_glass');
+      const entry = (statusResponse.body.data ?? []).find(
+        (item: { secretType: string }) => item.secretType === 'trading_api_key',
+      );
+      expect(entry?.cacheSource).toBe('break_glass');
     } finally {
       await ctx.close();
     }

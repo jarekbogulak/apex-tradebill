@@ -44,9 +44,7 @@ describe('POST /ops/apex-omni/secrets/break-glass (contract)', () => {
 
       expect(response.status).toBe(422);
       expect(response.body).toMatchObject({
-        error: expect.objectContaining({
-          code: 'INVALID_BREAK_GLASS_TTL',
-        }),
+        code: 'INVALID_BREAK_GLASS_TTL',
       });
     } finally {
       await ctx.close();

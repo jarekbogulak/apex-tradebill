@@ -8,12 +8,16 @@ describe('Omni secret cache hydration', () => {
       const startedAt = Date.now();
       const response = await ctx.request
         .get('/ops/apex-omni/secrets/status')
-        .set('Authorization', `Bearer ${token}`);
+        .set('Authorization', `Bearer ${token}`)
+        .send();
       const duration = Date.now() - startedAt;
 
       expect(response.status).toBe(200);
       expect(duration).toBeLessThan(1000);
-      expect(response.body.cacheSource).not.toBe('empty');
+      const entry = (response.body.data ?? []).find(
+        (item: { secretType: string }) => item.secretType === 'trading_api_key',
+      );
+      expect(entry?.cacheSource).not.toBe('empty');
     } finally {
       await ctx.close();
     }
@@ -30,10 +34,14 @@ describe('Omni secret cache hydration', () => {
 
       const response = await ctx.request
         .get('/ops/apex-omni/secrets/status')
-        .set('Authorization', `Bearer ${token}`);
+        .set('Authorization', `Bearer ${token}`)
+        .send();
 
       expect(response.status).toBe(200);
-      expect(response.body.cacheSource).toBe('gsm');
+      const entry = (response.body.data ?? []).find(
+        (item: { secretType: string }) => item.secretType === 'trading_api_key',
+      );
+      expect(entry?.cacheSource).toBe('gsm');
     } finally {
       await ctx.close();
     }

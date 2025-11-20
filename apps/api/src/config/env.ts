@@ -384,3 +384,4 @@ const buildEnv = (): AppEnv => {
 };
 
 export const env = buildEnv();
+export const rebuildEnv = buildEnv;

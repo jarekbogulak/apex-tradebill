@@ -1,4 +1,14 @@
 import type { FastifyPluginAsync } from 'fastify';
+import type {
+  SecretManagerServiceClient,
+  protos as SecretManagerProtos,
+} from '@google-cloud/secret-manager';
+
+type AccessSecretVersionResult = [
+  SecretManagerProtos.google.cloud.secretmanager.v1.IAccessSecretVersionResponse,
+  SecretManagerProtos.google.cloud.secretmanager.v1.IAccessSecretVersionRequest | undefined,
+  Record<string, never> | undefined,
+];
 import { env } from '../config/env.js';
 import { buildDatabasePoolOptions } from '../config/database.js';
 import {
@@ -6,6 +16,7 @@ import {
   runPendingMigrations,
 } from '../adapters/persistence/providers/postgres/pool.js';
 import { createOmniSecretRepository } from '@api/modules/omniSecrets/repository.js';
+import { createInMemoryOmniSecretRepository } from '@api/modules/omniSecrets/repository.inMemory.js';
 import { OmniSecretCache } from '@api/modules/omniSecrets/cache.js';
 import { GsmSecretManagerClient } from '@api/modules/omniSecrets/gsmClient.js';
 import { createOmniSecretService } from '@api/modules/omniSecrets/service.js';
@@ -24,10 +35,44 @@ declare module 'fastify' {
 }
 
 export const omniSecretsPlugin: FastifyPluginAsync = async (app) => {
-  const pool = await getSharedDatabasePool(buildDatabasePoolOptions());
-  await runPendingMigrations(pool);
-  const repository = createOmniSecretRepository(pool);
-  const gsmClient = new GsmSecretManagerClient({ logger: app.log });
+  const forceInMemoryDb = process.env.APEX_FORCE_IN_MEMORY_DB === 'true';
+  const useInMemoryRepo = (env.database.allowInMemory && !env.database.url) || forceInMemoryDb;
+
+  const repository = useInMemoryRepo
+    ? createInMemoryOmniSecretRepository()
+    : createOmniSecretRepository(await getSharedDatabasePool(buildDatabasePoolOptions()));
+
+  if (!useInMemoryRepo) {
+    const pool = await getSharedDatabasePool(buildDatabasePoolOptions());
+    await runPendingMigrations(pool);
+  }
+
+  const gsmClient = new GsmSecretManagerClient({
+    logger: app.log,
+    client: useInMemoryRepo
+      ? ({
+          accessSecretVersion: async ({ name }: { name: string }): Promise<AccessSecretVersionResult> => {
+            const simulateFailure =
+              process.env.NODE_ENV === 'test' && process.env.APEX_SIMULATE_GSM_FAILURE === 'true';
+            if (simulateFailure) {
+              throw new Error('simulated gsm failure');
+            }
+            const payload = Buffer.from(`${name}:mock-secret`, 'utf8');
+            const mockResponse: AccessSecretVersionResult = [
+              {
+                payload: { data: payload },
+                name: `${name}/versions/mock`,
+              },
+              undefined,
+              undefined,
+            ];
+            return mockResponse;
+          },
+        } satisfies Pick<SecretManagerServiceClient, 'accessSecretVersion'> & {
+          accessSecretVersion: ({ name }: { name: string }) => Promise<AccessSecretVersionResult>;
+        })
+      : undefined,
+  });
   const cache = new OmniSecretCache({
     ttlMs: env.omniSecrets.cacheTtlSeconds * 1000,
     gsmClient,

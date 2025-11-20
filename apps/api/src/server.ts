@@ -19,7 +19,7 @@ import observabilityPlugin from './plugins/observability.js';
 import omniSecretsPlugin from './plugins/omniSecrets.js';
 import errorHandlerPlugin from './plugins/errorHandler.js';
 import marketStreamPlugin from './plugins/marketStream.js';
-import { env } from './config/env.js';
+import { rebuildEnv, env, ConfigError } from './config/env.js';
 import { createDeviceAuthService } from './adapters/security/deviceAuthService.js';
 import { createMarketInfrastructure } from './adapters/streaming/marketData/infrastructure.js';
 import { resolveTradeCalculationRepository } from './adapters/persistence/trade-calculations/resolveTradeCalculationRepository.js';
@@ -65,6 +65,19 @@ const createAppLoggerFacade = (log: FastifyInstance['log']): AppLoggerFacade => 
 });
 
 export const buildServer = async (): Promise<FastifyInstance> => {
+  // Rebuild env in tests when overrides are applied
+  if (process.env.NODE_ENV === 'test') {
+    Object.assign(env, rebuildEnv());
+  }
+  const isNonProd = process.env.NODE_ENV !== 'production';
+  const pointsAtProdGsm =
+    process.env.APEX_OMNI_ENVIRONMENT === 'prod' && Boolean(process.env.GCP_PROJECT_ID);
+  if (isNonProd && pointsAtProdGsm) {
+    throw new ConfigError(
+      'Non-production environments cannot point at production Google Secret Manager secrets. Update GCP_PROJECT_ID or APEX_OMNI_ENVIRONMENT.',
+    );
+  }
+
   const app = Fastify({
     logger: {
       level: env.server.logLevel,
@@ -170,9 +183,11 @@ export const buildServer = async (): Promise<FastifyInstance> => {
     );
   };
 
+  const forceInMemoryDb = process.env.APEX_FORCE_IN_MEMORY_DB === 'true';
+
   if (tradeCalculationPool) {
     await onPersistentPoolReady(tradeCalculationPool);
-  } else if (env.database.allowInMemory) {
+  } else if (env.database.allowInMemory && !forceInMemoryDb) {
     scheduleDatabaseRecovery({
       repository: tradeCalculations,
       onPersistentResourcesReady: onPersistentPoolReady,

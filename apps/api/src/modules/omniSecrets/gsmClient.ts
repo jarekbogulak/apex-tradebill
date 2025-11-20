@@ -2,6 +2,7 @@ import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 
 export interface GsmSecretManagerClientOptions {
   projectId?: string | null;
+  client?: Pick<SecretManagerServiceClient, 'accessSecretVersion'>;
   logger?: {
     info(message: string, context?: Record<string, unknown>): void;
     warn(message: string, context?: Record<string, unknown>): void;
@@ -16,11 +17,15 @@ export interface SecretFetchResult {
 }
 
 export class GsmSecretManagerClient {
-  private readonly client: SecretManagerServiceClient;
+  private readonly client: Pick<SecretManagerServiceClient, 'accessSecretVersion'>;
   private readonly logger: NonNullable<GsmSecretManagerClientOptions['logger']>;
 
   constructor(private readonly options: GsmSecretManagerClientOptions = {}) {
-    this.client = new SecretManagerServiceClient();
+    this.client =
+      options.client ??
+      new SecretManagerServiceClient(
+        options.projectId ? { projectId: options.projectId ?? undefined } : undefined,
+      );
     this.logger =
       options.logger ??
       ({

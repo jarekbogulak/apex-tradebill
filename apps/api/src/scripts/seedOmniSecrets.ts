@@ -60,7 +60,13 @@ DO UPDATE SET
   updated_at = NOW();
 `.trim();
 
-const run = async () => {
+export const seedOmniSecrets = async () => {
+  if (process.env.NODE_ENV === 'test') {
+    return;
+  }
+  if (process.env.APEX_FORCE_IN_MEMORY_DB === 'true') {
+    return;
+  }
   const pool = await getSharedDatabasePool(buildDatabasePoolOptions());
   await runPendingMigrations(pool);
 
@@ -78,7 +84,7 @@ const run = async () => {
   await closeSharedDatabasePool();
 };
 
-void run().catch((error) => {
+void seedOmniSecrets().catch((error) => {
   console.error('Failed to seed Omni secrets catalog:', error);
   process.exitCode = 1;
 });

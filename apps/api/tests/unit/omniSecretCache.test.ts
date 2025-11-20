@@ -11,22 +11,21 @@ const buildMetadata = (secretType: string): OmniSecretMetadata => ({
   rotationDueAt: new Date(Date.now() + 86_400_000).toISOString(),
 });
 
-type MockAccessArgs = { name: string };
-
 type FakeGsmClient = {
-  accessSecretVersion: jest.Mock<Promise<Array<{ payload: { data: Buffer }; name?: string }>>, [MockAccessArgs]>;
+  accessSecretVersion: jest.Mock<
+    Promise<{ value: string; version: string; durationMs: number }>,
+    [string, string?]
+  >;
 };
 
 const createMockGsmClient = (): FakeGsmClient => {
   return {
-    accessSecretVersion: jest.fn(async ({ name }: MockAccessArgs) => {
-      const version = name.split('/').pop() ?? 'latest';
-      return [
-        {
-          payload: { data: Buffer.from(`${name}-value`) },
-          name: `projects/demo/secrets/mock/versions/${version}`,
-        },
-      ];
+    accessSecretVersion: jest.fn(async (secretResource: string, version = 'latest') => {
+      return {
+        value: `${secretResource}-value`,
+        version,
+        durationMs: 1,
+      };
     }),
   };
 };

@@ -3,7 +3,7 @@ import { defaultTestEnv } from '../helpers/omniTestUtils.js';
 describe('Omni environment guardrails', () => {
   it('refuses to start when a non-production node tries to reference production GSM secrets', async () => {
     const attempt = async () => {
-      const ctx = await globalThis.createOmniTestContext({
+      const ctxPromise = globalThis.createOmniTestContext({
         env: {
           ...defaultTestEnv,
           NODE_ENV: 'development',
@@ -11,7 +11,7 @@ describe('Omni environment guardrails', () => {
           GCP_PROJECT_ID: 'prod-project',
         },
       });
-      await ctx.close();
+      await ctxPromise.then((ctx) => ctx.close());
     };
 
     await expect(attempt()).rejects.toThrow(/production/i);

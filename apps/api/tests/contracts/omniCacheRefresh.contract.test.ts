@@ -11,7 +11,8 @@ describe('POST /internal/apex-omni/secrets/cache/refresh (contract)', () => {
       const token = createOperatorJwt({ scope: ['svc.omni.secrets.cache'] });
       const response = await ctx.request
         .post(path)
-        .set('Authorization', `Bearer ${token}`);
+        .set('Authorization', `Bearer ${token}`)
+        .send({});
 
       expect(response.status).toBe(202);
       expect(response.body).toEqual(

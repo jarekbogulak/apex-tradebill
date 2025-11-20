@@ -60,7 +60,7 @@
 - [X] T036 [P] Add unit tests for `GsmSecretManagerClient` retry/backoff logic in `apps/api/tests/unit/gsmClient.test.ts` (mocking Google SDK).
 - [X] T037 [P] Add unit tests for `OmniSecretCache` expiry + break-glass precedence in `apps/api/tests/unit/omniSecretCache.test.ts`.
 - [X] T038 Validate Quickstart steps by following `specs/002-the-api-app/quickstart.md`, capturing evidence in `apps/api/docs/verification/omni-secrets.md` and updating screenshots/log snippets.
-- [ ] T039 [P] Run full test + lint suite (`pnpm lint && pnpm test --filter=apps/api`) and update `apps/api/CHANGELOG.md` with summary + Constitution references.
+- [X] T039 [P] Run full test + lint suite (`pnpm lint && pnpm test --filter=apps/api`) and update `apps/api/CHANGELOG.md` with summary + Constitution references.
 
 ## Dependencies
 - Setup (T001-T004) must finish before any tests or implementation.

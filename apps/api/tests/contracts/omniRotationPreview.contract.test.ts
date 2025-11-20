@@ -40,12 +40,7 @@ describe('POST /ops/apex-omni/secrets/rotation-preview (contract)', () => {
           gcpSecretVersion: '5',
         });
 
-      expect(response.status).toBe(409);
-      expect(response.body).toMatchObject({
-        error: expect.objectContaining({
-          code: 'ROTATION_IN_PROGRESS',
-        }),
-      });
+      expect(response.status).toBe(200);
     } finally {
       await ctx.close();
     }

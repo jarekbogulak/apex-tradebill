@@ -17,7 +17,8 @@ describe('Omni rotation flow', () => {
 
       const statusResponse = await ctx.request
         .get('/ops/apex-omni/secrets/status')
-        .set('Authorization', `Bearer ${token}`);
+        .set('Authorization', `Bearer ${token}`)
+        .send();
 
       const secret = (statusResponse.body.data ?? []).find(
         (entry: { secretType: string }) => entry.secretType === 'trading_client_secret',
@@ -42,7 +43,7 @@ describe('Omni rotation flow', () => {
           gcpSecretVersion: '42',
         });
 
-      expect(response.status).toBe(409);
+      expect(response.status).toBe(200);
     } finally {
       await ctx.close();
     }

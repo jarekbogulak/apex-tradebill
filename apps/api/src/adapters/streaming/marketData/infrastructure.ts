@@ -39,6 +39,15 @@ export const createMarketInfrastructure = async ({
   logger,
   marketMetadata,
 }: CreateMarketInfrastructureOptions): Promise<MarketInfrastructure> => {
+  if (env.apex.allowInMemoryMarketData) {
+    logger.warn(
+      'Using in-memory market data (APEX_ALLOW_IN_MEMORY_MARKET_DATA=true); Apex Omni streaming disabled for tests.',
+    );
+    return {
+      marketData: createInMemoryMarketDataProvider(),
+    };
+  }
+
   const credentials = env.apex.credentials;
   if (!credentials) {
     logger.warn(
