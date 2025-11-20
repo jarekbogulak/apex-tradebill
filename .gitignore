@@ -96,3 +96,6 @@ pids
 !.codex/prompts/
 !.codex/prompts/**
 !.codex/config.toml.example
+
+# Gemini CLI artifacts
+.gemini/
