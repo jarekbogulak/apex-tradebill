@@ -1,4 +1,5 @@
 import Fastify, { type FastifyInstance } from 'fastify';
+import { pathToFileURL } from 'node:url';
 import { createMarketMetadataService } from './domain/markets/marketMetadataService.js';
 import { createSwappableTradeCalculationRepository } from './domain/trade-calculation/trade-calculation.entity.js';
 import getSymbolRoute from './adapters/http/fastify/markets/getSymbol.js';
@@ -347,6 +348,10 @@ const start = async () => {
   }
 };
 
-if (process.env.RUN_OMNI_SERVER === 'true') {
+const isDirectRun =
+  process.argv[1] != null && import.meta.url === pathToFileURL(process.argv[1]).href;
+const shouldStart = process.env.RUN_OMNI_SERVER !== 'false';
+
+if (isDirectRun && shouldStart) {
   void start();
 }
