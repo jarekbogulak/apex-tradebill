@@ -1,3 +1,5 @@
+/// <reference types="jest" />
+
 import { defaultTestEnv, createOperatorJwt } from '../helpers/omniTestUtils.js';
 
 const path = '/internal/apex-omni/secrets/cache/refresh';
