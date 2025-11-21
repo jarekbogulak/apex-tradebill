@@ -48,6 +48,8 @@ export const HistoryList = ({
     <FlatList
       data={data}
       keyExtractor={keyExtractor}
+      style={styles.list}
+      contentContainerStyle={styles.listContent}
       refreshControl={
         <RefreshControl
           refreshing={loading}
@@ -58,6 +60,7 @@ export const HistoryList = ({
       onEndReachedThreshold={0.75}
       onEndReached={() => onLoadMore?.()}
       scrollEnabled={false}
+      ListFooterComponent={<View style={styles.footerSpacer} />}
       ListHeaderComponent={
         error && data.length > 0 ? (
           <View style={styles.errorHeader}>{renderErrorCard()}</View>
@@ -183,5 +186,14 @@ const createStyles = (theme: Theme) =>
       fontSize: 13,
       color: theme.colors.textMuted,
       textAlign: 'center',
+    },
+    list: {
+      flexGrow: 0,
+    },
+    listContent: {
+      paddingBottom: theme.spacing.xl * 2,
+    },
+    footerSpacer: {
+      height: theme.spacing.xl * 1.5,
     },
   }) as const;
