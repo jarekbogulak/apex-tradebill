@@ -102,18 +102,17 @@ export default function TradeCalculatorScreen() {
           />
         )}
 
-        {shouldShowErrorBanner && errorMessage ? <TradeErrorBanner message={errorMessage} /> : null}
+    {shouldShowErrorBanner && errorMessage ? <TradeErrorBanner message={errorMessage} /> : null}
 
-        <TradeHistoryCard
-          items={historyItems}
-          isFetching={historyQuery.isFetching}
-          error={historyError}
-          historyUnavailable={historyUnavailable}
-          lastCheckedAt={historyLastCheckedAt}
-          autoRetryIntervalMs={historyAutoRetryIntervalMs ?? undefined}
-          onRefresh={() => historyQuery.refetch()}
-        />
-      </ScrollView>
+    <TradeHistoryCard
+      items={historyItems}
+      isFetching={historyQuery.isFetching}
+      error={historyError}
+      historyUnavailable={historyUnavailable}
+      lastCheckedAt={historyLastCheckedAt}
+      onRefresh={() => historyQuery.refetch()}
+    />
+  </ScrollView>
 
       <TradeInputSheet
         visible={isFormOpen}

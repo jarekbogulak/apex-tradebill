@@ -14,7 +14,6 @@ interface TradeHistoryCardProps {
   error?: Error | null;
   historyUnavailable?: boolean;
   lastCheckedAt?: number | null;
-  autoRetryIntervalMs?: number;
 }
 
 export const TradeHistoryCard = ({
@@ -24,17 +23,12 @@ export const TradeHistoryCard = ({
   error = null,
   historyUnavailable = false,
   lastCheckedAt = null,
-  autoRetryIntervalMs,
 }: TradeHistoryCardProps) => {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const shouldShowLoadingState = isFetching && !error && items.length === 0;
   const refreshDisabled = isFetching;
   const lastCheckedText = formatLastChecked(lastCheckedAt);
-  const autoRetryText =
-    historyUnavailable && autoRetryIntervalMs
-      ? `Auto retry every ${Math.round(autoRetryIntervalMs / 1000)}s.`
-      : null;
 
   return (
     <View style={styles.card}>
@@ -61,8 +55,9 @@ export const TradeHistoryCard = ({
             hint="Tap refresh to check again or wait for automatic retries."
             testID="trade-history-unavailable"
           />
-          <Text style={styles.metaText}>Last checked: {lastCheckedText}</Text>
-          {autoRetryText ? <Text style={styles.metaText}>{autoRetryText}</Text> : null}
+          <Text style={[styles.metaText, styles.unavailableMetaText]}>
+            Last checked: {lastCheckedText}
+          </Text>
         </View>
       ) : shouldShowLoadingState ? (
         <View style={styles.loadingState}>
@@ -135,7 +130,7 @@ const createStyles = (theme: Theme) => {
     },
     unavailableBlock: {
       width: '100%',
-      gap: theme.spacing.xs,
+      gap: theme.spacing.md,
     },
     loadingState: {
       minHeight: 160,
@@ -154,6 +149,9 @@ const createStyles = (theme: Theme) => {
     metaText: {
       fontSize: 12,
       color: theme.colors.textMuted,
+    },
+    unavailableMetaText: {
+      marginTop: theme.spacing.xs,
     },
   } as const;
 };
