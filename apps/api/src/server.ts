@@ -1,5 +1,5 @@
 import Fastify, { type FastifyInstance } from 'fastify';
-import { fileURLToPath } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { createMarketMetadataService } from './domain/markets/marketMetadataService.js';
 import { createSwappableTradeCalculationRepository } from './domain/trade-calculation/trade-calculation.entity.js';
 import getSymbolRoute from './adapters/http/fastify/markets/getSymbol.js';
@@ -17,8 +17,10 @@ import postDeviceRegisterRoute, {
 import { DEFAULT_USER_ID } from './adapters/http/fastify/shared/http.js';
 import authenticationPlugin from './plugins/authentication.js';
 import observabilityPlugin from './plugins/observability.js';
+import omniSecretsPlugin from './plugins/omniSecrets.js';
+import errorHandlerPlugin from './plugins/errorHandler.js';
 import marketStreamPlugin from './plugins/marketStream.js';
-import { env } from './config/env.js';
+import { rebuildEnv, env, ConfigError } from './config/env.js';
 import { createDeviceAuthService } from './adapters/security/deviceAuthService.js';
 import { createMarketInfrastructure } from './adapters/streaming/marketData/infrastructure.js';
 import { resolveTradeCalculationRepository } from './adapters/persistence/trade-calculations/resolveTradeCalculationRepository.js';
@@ -64,6 +66,19 @@ const createAppLoggerFacade = (log: FastifyInstance['log']): AppLoggerFacade => 
 });
 
 export const buildServer = async (): Promise<FastifyInstance> => {
+  // Rebuild env in tests when overrides are applied
+  if (process.env.NODE_ENV === 'test') {
+    Object.assign(env, rebuildEnv());
+  }
+  const isNonProd = process.env.NODE_ENV !== 'production';
+  const pointsAtProdGsm =
+    process.env.APEX_OMNI_ENVIRONMENT === 'prod' && Boolean(process.env.GCP_PROJECT_ID);
+  if (isNonProd && pointsAtProdGsm) {
+    throw new ConfigError(
+      'Non-production environments cannot point at production Google Secret Manager secrets. Update GCP_PROJECT_ID or APEX_OMNI_ENVIRONMENT.',
+    );
+  }
+
   const app = Fastify({
     logger: {
       level: env.server.logLevel,
@@ -91,6 +106,7 @@ export const buildServer = async (): Promise<FastifyInstance> => {
   });
 
   await app.register(observabilityPlugin);
+  await app.register(omniSecretsPlugin);
 
   const marketMetadataService = createMarketMetadataService();
   const infrastructure = await createMarketInfrastructure({
@@ -168,9 +184,11 @@ export const buildServer = async (): Promise<FastifyInstance> => {
     );
   };
 
+  const forceInMemoryDb = process.env.APEX_FORCE_IN_MEMORY_DB === 'true';
+
   if (tradeCalculationPool) {
     await onPersistentPoolReady(tradeCalculationPool);
-  } else if (env.database.allowInMemory) {
+  } else if (env.database.allowInMemory && !forceInMemoryDb) {
     scheduleDatabaseRecovery({
       repository: tradeCalculations,
       onPersistentResourcesReady: onPersistentPoolReady,
@@ -197,6 +215,8 @@ export const buildServer = async (): Promise<FastifyInstance> => {
   await app.register(postDeviceRegisterRoute, {
     deviceAuthServiceRef,
   });
+
+  await app.register(errorHandlerPlugin);
 
   await app.register(postHistoryImportRoute, {
     importTradeHistory: services.importTradeHistory,
@@ -328,15 +348,10 @@ const start = async () => {
   }
 };
 
-const isDirectRun = () => {
-  const entry = process.argv[1];
-  if (!entry) {
-    return false;
-  }
+const isDirectRun =
+  process.argv[1] != null && import.meta.url === pathToFileURL(process.argv[1]).href;
+const shouldStart = process.env.RUN_OMNI_SERVER !== 'false';
 
-  return entry === fileURLToPath(import.meta.url);
-};
-
-if (isDirectRun()) {
+if (isDirectRun && shouldStart) {
   void start();
 }

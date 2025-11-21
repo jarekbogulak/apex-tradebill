@@ -9,8 +9,9 @@ const config = createBaseJestConfig({
     color: 'magenta',
   },
   setupFiles: ['<rootDir>/apps/api/jest.env.cjs'],
-  preset: 'ts-jest',
+  preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
+  extensionsToTreatAsEsm: ['.ts'],
   testMatch: [
     '<rootDir>/apps/api/**/__tests__/**/*.(spec|test).[tj]s?(x)',
     '<rootDir>/apps/api/**/*.(spec|test).[tj]s?(x)',
@@ -19,6 +20,7 @@ const config = createBaseJestConfig({
     '^.+\\.(ts|tsx)$': [
       'ts-jest',
       {
+        useESM: true,
         tsconfig: '<rootDir>/apps/api/tsconfig.jest.json',
         diagnostics: {
           warnOnly: process.env.CI !== 'true',
@@ -26,7 +28,14 @@ const config = createBaseJestConfig({
       },
     ],
   },
-  setupFilesAfterEnv: ['<rootDir>/apps/api/jest.setup.cjs'],
+  injectGlobals: true,
+  setupFilesAfterEnv: [
+    '<rootDir>/apps/api/jest.setup.cjs',
+    '<rootDir>/apps/api/tests/setup/omniTestContext.ts',
+  ],
+  moduleNameMapper: {
+    '^@api/(.*)\\.js$': '<rootDir>/apps/api/src/$1',
+  },
 });
 
 module.exports = config;

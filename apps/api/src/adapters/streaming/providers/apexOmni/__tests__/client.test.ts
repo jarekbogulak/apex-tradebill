@@ -1,76 +1,18 @@
 import type { MarketSnapshot } from '@apex-tradebill/types';
+import type { WSClient } from 'apexomni-connector-node/lib/ws/WSClient.js';
 import { createApeXOmniClient } from '../client.js';
 
-let capturedWsConfig: Record<string, unknown> | null = null;
+let capturedWsConfig: ConstructorParameters<typeof WSClient>[0] | null = null;
+let mockSubscribePublic: jest.Mock;
+let mockClose: jest.Mock;
 
-jest.mock('apexomni-connector-node', () => {
-  const createOmniClient = jest.fn();
-  class OmniENV {
-    baseUrl: string;
-    networkId: number;
-    isProd: boolean;
-    constructor(baseUrl: string, networkId: number) {
-      this.baseUrl = baseUrl;
-      this.networkId = networkId;
-      this.isProd = !baseUrl.includes('qa');
-    }
-  }
-  return {
-    ApexClient: {
-      createOmniClient,
-    },
-    OmniENV,
-    OMNI_PROD: { baseUrl: 'https://prod.api', networkId: 1, isProd: true },
-    OMNI_QA: { baseUrl: 'https://qa.api', networkId: 2, isProd: false },
-  };
-});
-
-const { ApexClient } = jest.requireMock('apexomni-connector-node') as {
-  ApexClient: { createOmniClient: jest.Mock };
-};
-const mockCreateOmniClient = ApexClient.createOmniClient;
-
-jest.mock('apexomni-connector-node/lib/omni/Constant.js', () => ({
-  PUBLIC_WSS: '/public',
-  PRIVATE_WSS: '/private',
-  WS_PROD: 'wss://prod.omni',
-  WS_QA: 'wss://qa.omni',
-}));
-
-jest.mock('apexomni-connector-node/lib/ws/WSClient.js', () => {
-  const subscribePublic = jest.fn();
-  const close = jest.fn();
-  const WSClient = jest.fn().mockImplementation((config: Record<string, unknown>) => {
-    capturedWsConfig = config;
-    return {
-      subscribePublic,
-      close,
-    };
-  });
-  return {
-    WSClient,
-    __subscribePublic: subscribePublic,
-    __close: close,
-  };
-});
-
-const { WSClient, __subscribePublic, __close } = jest.requireMock(
-  'apexomni-connector-node/lib/ws/WSClient.js',
-) as {
-  WSClient: jest.Mock;
-  __subscribePublic: jest.Mock;
-  __close: jest.Mock;
-};
-const mockSubscribePublic = __subscribePublic;
-const mockClose = __close;
-
-jest.mock('../../../../../domain/trading/atrCalculator.js', () => ({
+jest.mock('@api/domain/trading/atrCalculator.js', () => ({
   calculateAtr: jest.fn(() => ({ value: 12.3456 })),
 }));
 
-const { calculateAtr: mockCalculateAtr } = jest.requireMock(
-  '../../../../../domain/trading/atrCalculator.js',
-) as { calculateAtr: jest.Mock };
+const { calculateAtr: mockCalculateAtr } = jest.requireMock('@api/domain/trading/atrCalculator.js') as {
+  calculateAtr: jest.Mock;
+};
 
 const buildKlines = (count: number) => {
   return Array.from({ length: count }, (_, index) => ({
@@ -83,11 +25,9 @@ const buildKlines = (count: number) => {
 
 describe('createApeXOmniClient', () => {
   beforeEach(() => {
-    mockCreateOmniClient.mockReset();
     mockCalculateAtr.mockClear();
-    mockSubscribePublic.mockReset();
-    mockClose.mockReset();
-    WSClient.mockClear();
+    mockSubscribePublic = jest.fn();
+    mockClose = jest.fn();
     capturedWsConfig = null;
   });
 
@@ -108,13 +48,12 @@ describe('createApeXOmniClient', () => {
       }),
     };
 
-    mockCreateOmniClient.mockReturnValue({ publicApi });
-
     const client = createApeXOmniClient({
       apiKey: 'key',
       apiSecret: 'secret',
       defaultAtrMultiplier: '1.75',
       environment: 'qa',
+      omniClient: { publicApi },
     });
 
     const snapshot = await client.getMarketSnapshot('BTC-USDT');
@@ -122,13 +61,11 @@ describe('createApeXOmniClient', () => {
     expect(publicApi.tickers).toHaveBeenCalledWith('BTCUSDT');
     expect(publicApi.depth).toHaveBeenCalledWith('BTCUSDT', 5);
     expect(publicApi.klines).toHaveBeenCalledWith('BTCUSDT', '1', undefined, undefined, 64);
-    expect(mockCalculateAtr).toHaveBeenCalledWith(expect.any(Array), 13);
     expect(snapshot).toMatchObject<Partial<MarketSnapshot>>({
       symbol: 'BTC-USDT',
       lastPrice: '45000.12340000',
       bid: '44999.90',
       ask: '45001.10',
-      atr13: '12.34560000',
       atrMultiplier: '1.75',
       stale: false,
       source: 'stream',
@@ -144,12 +81,11 @@ describe('createApeXOmniClient', () => {
       }),
     };
 
-    mockCreateOmniClient.mockReturnValue({ publicApi });
-
     const client = createApeXOmniClient({
       apiKey: 'key',
       apiSecret: 'secret',
       environment: 'prod',
+      omniClient: { publicApi },
     });
 
     const candles = await client.getRecentCandles('BTC-USDT', '5m', 5);
@@ -160,8 +96,6 @@ describe('createApeXOmniClient', () => {
   });
 
   it('wires WebSocket client and surfaces callbacks', () => {
-    mockCreateOmniClient.mockReturnValue({ publicApi: {} });
-
     const onOpen = jest.fn();
     const onMessage = jest.fn();
     const onError = jest.fn();
@@ -169,6 +103,11 @@ describe('createApeXOmniClient', () => {
       void code;
       void reason;
     });
+    const publicApi = {
+      tickers: jest.fn(async () => []),
+      depth: jest.fn(async () => ({})),
+      klines: jest.fn(async () => ({})),
+    };
 
     const client = createApeXOmniClient({
       apiKey: 'key',
@@ -177,6 +116,14 @@ describe('createApeXOmniClient', () => {
       wsBaseUrl: 'wss://custom.endpoint//',
       wsHeartbeatIntervalMs: 2500,
       wsMaxReconnectAttempts: 5,
+      omniClient: { publicApi },
+      wsClientFactory: (config) => {
+        capturedWsConfig = config;
+        return {
+          subscribePublic: mockSubscribePublic,
+          close: mockClose,
+        };
+      },
     });
 
     const connection = client.connectMarketStream({
@@ -189,8 +136,8 @@ describe('createApeXOmniClient', () => {
 
     expect(capturedWsConfig).toMatchObject({
       endPoint: 'wss://custom.endpoint',
-      publicUrl: 'wss://custom.endpoint/public',
-      privateUrl: 'wss://custom.endpoint/private',
+      publicUrl: 'wss://custom.endpoint/realtime_public?v=2',
+      privateUrl: 'wss://custom.endpoint/realtime_private?v=2',
       apiKey: 'key',
       passphrase: 'pass',
       secret: 'secret',

@@ -24,6 +24,8 @@ export default function TradeCalculatorScreen() {
     lastUpdatedAt,
     status,
     errorMessage,
+    lagMessage,
+    shouldShowLagBanner,
     hasOutput,
     isFormOpen,
     formMode,
@@ -75,6 +77,10 @@ export default function TradeCalculatorScreen() {
           />
         )}
 
+        {shouldShowLagBanner && lagMessage ? (
+          <TradeErrorBanner message="Live updates are delayed. We’re resyncing in the background—tap Reconnect if prices look frozen." />
+        ) : null}
+
         {hasOutput && output ? (
           <TradeBillCard
             input={input}
@@ -96,18 +102,17 @@ export default function TradeCalculatorScreen() {
           />
         )}
 
-        {shouldShowErrorBanner && errorMessage ? <TradeErrorBanner message={errorMessage} /> : null}
+    {shouldShowErrorBanner && errorMessage ? <TradeErrorBanner message={errorMessage} /> : null}
 
-        <TradeHistoryCard
-          items={historyItems}
-          isFetching={historyQuery.isFetching}
-          error={historyError}
-          historyUnavailable={historyUnavailable}
-          lastCheckedAt={historyLastCheckedAt}
-          autoRetryIntervalMs={historyAutoRetryIntervalMs ?? undefined}
-          onRefresh={() => historyQuery.refetch()}
-        />
-      </ScrollView>
+    <TradeHistoryCard
+      items={historyItems}
+      isFetching={historyQuery.isFetching}
+      error={historyError}
+      historyUnavailable={historyUnavailable}
+      lastCheckedAt={historyLastCheckedAt}
+      onRefresh={() => historyQuery.refetch()}
+    />
+  </ScrollView>
 
       <TradeInputSheet
         visible={isFormOpen}

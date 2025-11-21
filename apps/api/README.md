@@ -31,6 +31,21 @@ Key values in `.env` (validated by `src/config/env.ts` at startup):
 - `APEX_ALLOW_IN_MEMORY_DB` – opt-in toggle for using the in-memory trade repository when Postgres is unavailable (defaults to `true` outside production).
 - `APEX_ALLOW_IN_MEMORY_MARKET_DATA` – opt-in toggle for synthetic market data when ApeX Omni credentials are missing (defaults to `true` outside production).
 - `APEX_OMNI_*` – credentials, REST, and WebSocket endpoints for ApeX Omni (`*_TESTNET_*` values support sandbox usage).
+- `GCP_PROJECT_ID` – production Google Cloud project hosting the `apex-omni-*` secrets. The API refuses to start in production without this value.
+- `OMNI_BREAKGLASS_PUBLIC_KEY` – base64-encoded Curve25519 public key used to encrypt break-glass payloads submitted by operators. Required in production.
+- `OMNI_CACHE_TTL_SECONDS` – cache duration for Google Secret Manager fetches (defaults to 300 seconds).
+
+### Google Secret Manager (production-only)
+
+- Grant the API service account `roles/secretmanager.secretAccessor` and any operator automation identity `roles/secretmanager.admin`.
+- Populate the `apex-omni-*` secrets in GSM before deploying the API.
+- If `GCP_PROJECT_ID` or `OMNI_BREAKGLASS_PUBLIC_KEY` is missing in production, `src/config/env.ts` throws a `ConfigError` and the server aborts startup so secrets are never read from unsafe sources.
+- When GSM is unreachable at runtime, the Omni routes degrade and emit alerts; after 30 minutes all break-glass payloads expire automatically.
+
+### Security & CI checks
+
+- Run `pnpm --filter @apex-tradebill/api security:scan` locally or inside CI to execute both secrets scanning (`pnpm dlx gitleaks detect`) and `pnpm audit` against this package. This satisfies the constitution’s *Security and Secrets Protection* and *Test-First and Reliability* mandates.
+- The `security:secrets` and `security:audit` subtasks live in `apps/api/package.json` and should be wired into whatever CI runner protects `main`. Failing scans must block merges per the constitution.
 
 ## Common Scripts
 

@@ -26,6 +26,18 @@ export interface ResolveTradeCalculationRepositoryOptions {
 export const resolveTradeCalculationRepository = async ({
   logger,
 }: ResolveTradeCalculationRepositoryOptions): Promise<ResolvedTradeCalculationRepository> => {
+  const allowInMemory = env.database.allowInMemory;
+  const hasDatabaseUrl = Boolean(env.database.url);
+  const forceInMemory = process.env.APEX_FORCE_IN_MEMORY_DB === 'true';
+
+  if ((!hasDatabaseUrl && allowInMemory) || forceInMemory) {
+    logger.warn('database.connection_skipped_using_in_memory_repository');
+    return {
+      repository: createInMemoryTradeCalculationRepository(),
+      pool: null,
+    };
+  }
+
   try {
     const pool = await getSharedDatabasePool(buildDatabasePoolOptions());
     await runPendingMigrations(pool);

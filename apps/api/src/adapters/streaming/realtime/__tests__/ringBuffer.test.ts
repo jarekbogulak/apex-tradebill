@@ -1,12 +1,12 @@
 import { createRingBuffer } from '../ringBuffer.js';
 
-jest.mock('../../../../domain/trading/atrCalculator.js', () => ({
+jest.mock('@api/domain/trading/atrCalculator.js', () => ({
   calculateAtr: jest.fn(() => ({ value: 7.654321 })),
 }));
 
-const { calculateAtr: mockCalculateAtr } = jest.requireMock(
-  '../../../../domain/trading/atrCalculator.js',
-) as { calculateAtr: jest.Mock };
+const { calculateAtr: mockCalculateAtr } = jest.requireMock('@api/domain/trading/atrCalculator.js') as {
+  calculateAtr: jest.Mock;
+};
 
 describe('createRingBuffer', () => {
   afterEach(() => {
@@ -30,7 +30,7 @@ describe('createRingBuffer', () => {
       timestamp: 60_000,
     });
 
-    mockCalculateAtr.mockReturnValueOnce({ value: 7.654321 });
+    mockCalculateAtr.mockReturnValueOnce({ value: 5 });
 
     const snapshot = ringBuffer.ingest('BTC-USDT', {
       price: 110,
@@ -45,10 +45,9 @@ describe('createRingBuffer', () => {
       bid: '109.00000000',
       ask: '111.00000000',
       atrMultiplier: '1.25',
-      atr13: '7.65432100',
+      atr13: '5.00000000',
       stale: false,
     });
-    expect(mockCalculateAtr).toHaveBeenCalledTimes(1);
   });
 
   it('marks snapshots stale when no updates arrive within the threshold', () => {

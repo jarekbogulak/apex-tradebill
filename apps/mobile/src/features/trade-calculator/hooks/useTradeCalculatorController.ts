@@ -1,6 +1,6 @@
 import type { MarketSnapshot, Symbol } from '@apex-tradebill/types';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   selectCalculatorInput,
@@ -29,10 +29,12 @@ interface UseTradeCalculatorControllerResult {
   status: TradeCalculatorStatus;
   output: TradeCalculatorState['output'];
   snapshot: MarketSnapshot | null;
+  lagMessage: string | null;
   warnings: TradeCalculatorState['warnings'];
   lastUpdatedAt: string | null;
   errorMessage: string | null;
   hasOutput: boolean;
+  shouldShowLagBanner: boolean;
   isFormOpen: boolean;
   formMode: 'create' | 'edit';
   isSubmitting: boolean;
@@ -105,6 +107,18 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
   const userId = useAuthStore((state) => state.userId ?? null);
 
   const latestPriceRef = useRef<string | null>(null);
+  const lagDetectedAtRef = useRef<number | null>(null);
+  const lastSnapshotAtRef = useRef<number | null>(null);
+  const snapshotOnLagRef = useRef<number | null>(null);
+  const [lagBannerVisible, setLagBannerVisible] = useState(false);
+  const LAG_ERROR_MESSAGE = 'Refresh loop lag detected';
+
+  const recordLagDetected = () => {
+    lagDetectedAtRef.current = Date.now();
+    snapshotOnLagRef.current = lastSnapshotAtRef.current;
+    setLagBannerVisible(true);
+    setStatus('error', LAG_ERROR_MESSAGE);
+  };
 
   const {
     items: historyItems,
@@ -152,10 +166,12 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
       syncEntryFromMarket(incoming.lastPrice);
     },
     onLiveTick: operations.requestLivePreview,
-    onLagDetected: () => {
-      setStatus('error', 'Refresh loop lag detected');
-    },
+    onLagDetected: recordLagDetected,
   });
+
+  useEffect(() => {
+    lastSnapshotAtRef.current = marketStream.lastUpdatedAt ?? null;
+  }, [marketStream.lastUpdatedAt]);
 
   useEffect(() => {
     const patch: Partial<TradeCalculatorInputState> = {};
@@ -252,17 +268,41 @@ export const useTradeCalculatorController = (): UseTradeCalculatorControllerResu
   ]);
 
   const hasOutput = Boolean(output);
-  const shouldShowErrorBanner = Boolean(hasOutput && status === 'error' && errorMessage);
+
+  useEffect(() => {
+    if (!lagDetectedAtRef.current || !lagBannerVisible) {
+      return;
+    }
+
+    const latestSnapshot = marketStream.lastUpdatedAt ?? null;
+    const sawNewSnapshot =
+      latestSnapshot != null &&
+      (snapshotOnLagRef.current == null || latestSnapshot > snapshotOnLagRef.current);
+
+    if (sawNewSnapshot) {
+      lagDetectedAtRef.current = null;
+      snapshotOnLagRef.current = null;
+      setLagBannerVisible(false);
+      setStatus(hasOutput ? 'success' : 'idle');
+    }
+  }, [hasOutput, lagBannerVisible, marketStream.lastUpdatedAt, setStatus]);
+
+  const shouldShowLagBanner = lagBannerVisible;
+  const shouldShowErrorBanner = Boolean(
+    hasOutput && status === 'error' && errorMessage && !lagBannerVisible,
+  );
 
   return {
     input,
     status,
     output,
     snapshot,
+    lagMessage: lagBannerVisible ? LAG_ERROR_MESSAGE : null,
     warnings,
     lastUpdatedAt,
     errorMessage,
     hasOutput,
+    shouldShowLagBanner,
     isFormOpen,
     formMode,
     isSubmitting: operations.isSubmitting,

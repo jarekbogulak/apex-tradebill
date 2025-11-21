@@ -3,6 +3,8 @@
 Auto-generated from all feature plans. Last updated: 2025-09-25
 
 ## Active Technologies
+- TypeScript 5.9 targeting Node.js 22 (Fastify API workstation) + Fastify 5, `@google-cloud/secret-manager`, `apexomni-connector-node`, Pino logger, Postgres + `pg` driver (002-the-api-app)
+- Google Secret Manager for secret material; Postgres for metadata/access logs (002-the-api-app)
 
 See app-specific guides for detailed stacks:
 
@@ -14,7 +16,7 @@ See app-specific guides for detailed stacks:
 Platform-specific conventions now live in each app's `AGENTS.md`. Shared guidance that applies repo-wide remains below.
 
 ## Recent Changes
-
+- 002-the-api-app: Added TypeScript 5.9 targeting Node.js 22 (Fastify API workstation) + Fastify 5, `@google-cloud/secret-manager`, `apexomni-connector-node`, Pino logger, Postgres + `pg` driver
 - 001-develop-apex-tradebill: Updated stack to TypeScript 5.9, Expo SDK 54 (React Native 0.81), Node.js 22 LTS, Expo Router 6, TanStack Query 5, Zustand 5, Fastify 5 + `ws` 8
 
 <!-- MANUAL ADDITIONS START -->
