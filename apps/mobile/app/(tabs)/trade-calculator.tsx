@@ -24,6 +24,8 @@ export default function TradeCalculatorScreen() {
     lastUpdatedAt,
     status,
     errorMessage,
+    lagMessage,
+    shouldShowLagBanner,
     hasOutput,
     isFormOpen,
     formMode,
@@ -74,6 +76,10 @@ export default function TradeCalculatorScreen() {
             onReconnect={marketStream.reconnect}
           />
         )}
+
+        {shouldShowLagBanner && lagMessage ? (
+          <TradeErrorBanner message="Live updates are delayed. We’re resyncing in the background—tap Reconnect if prices look frozen." />
+        ) : null}
 
         {hasOutput && output ? (
           <TradeBillCard
