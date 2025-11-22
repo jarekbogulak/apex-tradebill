@@ -8,6 +8,7 @@ export const buildDatabasePoolOptions = (): DatabasePoolOptions => {
     max: env.database.pool.max,
     idleTimeoutMillis: env.database.pool.idleTimeoutMs,
     applicationName: env.database.pool.applicationName,
+    connectionTimeoutMillis: 10_000,
   };
 
   if (env.database.sslMode === 'disable') {

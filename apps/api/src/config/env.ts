@@ -63,7 +63,9 @@ const applyEnvOverrides = (fullPath: string) => {
   const content = fs.readFileSync(fullPath, 'utf-8');
   const parsed = parseEnvContent(content);
   for (const [key, value] of Object.entries(parsed)) {
-    process.env[key] = value;
+    if (process.env[key] === undefined) {
+      process.env[key] = value;
+    }
   }
 };
 
@@ -73,11 +75,12 @@ const loadEnvFile = (fileName: string) => {
     return;
   }
 
-  try {
-    if (typeof process.loadEnvFile === 'function') {
-      process.loadEnvFile(fullPath);
-    }
+  // Only use file-based env in non-production to avoid clobbering deployment secrets.
+  if (process.env.NODE_ENV === 'production') {
+    return;
+  }
 
+  try {
     applyEnvOverrides(fullPath);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
