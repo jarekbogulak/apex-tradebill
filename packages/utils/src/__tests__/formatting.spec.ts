@@ -5,6 +5,7 @@ import {
   formatPercent,
   getContrastTokens,
 } from '../formatting.js';
+import type * as formattingModule from '../formatting.js';
 
 describe('Formatting utilities', () => {
   test('applies locale-aware currency and percentage formats', () => {
@@ -34,7 +35,7 @@ describe('Formatting utilities', () => {
 
     jest.isolateModules(() => {
       const { formatCurrencyCompact: fallbackCompact } =
-        jest.requireActual<typeof import('../formatting.js')>('../formatting.js');
+        jest.requireActual<typeof formattingModule>('../formatting.js');
       expect(fallbackCompact(72_025_000)).toBe('$72M');
       expect(fallbackCompact(12_500, { compactMaximumFractionDigits: 1 })).toBe('$12.5K');
     });

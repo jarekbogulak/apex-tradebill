@@ -41,6 +41,24 @@ const stripQuotes = (value: string): string => {
   return trimmed;
 };
 
+const PUBLIC_ENV_KEYS = new Set([
+  'APP_ENV',
+  'EXPO_PUBLIC_APP_ENV',
+  'EXPO_PUBLIC_ENVIRONMENT',
+  'EXPO_PUBLIC_API_URL',
+  'EXPO_PUBLIC_API_WS_URL',
+  'EXPO_PUBLIC_APEX_ENVIRONMENT',
+  'EXPO_PUBLIC_APEX_REST_URL',
+  'EXPO_PUBLIC_APEX_WS_URL',
+  'EXPO_PUBLIC_APEX_TESTNET_REST_URL',
+  'EXPO_PUBLIC_APEX_TESTNET_WS_URL',
+  'APEX_OMNI_ENVIRONMENT',
+  'APEX_OMNI_REST_URL',
+  'APEX_OMNI_WS_URL',
+  'APEX_OMNI_TESTNET_REST_URL',
+  'APEX_OMNI_TESTNET_WS_URL',
+]);
+
 const parseEnvFile = (filePath: string): Record<string, string> => {
   const content = fs.readFileSync(filePath, 'utf8');
   return content.split(/\r?\n/).reduce<Record<string, string>>((acc, rawLine) => {
@@ -69,17 +87,33 @@ const loadEnvFile = (filePath: string) => {
   }
   const values = parseEnvFile(filePath);
   for (const [key, value] of Object.entries(values)) {
+    if (!PUBLIC_ENV_KEYS.has(key)) {
+      continue;
+    }
     if (process.env[key] === undefined) {
       process.env[key] = value;
     }
   }
 };
 
+const isProdBuild = () => {
+  const token =
+    process.env.APP_ENV ??
+    process.env.EXPO_PUBLIC_APP_ENV ??
+    process.env.EXPO_PUBLIC_ENVIRONMENT ??
+    process.env.NODE_ENV;
+  return normalizeAppEnvironment(token) === 'production';
+};
+
 const loadEnvironment = (preferred?: string): AppEnvironment => {
   const projectRoot = __dirname;
 
+  const prodBuild = isProdBuild();
+
   loadEnvFile(path.join(projectRoot, '.env'));
-  loadEnvFile(path.join(projectRoot, '.env.local'));
+  if (!prodBuild) {
+    loadEnvFile(path.join(projectRoot, '.env.local'));
+  }
 
   const resolved = normalizeAppEnvironment(
     preferred ??
@@ -90,7 +124,9 @@ const loadEnvironment = (preferred?: string): AppEnvironment => {
   );
 
   loadEnvFile(path.join(projectRoot, `.env.${resolved}`));
-  loadEnvFile(path.join(projectRoot, `.env.${resolved}.local`));
+  if (!prodBuild) {
+    loadEnvFile(path.join(projectRoot, `.env.${resolved}.local`));
+  }
 
   return resolved;
 };
