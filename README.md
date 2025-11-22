@@ -31,6 +31,12 @@ tests/        Cross-cutting suites (contract, latency, etc.)
 - Xcode and/or Android Studio for native simulators
 - Access to Apex Omni API credentials for production or testnet usage
 
+## CI / Quality Gates
+
+- Run `pnpm install --frozen-lockfile` on Node.js 22 in CI (use `corepack` to pin).
+- Gate merges with `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm security:scan`.
+- Prefer workspace-local scripts (`pnpm --filter ...`) rather than ad-hoc tool invocations to avoid phantom dependency drift.
+
 ## Installation & Workspace Scripts
 
 Install dependencies from the repo root:

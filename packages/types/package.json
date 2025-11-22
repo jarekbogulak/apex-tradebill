@@ -13,7 +13,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "lint": "eslint --config ../../configs/eslint/.eslintrc.cjs --ext .ts .",
+    "lint": "eslint --config ../../configs/eslint/eslint.config.cjs --ext .ts .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "engines": {

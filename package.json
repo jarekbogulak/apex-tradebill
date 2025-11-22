@@ -7,17 +7,15 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm --filter @apex-tradebill/mobile start",
     "dev:mobile": "pnpm --filter @apex-tradebill/mobile start",
     "dev:api": "pnpm --filter @apex-tradebill/api dev",
     "build": "pnpm -r build",
-    "lint": "cross-env ESLINT_USE_FLAT_CONFIG=0 eslint --config configs/eslint/.eslintrc.cjs --ext .ts,.tsx,.js .",
-    "lint:fix": "cross-env ESLINT_USE_FLAT_CONFIG=0 eslint --config configs/eslint/.eslintrc.cjs --ext .ts,.tsx,.js . --fix",
+    "lint": "eslint --config configs/eslint/eslint.config.cjs --ext .ts,.tsx,.js .",
+    "lint:fix": "eslint --config configs/eslint/eslint.config.cjs --ext .ts,.tsx,.js . --fix",
     "format": "prettier --config .prettierrc.cjs --write \"**/*.{cjs,js,ts,tsx,jsx,json,md}\"",
     "format:check": "prettier --config .prettierrc.cjs --check \"**/*.{cjs,js,ts,tsx,jsx,json,md}\"",
-    "typecheck": "pnpm -r typecheck --if-present",
+    "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r test --if-present",
-    "test:all": "pnpm -r test --if-present",
     "test:api": "pnpm --filter @apex-tradebill/api test",
     "test:mobile": "pnpm --filter @apex-tradebill/mobile test",
     "security:audit": "pnpm audit --prod --dev",
@@ -30,16 +28,11 @@
     "@typescript-eslint/eslint-plugin": "^8.12.2",
     "@typescript-eslint/parser": "^8.12.2",
     "@jest/types": "^29.6.3",
-    "@types/react": "^19.0.4",
-    "cross-env": "^7.0.3",
     "eslint": "^9.13.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-native": "^5.0.0",
-    "prettier": "^3.3.3",
-    "react": "^19.1.0",
-    "react-native": "^0.81.4",
-    "ts-node": "^10.9.2"
+    "prettier": "^3.3.3"
   }
 }

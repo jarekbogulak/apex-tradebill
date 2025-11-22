@@ -8,7 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "eslint --config ../../configs/eslint/.eslintrc.cjs --ext .ts,.tsx .",
+    "lint": "eslint --config ../../configs/eslint/eslint.config.cjs --ext .ts,.tsx .",
     "test": "jest --passWithNoTests"
   },
   "dependencies": {
