@@ -25,15 +25,16 @@ describe('Formatting utilities', () => {
     const originalNumberFormat = Intl.NumberFormat;
     const numberFormatSpy = jest
       .spyOn(Intl, 'NumberFormat')
-      .mockImplementation((locale: string | string[], options?: Intl.NumberFormatOptions) => {
+      .mockImplementation(((locales?: Intl.LocalesArgument, options?: Intl.NumberFormatOptions) => {
         if (options?.notation === 'compact') {
           throw new Error('Unsupported');
         }
-        return new originalNumberFormat(locale as string, options);
-      });
+        return new originalNumberFormat(locales, options);
+      }) as typeof Intl.NumberFormat);
 
     jest.isolateModules(() => {
-      const { formatCurrencyCompact: fallbackCompact } = require('../formatting.js');
+      const { formatCurrencyCompact: fallbackCompact } =
+        jest.requireActual<typeof import('../formatting.js')>('../formatting.js');
       expect(fallbackCompact(72_025_000)).toBe('$72M');
       expect(fallbackCompact(12_500, { compactMaximumFractionDigits: 1 })).toBe('$12.5K');
     });
