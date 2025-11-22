@@ -1,7 +1,4 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
-import fs from 'node:fs';
-import path from 'node:path';
-
 type AppEnvironment = 'development' | 'preview' | 'production';
 type ApexEnvironment = 'prod' | 'qa';
 
@@ -30,105 +27,13 @@ const normalizeApexEnvironment = (value: string | undefined): ApexEnvironment =>
   return 'prod';
 };
 
-const stripQuotes = (value: string): string => {
-  const trimmed = value.trim();
-  if (
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-  ) {
-    return trimmed.slice(1, -1);
-  }
-  return trimmed;
-};
-
-const PUBLIC_ENV_KEYS = new Set([
-  'APP_ENV',
-  'EXPO_PUBLIC_APP_ENV',
-  'EXPO_PUBLIC_ENVIRONMENT',
-  'EXPO_PUBLIC_API_URL',
-  'EXPO_PUBLIC_API_WS_URL',
-  'EXPO_PUBLIC_APEX_ENVIRONMENT',
-  'EXPO_PUBLIC_APEX_REST_URL',
-  'EXPO_PUBLIC_APEX_WS_URL',
-  'EXPO_PUBLIC_APEX_TESTNET_REST_URL',
-  'EXPO_PUBLIC_APEX_TESTNET_WS_URL',
-  'APEX_OMNI_ENVIRONMENT',
-  'APEX_OMNI_REST_URL',
-  'APEX_OMNI_WS_URL',
-  'APEX_OMNI_TESTNET_REST_URL',
-  'APEX_OMNI_TESTNET_WS_URL',
-]);
-
-const parseEnvFile = (filePath: string): Record<string, string> => {
-  const content = fs.readFileSync(filePath, 'utf8');
-  return content.split(/\r?\n/).reduce<Record<string, string>>((acc, rawLine) => {
-    const line = rawLine.trim();
-    if (!line || line.startsWith('#')) {
-      return acc;
-    }
-    const sanitized = line.startsWith('export ') ? line.slice(7).trim() : line;
-    const delimiterIndex = sanitized.indexOf('=');
-    if (delimiterIndex <= 0) {
-      return acc;
-    }
-    const key = sanitized.slice(0, delimiterIndex).trim();
-    const value = stripQuotes(sanitized.slice(delimiterIndex + 1));
-    if (!key) {
-      return acc;
-    }
-    acc[key] = value;
-    return acc;
-  }, {});
-};
-
-const loadEnvFile = (filePath: string) => {
-  if (!fs.existsSync(filePath)) {
-    return;
-  }
-  const values = parseEnvFile(filePath);
-  for (const [key, value] of Object.entries(values)) {
-    if (!PUBLIC_ENV_KEYS.has(key)) {
-      continue;
-    }
-    if (process.env[key] === undefined) {
-      process.env[key] = value;
-    }
-  }
-};
-
-const isProdBuild = () => {
-  const token =
-    process.env.APP_ENV ??
-    process.env.EXPO_PUBLIC_APP_ENV ??
-    process.env.EXPO_PUBLIC_ENVIRONMENT ??
-    process.env.NODE_ENV;
-  return normalizeAppEnvironment(token) === 'production';
-};
-
-const loadEnvironment = (preferred?: string): AppEnvironment => {
-  const projectRoot = __dirname;
-
-  const prodBuild = isProdBuild();
-
-  loadEnvFile(path.join(projectRoot, '.env'));
-  if (!prodBuild) {
-    loadEnvFile(path.join(projectRoot, '.env.local'));
-  }
-
-  const resolved = normalizeAppEnvironment(
+const resolveAppEnvironment = (preferred?: string): AppEnvironment => {
+  return normalizeAppEnvironment(
     preferred ??
-      process.env.APP_ENV ??
       process.env.EXPO_PUBLIC_APP_ENV ??
       process.env.EXPO_PUBLIC_ENVIRONMENT ??
       process.env.NODE_ENV,
   );
-
-  loadEnvFile(path.join(projectRoot, `.env.${resolved}`));
-  if (!prodBuild) {
-    loadEnvFile(path.join(projectRoot, `.env.${resolved}.local`));
-  }
-
-  return resolved;
 };
 
 const sanitizeUrl = (value: string): string => {
@@ -167,31 +72,19 @@ const resolveApiConfig = () => {
 };
 
 const resolveApexEndpoints = () => {
-  const explicitEnvironment = normalizeApexEnvironment(
-    process.env.EXPO_PUBLIC_APEX_ENVIRONMENT ?? process.env.APEX_OMNI_ENVIRONMENT,
-  );
+  const explicitEnvironment = normalizeApexEnvironment(process.env.EXPO_PUBLIC_APEX_ENVIRONMENT);
 
   const prodRestUrl = sanitizeUrl(
-    requireString(
-      'EXPO_PUBLIC_APEX_REST_URL',
-      process.env.APEX_OMNI_REST_URL ?? 'https://api.pro.apex.exchange',
-    ),
+    requireString('EXPO_PUBLIC_APEX_REST_URL', 'https://api.pro.apex.exchange'),
   );
   const prodWsUrl = sanitizeUrl(
-    requireString(
-      'EXPO_PUBLIC_APEX_WS_URL',
-      process.env.APEX_OMNI_WS_URL ?? 'wss://stream.pro.apex.exchange',
-    ),
+    requireString('EXPO_PUBLIC_APEX_WS_URL', 'wss://stream.pro.apex.exchange'),
   );
 
   const testnetRestUrlRaw =
-    process.env.EXPO_PUBLIC_APEX_TESTNET_REST_URL ??
-    process.env.APEX_OMNI_TESTNET_REST_URL ??
-    'https://testnet.omni.apex.exchange/api/';
+    process.env.EXPO_PUBLIC_APEX_TESTNET_REST_URL ?? 'https://testnet.omni.apex.exchange/api/';
   const testnetWsUrlRaw =
-    process.env.EXPO_PUBLIC_APEX_TESTNET_WS_URL ??
-    process.env.APEX_OMNI_TESTNET_WS_URL ??
-    'wss://testnet.omni.apex.exchange/ws/v1';
+    process.env.EXPO_PUBLIC_APEX_TESTNET_WS_URL ?? 'wss://testnet.omni.apex.exchange/ws/v1';
 
   const testnetRestUrl = sanitizeUrl(testnetRestUrlRaw);
   const testnetWsUrl = sanitizeUrl(testnetWsUrlRaw);
@@ -199,9 +92,7 @@ const resolveApexEndpoints = () => {
   const inferredEnvironment =
     explicitEnvironment === 'prod' &&
     (process.env.EXPO_PUBLIC_APEX_TESTNET_REST_URL ||
-      process.env.EXPO_PUBLIC_APEX_TESTNET_WS_URL ||
-      process.env.APEX_OMNI_TESTNET_REST_URL ||
-      process.env.APEX_OMNI_TESTNET_WS_URL)
+      process.env.EXPO_PUBLIC_APEX_TESTNET_WS_URL)
       ? 'qa'
       : explicitEnvironment;
 
@@ -226,12 +117,7 @@ const resolveApexEndpoints = () => {
 };
 
 export default ({ config }: ConfigContext = {} as ConfigContext): ExpoConfig => {
-  const appEnv = loadEnvironment(
-    process.env.APP_ENV ??
-      process.env.EXPO_PUBLIC_APP_ENV ??
-      process.env.EXPO_PUBLIC_ENVIRONMENT ??
-      process.env.NODE_ENV,
-  );
+  const appEnv = resolveAppEnvironment(process.env.EXPO_PUBLIC_APP_ENV);
 
   const api = resolveApiConfig();
   const apexOmni = resolveApexEndpoints();

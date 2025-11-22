@@ -74,8 +74,8 @@ pnpm --filter @apex-tradebill/api migrate
 ## Environment Configuration
 
 - Copy `apps/api/.env.example` to `apps/api/.env` and supply database, JWT, and Apex Omni credentials.
-- Copy `apps/mobile/.env.example` to the appropriate `.env.<environment>` file (e.g., `.env.development`). The Expo app reads environment-specific values through `app.config.ts`.
-- Both workspaces respect `EXPO_PUBLIC_*` and `APEX_OMNI_*` variables documented in their respective README files.
+- Copy `apps/mobile/.env.example` to the appropriate `.env.<environment>` file (e.g., `.env.development`). The Expo app only consumes `EXPO_PUBLIC_*` variables; never place private ApeX Omni secrets in mobile env files.
+- The API continues to use `APEX_OMNI_*` for server-side credentials; the mobile app uses `EXPO_PUBLIC_APEX_*` for public endpoints only. See the app-specific READMEs for details.
 
 ## Device Activation Flow
 
