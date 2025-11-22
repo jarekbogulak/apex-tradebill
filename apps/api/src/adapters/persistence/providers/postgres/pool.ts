@@ -13,6 +13,7 @@ interface PgPoolConfig {
   max?: number;
   idleTimeoutMillis?: number;
   allowExitOnIdle?: boolean;
+  connectionTimeoutMillis?: number;
   ssl?: boolean | { rejectUnauthorized: boolean };
   application_name?: string;
 }
@@ -49,6 +50,7 @@ export interface DatabasePoolOptions {
   min?: number;
   max?: number;
   idleTimeoutMillis?: number;
+  connectionTimeoutMillis?: number;
   ssl?: boolean | { rejectUnauthorized: boolean };
   applicationName?: string;
 }
@@ -95,6 +97,7 @@ export const createDatabasePool = async ({
   min = parseInteger(process.env.SUPABASE_DB_POOL_MIN, 0),
   max = parseInteger(process.env.SUPABASE_DB_POOL_MAX, 10),
   idleTimeoutMillis = parseInteger(process.env.SUPABASE_DB_IDLE_TIMEOUT_MS, 30_000),
+  connectionTimeoutMillis,
   ssl,
   applicationName = process.env.SUPABASE_DB_APPLICATION ?? 'apex-tradebill-api',
 }: DatabasePoolOptions = {}): Promise<DatabasePool> => {
@@ -111,6 +114,7 @@ export const createDatabasePool = async ({
     max,
     idleTimeoutMillis,
     allowExitOnIdle: true,
+    connectionTimeoutMillis,
     application_name: applicationName,
     ssl: resolveSslConfig(connectionString, ssl),
   });
