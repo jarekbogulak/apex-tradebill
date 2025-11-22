@@ -16,28 +16,21 @@ corepack pnpm install
 
 ## Environment Configuration
 
-`app.config.ts` loads environment variables from the closest matching file:
-
-1. `.env`
-2. `.env.<environment>`
-3. `.env.local`
-4. `.env.<environment>.local`
-
-Copy the template and adjust values for your profile:
+Expo injects any `EXPO_PUBLIC_*` variables from your `.env*` files into the client bundle. Copy the template and adjust values for your profile:
 
 ```bash
 cp apps/mobile/.env.example apps/mobile/.env.development
 ```
 
-Key variables:
+Key variables (all public):
 
-- `EXPO_PUBLIC_APP_ENV` – `development` | `preview` | `production`; influences which `.env.*` file is read.
+- `EXPO_PUBLIC_APP_ENV` – `development` | `preview` | `production`; used for display/analytics only.
 - `EXPO_PUBLIC_API_URL` – base URL for the TradeBill API (defaults to `http://127.0.0.1:4000`).
 - `EXPO_PUBLIC_API_WS_URL` – optional override for WebSocket connections; falls back to `EXPO_PUBLIC_API_URL`.
-- `EXPO_PUBLIC_APEX_ENVIRONMENT` – `prod` (default) or `testnet`. When unset the mobile build inherits `APEX_OMNI_ENVIRONMENT` from the API env.
-- `EXPO_PUBLIC_APEX_*` – optional overrides for REST/WebSocket endpoints. We default to the same prod/testnet URLs defined for the API service, so only set these when you need an alternate cluster. Credentials stay server-side.
+- `EXPO_PUBLIC_APEX_ENVIRONMENT` – `prod` (default) or `testnet`; chooses which public ApeX endpoints to use.
+- `EXPO_PUBLIC_APEX_*` – optional overrides for REST/WebSocket endpoints. Defaults point to the standard prod/testnet clusters. Do not place private ApeX credentials or any non-public secrets here.
 
-The resolved config is exposed at runtime via `env` (`src/config/env.ts`).
+The resolved config is exposed at runtime via `extra` in `app.config.ts` (see `extra.api` and `extra.apexOmni`).
 
 ## Running the App
 
