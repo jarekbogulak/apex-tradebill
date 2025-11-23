@@ -6,9 +6,9 @@ import { env } from '../../../config/env.js';
 import { buildDatabasePoolOptions } from '../../../config/database.js';
 import {
   getSharedDatabasePool,
-  runPendingMigrations,
   type DatabasePool,
 } from '../providers/postgres/pool.js';
+import { runMigrations } from '../providers/postgres/migrations.js';
 import { createPostgresTradeCalculationRepository } from './tradeCalculationRepository.postgres.js';
 
 export interface ResolvedTradeCalculationRepository {
@@ -39,8 +39,9 @@ export const resolveTradeCalculationRepository = async ({
   }
 
   try {
-    const pool = await getSharedDatabasePool(buildDatabasePoolOptions());
-    await runPendingMigrations(pool);
+    const poolOptions = buildDatabasePoolOptions();
+    await runMigrations(poolOptions, console);
+    const pool = await getSharedDatabasePool(poolOptions);
     logger.info('database.connected');
 
     return {

@@ -1,10 +1,7 @@
 import { buildDatabasePoolOptions } from '../config/database.js';
 import { env } from '../config/env.js';
-import {
-  closeSharedDatabasePool,
-  getSharedDatabasePool,
-  runPendingMigrations,
-} from '../adapters/persistence/providers/postgres/pool.js';
+import { closeSharedDatabasePool, getSharedDatabasePool } from '../adapters/persistence/providers/postgres/pool.js';
+import { runMigrations } from '../adapters/persistence/providers/postgres/migrations.js';
 
 const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 
@@ -68,7 +65,7 @@ export const seedOmniSecrets = async () => {
     return;
   }
   const pool = await getSharedDatabasePool(buildDatabasePoolOptions());
-  await runPendingMigrations(pool);
+  await runMigrations(buildDatabasePoolOptions());
 
   const rotationDueAt = new Date(Date.now() + ONE_YEAR_MS).toISOString();
   for (const descriptor of seedCatalog()) {

@@ -2,10 +2,10 @@ import { createPostgresTradeCalculationRepository } from '../../trade-calculatio
 import type { SwappableTradeCalculationRepository } from '../../../../domain/trade-calculation/trade-calculation.entity.js';
 import {
   getSharedDatabasePool,
-  runPendingMigrations,
   type DatabasePool,
   type DatabasePoolOptions,
 } from './pool.js';
+import { runMigrations } from './migrations.js';
 import { buildDatabasePoolOptions } from '../../../../config/database.js';
 
 export interface DatabaseRecoveryLogger {
@@ -47,8 +47,9 @@ export const scheduleDatabaseRecovery = ({
       return;
     }
     try {
-      const pool = await getSharedDatabasePool(buildOptions());
-      await runPendingMigrations(pool);
+      const poolOptions = buildOptions();
+      await runMigrations(poolOptions, console);
+      const pool = await getSharedDatabasePool(poolOptions);
       repository.swap(createPostgresTradeCalculationRepository(pool));
       await onPersistentResourcesReady(pool);
       recovered = true;

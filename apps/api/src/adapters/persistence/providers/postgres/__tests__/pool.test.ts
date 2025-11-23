@@ -1,6 +1,3 @@
-import fs from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
 import type { DatabaseClient, DatabasePool } from '../pool.js';
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- need module function signatures for manual loader
@@ -8,7 +5,6 @@ type PoolModule = typeof import('../pool.js');
 
 let createDatabasePool: PoolModule['createDatabasePool'];
 let closeSharedDatabasePool: PoolModule['closeSharedDatabasePool'];
-let runPendingMigrations: PoolModule['runPendingMigrations'];
 let withTransaction: PoolModule['withTransaction'];
 let getSharedDatabasePool: PoolModule['getSharedDatabasePool'];
 
@@ -16,7 +12,6 @@ beforeAll(async () => {
   const module = await import('../pool.js');
   createDatabasePool = module.createDatabasePool;
   closeSharedDatabasePool = module.closeSharedDatabasePool;
-  runPendingMigrations = module.runPendingMigrations;
   withTransaction = module.withTransaction;
   getSharedDatabasePool = module.getSharedDatabasePool;
 });
@@ -57,33 +52,6 @@ const restoreEnv = (key: string, original: string | undefined) => {
   } else {
     process.env[key] = original;
   }
-};
-
-const createMockPool = (appliedIds: string[] = []) => {
-  const query = jest.fn().mockImplementation(async (sql: string) => {
-    if (sql.includes('SELECT id FROM schema_migrations')) {
-      return {
-        rows: appliedIds.map((id) => ({ id })),
-        rowCount: appliedIds.length,
-      };
-    }
-    return { rows: [], rowCount: 0 };
-  });
-
-  const clientQuery = jest.fn().mockResolvedValue({ rows: [], rowCount: 0 });
-  const client: DatabaseClient = {
-    query: clientQuery,
-    release: jest.fn(),
-  };
-
-  const pool: DatabasePool = {
-    query,
-    connect: jest.fn(async () => client),
-    end: jest.fn(async () => undefined),
-    on: jest.fn(),
-  };
-
-  return { pool, client, clientQuery, query };
 };
 
 describe('createDatabasePool', () => {
@@ -145,52 +113,6 @@ describe('createDatabasePool', () => {
     const sharedInstance = mockPoolInstances[mockPoolInstances.length - 1];
     expect(sharedInstance.end).toHaveBeenCalled();
     expect(pool).toBe(instance);
-  });
-});
-
-describe('runPendingMigrations', () => {
-  afterEach(async () => {
-    await closeSharedDatabasePool();
-    jest.clearAllMocks();
-  });
-
-  it('applies new migrations and records them', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'apex-migrations-'));
-    const migrationPath = path.join(tempDir, '20250216_init.sql');
-    await fs.writeFile(migrationPath, 'CREATE TABLE example (id INT);');
-
-    const { pool, clientQuery, query, client } = createMockPool();
-
-    const result = await runPendingMigrations(pool, tempDir);
-
-    expect(query).toHaveBeenCalledWith(expect.stringContaining('CREATE TABLE IF NOT EXISTS'));
-    expect(query).toHaveBeenCalledWith(expect.stringContaining('SELECT id FROM schema_migrations'));
-    expect(clientQuery).toHaveBeenNthCalledWith(1, 'BEGIN;');
-    expect(clientQuery).toHaveBeenNthCalledWith(2, 'CREATE TABLE example (id INT);');
-    expect(clientQuery).toHaveBeenNthCalledWith(
-      3,
-      expect.stringContaining('INSERT INTO schema_migrations'),
-      ['20250216_init'],
-    );
-    expect(clientQuery).toHaveBeenNthCalledWith(4, 'COMMIT;');
-    expect(client.release).toHaveBeenCalled();
-    expect(result).toEqual({ applied: ['20250216_init'], skipped: [] });
-  });
-
-  it('skips migrations that are already applied or empty', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'apex-migrations-'));
-    await fs.writeFile(path.join(tempDir, '20240201_empty.sql'), '   ');
-    await fs.writeFile(path.join(tempDir, '20240202_accounts.sql'), 'CREATE INDEX dummy ON x;');
-
-    const { pool, clientQuery } = createMockPool(['20240202_accounts']);
-
-    const result = await runPendingMigrations(pool, tempDir);
-
-    expect(clientQuery).not.toHaveBeenCalledWith('CREATE INDEX dummy ON x;');
-    expect(result).toEqual({
-      applied: [],
-      skipped: ['20240201_empty', '20240202_accounts'],
-    });
   });
 });
 

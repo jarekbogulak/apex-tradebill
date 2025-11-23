@@ -1,25 +1,29 @@
+import { env } from '../config/env.js';
 import { buildDatabasePoolOptions } from '../config/database.js';
-import {
-  closeSharedDatabasePool,
-  getSharedDatabasePool,
-  runPendingMigrations,
-} from '../adapters/persistence/providers/postgres/pool.js';
+import { runMigrations } from '../adapters/persistence/providers/postgres/migrations.js';
 
 const run = async () => {
-  const pool = await getSharedDatabasePool(buildDatabasePoolOptions());
-  const { applied, skipped } = await runPendingMigrations(pool);
-
-  if (applied.length > 0) {
-    process.stdout.write(`Applied migrations: ${applied.join(', ')}\n`);
-  } else {
-    process.stdout.write('No new migrations to apply.\n');
+  if (!env.database.url) {
+    if (env.database.allowInMemory) {
+      console.warn(
+        'APEX_ALLOW_IN_MEMORY_DB is enabled and no database URL is configured; skipping migrations.',
+      );
+      return;
+    }
+    throw new Error(
+      'Database URL is missing. Set SUPABASE_DB_URL (or DATABASE_URL) or enable APEX_ALLOW_IN_MEMORY_DB.',
+    );
   }
 
-  if (skipped.length > 0) {
-    process.stdout.write(`Skipped migrations (already applied): ${skipped.join(', ')}\n`);
+  if (env.database.allowInMemory && process.env.APEX_FORCE_DB_MIGRATIONS !== 'true') {
+    console.warn(
+      'APEX_ALLOW_IN_MEMORY_DB is enabled; skipping migrations. Set APEX_FORCE_DB_MIGRATIONS=true to force execution.',
+    );
+    return;
   }
 
-  await closeSharedDatabasePool();
+  await runMigrations(buildDatabasePoolOptions(), console);
+  process.stdout.write('Migrations finished.\n');
 };
 
 void run().catch((error) => {
