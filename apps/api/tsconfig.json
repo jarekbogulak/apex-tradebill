@@ -1,6 +1,13 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "@apex-tradebill/tsconfig/base.json",
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@api/*": ["src/*"],
+      "@api/domain/*": ["src/domain/*"],
+      "@api/adapters/*": ["src/adapters/*"],
+      "@api/config/*": ["src/config/*"]
+    },
     "outDir": "dist",
     "rootDir": "src",
     "module": "NodeNext",
