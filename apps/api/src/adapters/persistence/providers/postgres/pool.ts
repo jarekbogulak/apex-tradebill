@@ -1,8 +1,3 @@
-import { promises as fs } from 'node:fs';
-import { constants as fsConstants } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 type PgPool = {
   new (config?: PgPoolConfig): DatabasePool;
 };
@@ -92,7 +87,7 @@ const resolveSslConfig = (
   return undefined;
 };
 
-export const createDatabasePool = async ({
+export const buildPgPoolConfig = ({
   connectionString = process.env.SUPABASE_DB_URL ?? process.env.DATABASE_URL,
   min = parseInteger(process.env.SUPABASE_DB_POOL_MIN, 0),
   max = parseInteger(process.env.SUPABASE_DB_POOL_MAX, 10),
@@ -100,15 +95,14 @@ export const createDatabasePool = async ({
   connectionTimeoutMillis,
   ssl,
   applicationName = process.env.SUPABASE_DB_APPLICATION ?? 'apex-tradebill-api',
-}: DatabasePoolOptions = {}): Promise<DatabasePool> => {
+}: DatabasePoolOptions = {}): PgPoolConfig & { connectionString: string } => {
   if (!connectionString) {
     throw new Error(
       'Missing SUPABASE_DB_URL (or DATABASE_URL) environment variable for PostgreSQL connection.',
     );
   }
 
-  const { Pool } = await loadPgModule();
-  const pool = new Pool({
+  return {
     connectionString,
     min,
     max,
@@ -117,7 +111,14 @@ export const createDatabasePool = async ({
     connectionTimeoutMillis,
     application_name: applicationName,
     ssl: resolveSslConfig(connectionString, ssl),
-  });
+  };
+};
+
+export const createDatabasePool = async (
+  options: DatabasePoolOptions = {},
+): Promise<DatabasePool> => {
+  const { Pool } = await loadPgModule();
+  const pool = new Pool(buildPgPoolConfig(options));
 
   pool.on('error', (error: Error) => {
     console.error('Unexpected PostgreSQL client error', error);
@@ -143,101 +144,6 @@ export const closeSharedDatabasePool = async (): Promise<void> => {
   }
   await sharedPool.end();
   sharedPool = null;
-};
-
-const MIGRATIONS_TABLE = 'schema_migrations';
-
-export interface MigrationResult {
-  applied: string[];
-  skipped: string[];
-}
-
-const defaultMigrationsDir = (): string => {
-  const url = new URL('../../../../../configs/db/migrations', import.meta.url);
-  return fileURLToPath(url);
-};
-
-const listMigrationFiles = async (directory: string): Promise<string[]> => {
-  try {
-    const entries = await fs.readdir(directory, { withFileTypes: true });
-    return entries
-      .filter((entry) => entry.isFile() && entry.name.endsWith('.sql'))
-      .map((entry) => entry.name)
-      .sort();
-  } catch (error) {
-    const err = error as NodeJS.ErrnoException;
-    if (err.code === 'ENOENT') {
-      return [];
-    }
-    throw error;
-  }
-};
-
-const directoryExists = async (directory: string): Promise<boolean> => {
-  try {
-    await fs.access(directory, fsConstants.F_OK);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-export const runPendingMigrations = async (
-  pool: DatabasePool,
-  directory = defaultMigrationsDir(),
-): Promise<MigrationResult> => {
-  if (!(await directoryExists(directory))) {
-    return { applied: [], skipped: [] };
-  }
-
-  await pool.query(
-    `CREATE TABLE IF NOT EXISTS ${MIGRATIONS_TABLE} (
-      id TEXT PRIMARY KEY,
-      applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );`,
-  );
-
-  const existing = await pool.query<{ id: string }>(
-    `SELECT id FROM ${MIGRATIONS_TABLE} ORDER BY applied_at ASC;`,
-  );
-  const appliedIds = new Set(existing.rows.map((row) => row.id));
-
-  const files = await listMigrationFiles(directory);
-  const applied: string[] = [];
-  const skipped: string[] = [];
-
-  for (const fileName of files) {
-    const migrationId = fileName.replace(/\.sql$/, '');
-    if (appliedIds.has(migrationId)) {
-      skipped.push(migrationId);
-      continue;
-    }
-
-    const filePath = path.join(directory, fileName);
-    const sql = await fs.readFile(filePath, 'utf-8');
-    const trimmed = sql.trim();
-    if (!trimmed) {
-      skipped.push(migrationId);
-      continue;
-    }
-
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN;');
-      await client.query(trimmed);
-      await client.query(`INSERT INTO ${MIGRATIONS_TABLE} (id) VALUES ($1);`, [migrationId]);
-      await client.query('COMMIT;');
-      applied.push(migrationId);
-    } catch (error) {
-      await client.query('ROLLBACK;');
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to apply migration "${fileName}": ${message}`);
-    } finally {
-      client.release();
-    }
-  }
-
-  return { applied, skipped };
 };
 
 export const withTransaction = async <T>(

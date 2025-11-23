@@ -1,6 +1,6 @@
 # Database Migrations – Apex TradeBill
 
-This directory stores ANSI SQL migration files for the Supabase-managed (vanilla PostgreSQL 16) database that powers user profiles, settings, and trade calculation history. Migrations are applied sequentially in timestamp order using the helper exposed via `apps/api/src/infra/database/pool.ts`.
+This directory stores ANSI SQL migration files for the Supabase-managed (vanilla PostgreSQL 16) database that powers user profiles, settings, and trade calculation history. Migrations are applied sequentially in timestamp order by `node-pg-migrate` via `apps/api/src/adapters/persistence/providers/postgres/migrations.ts`.
 
 ## Folder Layout
 
@@ -56,7 +56,7 @@ CREATE INDEX IF NOT EXISTS trade_calculations_user_created_idx
 pnpm --filter @apex-tradebill/api migrate
 ```
 
-The script will apply any pending migrations and record their identifiers in the `schema_migrations` table.
+The script will apply any pending migrations under an advisory lock (via `node-pg-migrate`) and record their identifiers in the `pgmigrations` table. Legacy identifiers stored in `schema_migrations` are copied forward automatically to avoid double-runs during the transition.
 
 ## Rolling Back
 

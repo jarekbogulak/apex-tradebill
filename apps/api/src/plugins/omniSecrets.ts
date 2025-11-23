@@ -11,10 +11,8 @@ type AccessSecretVersionResult = [
 ];
 import { env } from '../config/env.js';
 import { buildDatabasePoolOptions } from '../config/database.js';
-import {
-  getSharedDatabasePool,
-  runPendingMigrations,
-} from '../adapters/persistence/providers/postgres/pool.js';
+import { getSharedDatabasePool } from '../adapters/persistence/providers/postgres/pool.js';
+import { runMigrations } from '../adapters/persistence/providers/postgres/migrations.js';
 import { createOmniSecretRepository } from '@api/modules/omniSecrets/repository.js';
 import { createInMemoryOmniSecretRepository } from '@api/modules/omniSecrets/repository.inMemory.js';
 import { OmniSecretCache } from '@api/modules/omniSecrets/cache.js';
@@ -43,8 +41,7 @@ export const omniSecretsPlugin: FastifyPluginAsync = async (app) => {
     : createOmniSecretRepository(await getSharedDatabasePool(buildDatabasePoolOptions()));
 
   if (!useInMemoryRepo) {
-    const pool = await getSharedDatabasePool(buildDatabasePoolOptions());
-    await runPendingMigrations(pool);
+    await runMigrations(buildDatabasePoolOptions(), app.log);
   }
 
   const gsmClient = new GsmSecretManagerClient({
