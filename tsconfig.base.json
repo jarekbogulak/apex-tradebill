@@ -1,30 +1,3 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "lib": ["ES2022"],
-    "baseUrl": ".",
-    "strict": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-    "allowImportingTsExtensions": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "paths": {
-      "@mobile/*": ["apps/mobile/*"],
-      "@api/*": ["apps/api/src/*"],
-      "@api/domain/*": ["apps/api/src/domain/*"],
-      "@api/adapters/*": ["apps/api/src/adapters/*"],
-      "@api/config/*": ["apps/api/src/config/*"],
-      "@packages/*": ["packages/*"],
-      "@apex-tradebill/types": ["packages/types/src/index.ts"],
-      "@apex-tradebill/ui": ["packages/ui/src/index.ts"],
-      "@apex-tradebill/ui/*": ["packages/ui/src/*"],
-      "@apex-tradebill/utils": ["packages/utils/src/index.ts"]
-    }
-  },
-  "exclude": ["node_modules", "dist"]
+  "extends": "./packages/tsconfig/base.json"
 }
