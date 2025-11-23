@@ -1,27 +1,51 @@
 import type { Timeframe } from '@apex-tradebill/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
+import { useTheme, type Theme } from '@apex-tradebill/ui';
 import { useSettingsStore } from '@/src/state/settingsStore';
 import { createApiClient } from '@/src/services/apiClient';
+import { formatFriendlyError } from '@/src/utils/api-error';
 
-const COLORS = {
-  textPrimary: '#0F172A',
-  textMuted: '#475569',
-  border: '#CBD5F5',
-  accent: '#2563EB',
-  textOnAccent: '#FFFFFF',
-} as const;
+type StatusState =
+  | {
+      type: 'success';
+      message: string;
+    }
+  | {
+      type: 'error';
+      message: string;
+    };
 
 const apiClient = createApiClient();
 const TIMEFRAME_OPTIONS: Timeframe[] = ['1m', '5m', '15m'];
+const DEFAULT_ERROR_MESSAGE = 'Unable to save settings. Please try again.';
+
+const toFriendlySettingsError = (message: string): string => {
+  if (/rememberedMultiplierOptions/i.test(message)) {
+    return 'Multiplier presets must be numbers separated by commas (e.g., 1.5, 2, 3).';
+  }
+  if (/riskPercent/i.test(message)) {
+    return 'Risk percent must be a valid number.';
+  }
+  if (/atrMultiplier/i.test(message)) {
+    return 'ATR multiplier must be a valid number.';
+  }
+  if (/dataFreshnessThresholdMs/i.test(message)) {
+    return 'Freshness threshold must be a whole number of milliseconds.';
+  }
+  return message;
+};
 
 export default function SettingsScreen() {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const queryClient = useQueryClient();
   const settings = useSettingsStore();
   const setSettings = useSettingsStore((state) => state.setSettings);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [status, setStatus] = useState<StatusState | null>(null);
 
   const { data: remoteSettings } = useQuery({
     queryKey: ['settings'],
@@ -56,14 +80,40 @@ export default function SettingsScreen() {
         lastSyncedAt: new Date().toISOString(),
       });
       await queryClient.invalidateQueries({ queryKey: ['settings'] });
-      setStatusMessage('Settings updated successfully');
+      setStatus({
+        type: 'success',
+        message: 'Settings updated successfully',
+      });
     },
     onError: (error: Error) => {
-      setStatusMessage(error.message);
+      const friendly = formatFriendlyError(error, DEFAULT_ERROR_MESSAGE);
+      setStatus({
+        type: 'error',
+        message: toFriendlySettingsError(friendly),
+      });
     },
   });
 
+  useEffect(() => {
+    if (!status) return;
+
+    const timeoutId = setTimeout(() => {
+      setStatus(null);
+    }, 4000);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [status]);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => setStatus(null);
+    }, []),
+  );
+
   const handleSave = () => {
+    setStatus(null);
     updateMutation.mutate({
       riskPercent: settings.riskPercent,
       atrMultiplier: settings.atrMultiplier,
@@ -146,75 +196,112 @@ export default function SettingsScreen() {
           {updateMutation.isPending ? 'Saving…' : 'Save Settings'}
         </Text>
       </Pressable>
-      {statusMessage ? <Text style={styles.status}>{statusMessage}</Text> : null}
+      {status ? (
+        <View
+          style={[
+            styles.statusContainer,
+            status.type === 'success' ? styles.statusSuccess : styles.statusError,
+          ]}
+        >
+          <Text
+            style={[
+              styles.statusMessage,
+              status.type === 'success' ? styles.statusSuccessText : styles.statusErrorText,
+            ]}
+          >
+            {status.message}
+          </Text>
+        </View>
+      ) : null}
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    gap: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-  },
-  field: {
-    gap: 4,
-  },
-  label: {
-    color: COLORS.textMuted,
-    fontSize: 14,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: COLORS.textPrimary,
-  },
-  timeframeGroup: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  timeframeOption: {
-    flexGrow: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  timeframeOptionActive: {
-    backgroundColor: COLORS.accent,
-    borderColor: COLORS.accent,
-  },
-  timeframeOptionLabel: {
-    color: COLORS.textPrimary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  timeframeOptionLabelActive: {
-    color: COLORS.textOnAccent,
-  },
-  button: {
-    backgroundColor: COLORS.accent,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  buttonLabel: {
-    color: COLORS.textOnAccent,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  status: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-  },
-});
+const createStyles = (theme: Theme) =>
+  StyleSheet.create({
+    container: {
+      padding: theme.spacing.lg,
+      gap: theme.spacing.lg,
+      backgroundColor: theme.colors.surfaceAlt,
+      flexGrow: 1,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: theme.colors.textPrimary,
+    },
+    field: {
+      gap: theme.spacing.xs,
+    },
+    label: {
+      color: theme.colors.textSecondary,
+      fontSize: 14,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: theme.radii.sm,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.md,
+      fontSize: 16,
+      color: theme.colors.textPrimary,
+      backgroundColor: theme.colors.surface,
+    },
+    timeframeGroup: {
+      flexDirection: 'row',
+      gap: theme.spacing.sm,
+    },
+    timeframeOption: {
+      flexGrow: 1,
+      paddingVertical: theme.spacing.md,
+      borderRadius: theme.radii.sm,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.surface,
+    },
+    timeframeOptionActive: {
+      backgroundColor: theme.colors.accent,
+      borderColor: theme.colors.accent,
+    },
+    timeframeOptionLabel: {
+      color: theme.colors.textPrimary,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    timeframeOptionLabelActive: {
+      color: theme.colors.textInverted,
+    },
+    button: {
+      backgroundColor: theme.colors.accent,
+      paddingVertical: theme.spacing.lg,
+      borderRadius: theme.radii.md,
+      alignItems: 'center',
+    },
+    buttonLabel: {
+      color: theme.colors.textInverted,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    statusContainer: {
+      borderRadius: theme.radii.md,
+      padding: theme.spacing.md,
+      marginTop: theme.spacing.sm,
+    },
+    statusSuccess: {
+      backgroundColor: theme.colors.successSurface,
+    },
+    statusError: {
+      backgroundColor: theme.colors.errorSurface,
+    },
+    statusMessage: {
+      fontSize: 14,
+    },
+    statusSuccessText: {
+      color: theme.colors.success,
+    },
+    statusErrorText: {
+      color: theme.colors.error,
+    },
+  });
