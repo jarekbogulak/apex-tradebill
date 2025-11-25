@@ -1,6 +1,7 @@
 import type { OmniSecretRepository, OmniSecretMetadataUpdates } from './repository.js';
 import type { OmniSecretCache, CachedSecret, CacheFetchResult } from './cache.js';
 import type { GsmSecretManagerClient } from './gsmClient.js';
+import { box_open } from 'tweetnacl-ts';
 import {
   CacheSourceSchema,
   type CacheSource,
@@ -14,6 +15,8 @@ export interface OmniSecretServiceDeps {
   repository: OmniSecretRepository;
   cache: OmniSecretCache;
   gsmClient: GsmSecretManagerClient;
+  breakglassPrivateKey?: string | null;
+  allowLatestVersion?: boolean;
   logger?: {
     info(message: string, context?: Record<string, unknown>): void;
     warn(message: string, context?: Record<string, unknown>): void;
@@ -91,7 +94,30 @@ export class InvalidBreakGlassTtlError extends Error {
   }
 }
 
+export class InvalidBreakGlassPayloadError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidBreakGlassPayloadError';
+  }
+}
+
 const MAX_BREAK_GLASS_TTL_MS = 30 * 60 * 1000;
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+const BOX_SECRET_KEY_LENGTH = 32;
+const BOX_PUBLIC_KEY_LENGTH = 32;
+const BOX_NONCE_LENGTH = 24;
+
+interface BreakGlassEnvelope {
+  version: number;
+  nonce: string;
+  ephemeralPublicKey: string;
+  ciphertext: string;
+}
+
+const decodeBase64ToUint8 = (value: string): Uint8Array => {
+  return new Uint8Array(Buffer.from(value, 'base64'));
+};
 
 const mapCacheToStatus = (
   metadata: OmniSecretMetadata,
@@ -121,6 +147,8 @@ export const createOmniSecretService = ({
   repository,
   cache,
   gsmClient,
+  breakglassPrivateKey: breakglassPrivateKeyBase64,
+  allowLatestVersion: allowLatestVersionInput,
   logger,
   telemetry,
   alerts,
@@ -129,6 +157,16 @@ export const createOmniSecretService = ({
     info: () => {},
     warn: () => {},
   };
+  const allowLatestVersion = allowLatestVersionInput ?? true;
+
+  const decodedBreakglassPrivateKey =
+    breakglassPrivateKeyBase64 && breakglassPrivateKeyBase64.length > 0
+      ? decodeBase64ToUint8(breakglassPrivateKeyBase64)
+      : null;
+
+  if (decodedBreakglassPrivateKey && decodedBreakglassPrivateKey.length !== BOX_SECRET_KEY_LENGTH) {
+    throw new Error('Invalid OMNI_BREAKGLASS_PRIVATE_KEY length; expected Curve25519 private key.');
+  }
 
   const ensureSecret = async (secretType: string): Promise<OmniSecretMetadata> => {
     const parsedType = SecretTypeSchema.parse(secretType);
@@ -141,6 +179,61 @@ export const createOmniSecretService = ({
 
   const updateMetadata = (secretType: string, updates: OmniSecretMetadataUpdates) => {
     return repository.updateMetadata(secretType, updates);
+  };
+
+  const resolveGcpVersion = (metadata: OmniSecretMetadata, override?: string): string => {
+    const version = override ?? metadata.gcpVersionAlias ?? 'latest';
+    if (!allowLatestVersion && version === 'latest') {
+      throw new SecretUnavailableError(
+        metadata.secretType,
+        'latest version alias is disabled by OMNI_ALLOW_LATEST_VERSION=false',
+      );
+    }
+    return version;
+  };
+
+  const decryptBreakGlassPayload = (ciphertext: string, secretType: string): string => {
+    if (!decodedBreakglassPrivateKey) {
+      throw new SecretUnavailableError(secretType, 'break-glass private key unavailable');
+    }
+
+    let envelope: BreakGlassEnvelope;
+    try {
+      const decoded = Buffer.from(ciphertext, 'base64').toString('utf-8');
+      const parsed = JSON.parse(decoded) as Partial<BreakGlassEnvelope>;
+      if (
+        typeof parsed.nonce !== 'string' ||
+        typeof parsed.ephemeralPublicKey !== 'string' ||
+        typeof parsed.ciphertext !== 'string'
+      ) {
+        throw new Error('Missing envelope fields');
+      }
+      envelope = {
+        version: typeof parsed.version === 'number' ? parsed.version : 1,
+        nonce: parsed.nonce,
+        ephemeralPublicKey: parsed.ephemeralPublicKey,
+        ciphertext: parsed.ciphertext,
+      };
+    } catch (error) {
+      throw new InvalidBreakGlassPayloadError(
+        `Invalid break-glass payload: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+
+    const nonce = decodeBase64ToUint8(envelope.nonce);
+    const ephemeralPublicKey = decodeBase64ToUint8(envelope.ephemeralPublicKey);
+    const cipherBytes = decodeBase64ToUint8(envelope.ciphertext);
+
+    if (nonce.length !== BOX_NONCE_LENGTH || ephemeralPublicKey.length !== BOX_PUBLIC_KEY_LENGTH) {
+      throw new InvalidBreakGlassPayloadError('Invalid break-glass envelope sizing.');
+    }
+
+    const plaintext = box_open(cipherBytes, nonce, ephemeralPublicKey, decodedBreakglassPrivateKey);
+    if (!plaintext) {
+      throw new InvalidBreakGlassPayloadError('Unable to decrypt break-glass payload.');
+    }
+
+    return decoder.decode(plaintext);
   };
 
   const getStatus = async (): Promise<StatusSummary> => {
@@ -167,7 +260,7 @@ export const createOmniSecretService = ({
 
     const result = await gsmClient.accessSecretVersion(
       metadata.gcpSecretId,
-      gcpSecretVersion ?? metadata.gcpVersionAlias ?? 'latest',
+      resolveGcpVersion(metadata, gcpSecretVersion),
     );
 
     await updateMetadata(secretType, {
@@ -199,7 +292,11 @@ export const createOmniSecretService = ({
 
     for (const entry of entries) {
       try {
-        const { entry: cached, durationMs }: CacheFetchResult = await cache.refresh(entry);
+        const targetEntry = {
+          ...entry,
+          gcpVersionAlias: resolveGcpVersion(entry),
+        };
+        const { entry: cached, durationMs }: CacheFetchResult = await cache.refresh(targetEntry);
         refreshed.push(entry.secretType);
         await updateMetadata(entry.secretType, {
           cacheSource: cached.source,
@@ -259,7 +356,9 @@ export const createOmniSecretService = ({
       throw new InvalidBreakGlassTtlError('Break-glass TTL cannot exceed 30 minutes');
     }
 
-    const cached = cache.setBreakGlass(metadata.secretType, ciphertext, ttlMs);
+    const secretValue = decryptBreakGlassPayload(ciphertext, secretType);
+
+    const cached = cache.setBreakGlass(metadata.secretType, secretValue, ttlMs);
     await updateMetadata(metadata.secretType, {
       breakGlassEnabledUntil: expiresAtDate.toISOString(),
       cacheSource: cached.source,

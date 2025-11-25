@@ -1,11 +1,12 @@
 import { defaultTestEnv, createOperatorJwt } from '../helpers/omniTestUtils.js';
+import { buildBreakGlassCiphertext } from '../helpers/breakGlassFixtures.js';
 
 const path = '/ops/apex-omni/secrets/break-glass';
 
 describe('POST /ops/apex-omni/secrets/break-glass (contract)', () => {
   const buildPayload = (overrides: Record<string, unknown> = {}) => ({
     secretType: 'trading_api_key',
-    ciphertext: 'base64-encrypted-secret',
+    ciphertext: buildBreakGlassCiphertext('contract-test-secret'),
     expiresAt: new Date(Date.now() + 20 * 60 * 1000).toISOString(),
     ...overrides,
   });

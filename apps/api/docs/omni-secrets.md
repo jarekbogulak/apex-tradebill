@@ -21,11 +21,13 @@
    ```bash
    pnpm --filter @apex-tradebill/api breakglass:omni \
      --secretType trading_api_key \
-     --ciphertext-file ./tmp/secret.enc \
+     --secret-value-file ./tmp/secret.plaintext \
      --ttl 25m \
      --api-url https://api.apex-tradebill.com \
      --token $OPS_JWT
    ```
+   The CLI encrypts with `OMNI_BREAKGLASS_PUBLIC_KEY`; the API decrypts with `OMNI_BREAKGLASS_PRIVATE_KEY` before caching.
+   `secret-value-file` is a local plaintext of the secret you want to inject (e.g., API key). Keep it out of git, restrict permissions (e.g., `chmod 600`), prefer piping from a secret store instead of writing to disk, and delete it immediately after use.
 2. Verify `/ops/apex-omni/secrets/status` reports `cacheSource="break_glass"` until the TTL expires.
 3. Restore GSM access ASAP, then re-run the cache refresh endpoint to return to steady state. All break-glass events log `omni.alert.break_glass_applied` for audit purposes.
 

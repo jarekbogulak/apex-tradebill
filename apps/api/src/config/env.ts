@@ -162,7 +162,9 @@ const envSchema = z.object({
   supabaseDbSsl: z.enum(['auto', 'disable', 'require']),
   gcpProjectId: z.string().min(1).optional(),
   omniBreakglassPublicKey: z.string().min(1).optional(),
+  omniBreakglassPrivateKey: z.string().min(1).optional(),
   omniCacheTtlSeconds: z.number().int().positive(),
+  omniAllowLatestVersion: z.boolean().nullable(),
 });
 
 const parseEnv = () => {
@@ -196,7 +198,12 @@ const parseEnv = () => {
     supabaseDbSsl: normalizeSslMode(process.env.SUPABASE_DB_SSL),
     gcpProjectId: process.env.GCP_PROJECT_ID,
     omniBreakglassPublicKey: process.env.OMNI_BREAKGLASS_PUBLIC_KEY,
+    omniBreakglassPrivateKey: process.env.OMNI_BREAKGLASS_PRIVATE_KEY,
     omniCacheTtlSeconds: toInteger(process.env.OMNI_CACHE_TTL_SECONDS, 300),
+    omniAllowLatestVersion:
+      process.env.OMNI_ALLOW_LATEST_VERSION == null
+        ? null
+        : toBoolean(process.env.OMNI_ALLOW_LATEST_VERSION, true),
   });
 };
 
@@ -243,8 +250,10 @@ export interface ApexConfig {
 export interface OmniSecretsConfig {
   gcpProjectId: string | null;
   breakglassPublicKey: string | null;
+  breakglassPrivateKey: string | null;
   cacheTtlSeconds: number;
   environment: 'production' | 'test';
+  allowLatestVersion: boolean;
 }
 
 export interface AppEnv {
@@ -326,6 +335,8 @@ const buildEnv = (): AppEnv => {
   const resolvedCacheTtlSeconds = parsed.omniCacheTtlSeconds;
   const resolvedGcpProjectId = parsed.gcpProjectId ?? null;
   const resolvedBreakglassKey = parsed.omniBreakglassPublicKey ?? null;
+  const resolvedBreakglassPrivateKey = parsed.omniBreakglassPrivateKey ?? null;
+  const resolvedAllowLatestVersion = parsed.omniAllowLatestVersion ?? true;
   const omniEnvironment =
     parsed.nodeEnv === 'production' || process.env.APEX_OMNI_ENVIRONMENT === 'prod'
       ? 'production'
@@ -338,6 +349,11 @@ const buildEnv = (): AppEnv => {
     if (!resolvedBreakglassKey) {
       throw new ConfigError(
         'OMNI_BREAKGLASS_PUBLIC_KEY is required in production for encrypted break-glass overrides.',
+      );
+    }
+    if (!resolvedBreakglassPrivateKey) {
+      throw new ConfigError(
+        'OMNI_BREAKGLASS_PRIVATE_KEY is required in production to decrypt break-glass payloads.',
       );
     }
   }
@@ -380,8 +396,10 @@ const buildEnv = (): AppEnv => {
     omniSecrets: {
       gcpProjectId: resolvedGcpProjectId,
       breakglassPublicKey: resolvedBreakglassKey,
+      breakglassPrivateKey: resolvedBreakglassPrivateKey,
       cacheTtlSeconds: resolvedCacheTtlSeconds,
       environment: omniEnvironment,
+      allowLatestVersion: resolvedAllowLatestVersion,
     },
   };
 };

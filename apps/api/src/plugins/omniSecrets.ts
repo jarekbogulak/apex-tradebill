@@ -82,6 +82,8 @@ export const omniSecretsPlugin: FastifyPluginAsync = async (app) => {
     repository,
     cache,
     gsmClient,
+    breakglassPrivateKey: env.omniSecrets.breakglassPrivateKey,
+    allowLatestVersion: env.omniSecrets.allowLatestVersion,
     logger: app.log,
     telemetry,
     alerts,

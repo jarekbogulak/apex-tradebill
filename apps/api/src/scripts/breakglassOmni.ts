@@ -3,18 +3,24 @@ import path from 'node:path';
 import http from 'node:http';
 import https from 'node:https';
 import { URL } from 'node:url';
+import { box, box_keyPair, randomBytes } from 'tweetnacl-ts';
 
 interface CliOptions {
   secretType: string;
-  ciphertext?: string;
-  ciphertextFile?: string;
+  secretValue?: string;
+  secretValueFile?: string;
   ttlMinutes: number;
   apiUrl: string;
   token: string;
+  publicKey: string;
 }
 
 const DEFAULT_API_URL = process.env.OMNI_BREAKGLASS_API_URL ?? 'http://localhost:4000';
+const DEFAULT_PUBLIC_KEY = process.env.OMNI_BREAKGLASS_PUBLIC_KEY ?? '';
 const MAX_TTL_MINUTES = 30;
+const encoder = new TextEncoder();
+const BOX_PUBLIC_KEY_LENGTH = 32;
+const BOX_NONCE_LENGTH = 24;
 
 const parseDurationToMinutes = (value: string | undefined): number => {
   if (!value) {
@@ -47,19 +53,21 @@ const parseDurationToMinutes = (value: string | undefined): number => {
 const parseArgs = (): CliOptions => {
   const args = process.argv.slice(2);
   let secretType: string | undefined;
-  let ciphertext: string | undefined;
-  let ciphertextFile: string | undefined;
+  let secretValue: string | undefined;
+  let secretValueFile: string | undefined;
   let ttlMinutes = MAX_TTL_MINUTES / 2;
   let apiUrl = DEFAULT_API_URL;
   let token = process.env.OMNI_BREAKGLASS_TOKEN ?? '';
+  let publicKey = DEFAULT_PUBLIC_KEY;
 
   let pendingKey:
     | 'secret'
-    | 'ciphertext'
-    | 'ciphertextFile'
+    | 'secretValue'
+    | 'secretValueFile'
     | 'ttl'
     | 'apiUrl'
     | 'token'
+    | 'publicKey'
     | null = null;
 
   for (const arg of args) {
@@ -68,11 +76,11 @@ const parseArgs = (): CliOptions => {
         case 'secret':
           secretType = arg;
           break;
-        case 'ciphertext':
-          ciphertext = arg;
+        case 'secretValue':
+          secretValue = arg;
           break;
-        case 'ciphertextFile':
-          ciphertextFile = arg;
+        case 'secretValueFile':
+          secretValueFile = arg;
           break;
         case 'ttl':
           ttlMinutes = parseDurationToMinutes(arg);
@@ -82,6 +90,9 @@ const parseArgs = (): CliOptions => {
           break;
         case 'token':
           token = arg;
+          break;
+        case 'publicKey':
+          publicKey = arg;
           break;
         default:
           break;
@@ -109,14 +120,16 @@ const parseArgs = (): CliOptions => {
         }, 'secret');
         continue;
       case '--ciphertext':
+      case '--secret-value':
         assign(inlineValue, (val) => {
-          ciphertext = val;
-        }, 'ciphertext');
+          secretValue = val;
+        }, 'secretValue');
         continue;
       case '--ciphertext-file':
+      case '--secret-value-file':
         assign(inlineValue, (val) => {
-          ciphertextFile = val;
-        }, 'ciphertextFile');
+          secretValueFile = val;
+        }, 'secretValueFile');
         continue;
       case '--ttl':
         assign(inlineValue, (val) => {
@@ -133,6 +146,11 @@ const parseArgs = (): CliOptions => {
           token = val;
         }, 'token');
         continue;
+      case '--public-key':
+        assign(inlineValue, (val) => {
+          publicKey = val;
+        }, 'publicKey');
+        continue;
       default:
         break;
     }
@@ -145,11 +163,11 @@ const parseArgs = (): CliOptions => {
   if (pendingKey === 'secret') {
     throw new Error('Missing value for --secretType');
   }
-  if (pendingKey === 'ciphertext') {
-    throw new Error('Missing value for --ciphertext');
+  if (pendingKey === 'secretValue') {
+    throw new Error('Missing value for --secret-value');
   }
-  if (pendingKey === 'ciphertextFile') {
-    throw new Error('Missing value for --ciphertext-file');
+  if (pendingKey === 'secretValueFile') {
+    throw new Error('Missing value for --secret-value-file');
   }
   if (pendingKey === 'ttl') {
     throw new Error('Missing value for --ttl');
@@ -160,6 +178,9 @@ const parseArgs = (): CliOptions => {
   if (pendingKey === 'token') {
     throw new Error('Missing value for --token');
   }
+  if (pendingKey === 'publicKey') {
+    throw new Error('Missing value for --public-key');
+  }
 
   if (!secretType) {
     throw new Error('secretType is required. Pass --secretType <name>');
@@ -169,27 +190,57 @@ const parseArgs = (): CliOptions => {
     throw new Error('OMNI_BREAKGLASS_TOKEN env or --token is required for authentication');
   }
 
+  if (!publicKey) {
+    throw new Error('OMNI_BREAKGLASS_PUBLIC_KEY env or --public-key is required for encryption');
+  }
+
   ttlMinutes = Math.min(Math.max(ttlMinutes, 1), MAX_TTL_MINUTES);
 
   return {
     secretType,
-    ciphertext,
-    ciphertextFile,
+    secretValue,
+    secretValueFile,
     ttlMinutes,
     apiUrl,
     token,
+    publicKey,
   };
 };
 
-const resolveCiphertext = (options: CliOptions): string => {
-  if (options.ciphertext) {
-    return options.ciphertext;
+const resolveSecretValue = (options: CliOptions): string => {
+  if (options.secretValue) {
+    return options.secretValue;
   }
-  if (options.ciphertextFile) {
-    const fullPath = path.resolve(options.ciphertextFile);
+  if (options.secretValueFile) {
+    const fullPath = path.resolve(options.secretValueFile);
     return fs.readFileSync(fullPath, 'utf-8').trim();
   }
-  throw new Error('ciphertext missing. Provide --ciphertext <value> or --ciphertext-file <path>');
+  throw new Error(
+    'secret value missing. Provide --secret-value <value> or --secret-value-file <path>',
+  );
+};
+
+const encryptBreakGlassPayload = (value: string, publicKeyBase64: string): string => {
+  const recipientPublicKey = new Uint8Array(Buffer.from(publicKeyBase64, 'base64'));
+  if (recipientPublicKey.length !== BOX_PUBLIC_KEY_LENGTH) {
+    throw new Error('OMNI_BREAKGLASS_PUBLIC_KEY must be a 32-byte Curve25519 key (base64).');
+  }
+
+  const nonce = randomBytes(BOX_NONCE_LENGTH);
+  const ephemeral = box_keyPair();
+  const cipher = box(encoder.encode(value), nonce, recipientPublicKey, ephemeral.secretKey);
+  if (!cipher) {
+    throw new Error('Failed to encrypt break-glass payload.');
+  }
+
+  const envelope = {
+    version: 1,
+    nonce: Buffer.from(nonce).toString('base64'),
+    ephemeralPublicKey: Buffer.from(ephemeral.publicKey).toString('base64'),
+    ciphertext: Buffer.from(cipher).toString('base64'),
+  };
+
+  return Buffer.from(JSON.stringify(envelope)).toString('base64');
 };
 
 const postJson = async (endpoint: string, payload: Record<string, unknown>, token: string) => {
@@ -239,7 +290,8 @@ const postJson = async (endpoint: string, payload: Record<string, unknown>, toke
 const main = async () => {
   try {
     const options = parseArgs();
-    const ciphertext = resolveCiphertext(options);
+    const secretValue = resolveSecretValue(options);
+    const ciphertext = encryptBreakGlassPayload(secretValue, options.publicKey);
     const expiresAt = new Date(Date.now() + options.ttlMinutes * 60_000).toISOString();
 
     const payload = await postJson(
