@@ -3,6 +3,7 @@ import { createErrorResponse, errorResponseSchema } from '../shared/http.js';
 import type { OmniSecretService } from '@api/modules/omniSecrets/service.js';
 import {
   InvalidBreakGlassTtlError,
+  InvalidBreakGlassPayloadError,
   SecretUnavailableError,
 } from '@api/modules/omniSecrets/service.js';
 
@@ -78,6 +79,11 @@ export const omniBreakGlassRoute: FastifyPluginAsync<BreakGlassRouteOptions> = a
           return reply
             .status(422)
             .send(createErrorResponse('INVALID_BREAK_GLASS_TTL', error.message));
+        }
+        if (error instanceof InvalidBreakGlassPayloadError) {
+          return reply
+            .status(422)
+            .send(createErrorResponse('INVALID_BREAK_GLASS_PAYLOAD', error.message));
         }
         if (error instanceof SecretUnavailableError) {
           return reply

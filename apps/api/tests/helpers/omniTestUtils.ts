@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { testBreakGlassKeys } from './breakGlassFixtures.js';
 
 export const defaultTestEnv = {
   NODE_ENV: 'test',
@@ -17,6 +18,8 @@ export const defaultTestEnv = {
   APEX_OMNI_WS_URL: undefined,
   OMNI_CACHE_TTL_SECONDS: '300',
   GCP_PROJECT_ID: 'test-project',
+  OMNI_BREAKGLASS_PUBLIC_KEY: testBreakGlassKeys.publicKeyBase64,
+  OMNI_BREAKGLASS_PRIVATE_KEY: testBreakGlassKeys.privateKeyBase64,
 };
 
 type JwtClaims = {

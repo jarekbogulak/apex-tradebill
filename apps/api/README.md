@@ -33,7 +33,9 @@ Key values in `.env` (validated by `src/config/env.ts` at startup):
 - `APEX_OMNI_*` – credentials, REST, and WebSocket endpoints for ApeX Omni (`*_TESTNET_*` values support sandbox usage).
 - `GCP_PROJECT_ID` – production Google Cloud project hosting the `apex-omni-*` secrets. The API refuses to start in production without this value.
 - `OMNI_BREAKGLASS_PUBLIC_KEY` – base64-encoded Curve25519 public key used to encrypt break-glass payloads submitted by operators. Required in production.
+- `OMNI_BREAKGLASS_PRIVATE_KEY` – base64-encoded Curve25519 private key used by the API to decrypt break-glass payloads. Required in production.
 - `OMNI_CACHE_TTL_SECONDS` – cache duration for Google Secret Manager fetches (defaults to 300 seconds).
+- `OMNI_ALLOW_LATEST_VERSION` – when `false`, disallows the `latest` alias for GSM secrets and requires a pinned version; defaults to `true`.
 
 ### Google Secret Manager (production-only)
 

@@ -1,4 +1,5 @@
 import { defaultTestEnv, createOperatorJwt } from '../helpers/omniTestUtils.js';
+import { buildBreakGlassCiphertext } from '../helpers/breakGlassFixtures.js';
 
 describe('Omni break-glass flow', () => {
   it('switches cache source to break_glass until TTL expires', async () => {
@@ -13,7 +14,7 @@ describe('Omni break-glass flow', () => {
         .set('Authorization', `Bearer ${operatorToken}`)
         .send({
           secretType: 'trading_api_key',
-          ciphertext: 'encrypted-secret',
+          ciphertext: buildBreakGlassCiphertext('encrypted-secret'),
           expiresAt,
         });
 
