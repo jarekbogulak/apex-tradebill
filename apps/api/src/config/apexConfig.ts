@@ -28,6 +28,10 @@ export interface ApeXCredentials {
   environment: ApeXEnvironment;
   restUrl?: string;
   wsUrl?: string;
+  /**
+   * ZK signing seed (hex). For prod this should come from Secret Manager (secret type: zk_signing_seed).
+   */
+  l2Seed?: string;
 }
 
 export const resolveApeXCredentials = (
@@ -62,5 +66,6 @@ export const resolveApeXCredentials = (
     environment: detectedEnvironment,
     restUrl,
     wsUrl,
+    l2Seed: env.APEX_OMNI_L2_SEED,
   };
 };

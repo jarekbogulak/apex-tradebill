@@ -73,6 +73,13 @@ export interface BreakGlassResult {
   expiresAt: string;
 }
 
+export interface SecretValueResult {
+  secretType: string;
+  value: string;
+  version: string;
+  source: CacheSource;
+}
+
 export class RotationInProgressError extends Error {
   constructor(secretType: string) {
     super(`Rotation already in progress for ${secretType}`);
@@ -102,7 +109,6 @@ export class InvalidBreakGlassPayloadError extends Error {
 }
 
 const MAX_BREAK_GLASS_TTL_MS = 30 * 60 * 1000;
-const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const BOX_SECRET_KEY_LENGTH = 32;
 const BOX_PUBLIC_KEY_LENGTH = 32;
@@ -384,12 +390,68 @@ export const createOmniSecretService = ({
   };
 
   const isSecretAvailable = async (secretType: string): Promise<boolean> => {
-    const metadata = await repository.getMetadata(secretType);
+    const parsedType = SecretTypeSchema.parse(secretType);
+    const metadata = await repository.getMetadata(parsedType);
     if (!metadata) {
       return false;
     }
-    const cached = cache.getCached(secretType);
+    const cached = cache.getCached(parsedType);
     return Boolean(cached && cached.source !== 'empty');
+  };
+
+  const getSecretValue = async (secretType: string): Promise<SecretValueResult> => {
+    const metadata = await ensureSecret(secretType);
+    const parsedSecretType = metadata.secretType;
+    const targetEntry: OmniSecretMetadata = {
+      ...metadata,
+      gcpVersionAlias: resolveGcpVersion(metadata),
+    };
+
+    try {
+      const cached = await cache.getOrFetch(targetEntry);
+      telemetry?.recordSecretRead(parsedSecretType, cached.source, 0);
+      telemetry?.setCacheAge(parsedSecretType, cached.source, 0);
+      await updateMetadata(parsedSecretType, {
+        cacheSource: cached.source,
+        cacheVersion: cached.version,
+        lastValidatedAt: new Date().toISOString(),
+      });
+      await repository.recordAccessEvent({
+        secretType: parsedSecretType,
+        action: 'secret_read',
+        actorType: 'service',
+        actorId: 'omni-runtime',
+        result: 'success',
+        gcpSecretVersion: cached.version,
+      });
+
+      return {
+        secretType: parsedSecretType,
+        value: cached.value,
+        version: cached.version,
+        source: cached.source,
+      };
+    } catch (error) {
+      telemetry?.recordSecretFailure(parsedSecretType, 'gsm_unavailable');
+      alerts?.recordCacheFailure(parsedSecretType, 'gsm_unavailable');
+      cache.markEmpty(parsedSecretType);
+      await updateMetadata(parsedSecretType, {
+        cacheSource: 'empty',
+        cacheVersion: null,
+      });
+      await repository.recordAccessEvent({
+        secretType: parsedSecretType,
+        action: 'secret_read',
+        actorType: 'service',
+        actorId: 'omni-runtime',
+        result: 'failure',
+        errorCode: 'GSM_UNAVAILABLE',
+      });
+      throw new SecretUnavailableError(
+        parsedSecretType,
+        error instanceof Error ? error.message : 'gsm_unavailable',
+      );
+    }
   };
 
   return {
@@ -398,6 +460,7 @@ export const createOmniSecretService = ({
     refreshCache,
     applyBreakGlass,
     isSecretAvailable,
+    getSecretValue,
     listMetadata: () => repository.listMetadata(),
   };
 };

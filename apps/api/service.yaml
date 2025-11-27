@@ -1,0 +1,87 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: apex-tradebill-api
+  labels:
+    cloud.googleapis.com/location: us-central1
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "10"
+        run.googleapis.com/execution-environment: gen2
+    spec:
+      serviceAccountName: apex-tradebill-api-sa
+      containers:
+        - image: gcr.io/your-project-id/apex-tradebill-api:latest
+          ports:
+            - containerPort: 4000
+          env:
+            # --- Plain Text Configuration (Non-Sensitive) ---
+            - name: NODE_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: PORT
+              value: "4000"
+            - name: GCP_PROJECT_ID
+              value: "apex-tradebill-api"
+            - name: APEX_OMNI_ENVIRONMENT
+              value: "prod"
+            - name: OMNI_CACHE_TTL_SECONDS
+              value: "300"
+            - name: OMNI_ALLOW_LATEST_VERSION
+              value: "true"
+            - name: SUPABASE_DB_POOL_MIN
+              value: "1"
+            - name: SUPABASE_DB_POOL_MAX
+              value: "5"
+            - name: SUPABASE_DB_IDLE_TIMEOUT_MS
+              value: "30000"
+            - name: SUPABASE_DB_SSL
+              value: "require"
+            - name: APEX_TRADEBILL_AUTH_ALLOW_GUEST
+              value: "false"
+            # Disable local fallbacks in production
+            - name: APEX_ALLOW_IN_MEMORY_DB
+              value: "false"
+            - name: APEX_ALLOW_IN_MEMORY_MARKET_DATA
+              value: "false"
+
+            # --- Secrets Mounted as Environment Variables ---
+            # 1. Database URL (GSM env var; required before Omni Secrets bootstrap)
+            - name: SUPABASE_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: apex-tradebill-prod-SUPABASE_DB_URL
+                  key: latest
+            
+            # 2. JWT Secret
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: apex-tradebill-prod-JWT_SECRET
+                  key: latest
+
+            # 3. Omni API Passphrase
+            - name: APEX_OMNI_API_PASSPHRASE
+              valueFrom:
+                secretKeyRef:
+                  name: apex-tradebill-prod-APEX_OMNI_API_PASSPHRASE
+                  key: latest
+
+            # 4. Omni Breakglass Keys (Curve25519 base64)
+            - name: OMNI_BREAKGLASS_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: apex-tradebill-prod-OMNI_BREAKGLASS_PRIVATE_KEY
+                  key: latest
+            - name: OMNI_BREAKGLASS_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: apex-tradebill-prod-OMNI_BREAKGLASS_PUBLIC_KEY
+                  key: latest
+
+            # NOTE: Apex Omni API key/secret and zk signing seed are retrieved at runtime via Omni Secrets
+            # (GSM-backed) and NOT injected as environment variables to avoid wider exposure.

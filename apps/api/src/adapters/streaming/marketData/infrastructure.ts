@@ -7,6 +7,7 @@ import type { RingBuffer } from '../realtime/ringBuffer.js';
 import { createRingBufferMarketDataPort } from './ringBufferAdapter.js';
 import { createInMemoryMarketDataProvider } from './marketDataProvider.inMemory.js';
 import { DEFAULT_BASE_PRICES } from './defaults.js';
+import type { OmniSecretService } from '@api/modules/omniSecrets/service.js';
 
 export interface MarketInfrastructure {
   marketData: MarketDataPort;
@@ -25,6 +26,7 @@ export interface MarketInfrastructureLogger {
 export interface CreateMarketInfrastructureOptions {
   logger: MarketInfrastructureLogger;
   marketMetadata: MarketMetadataPort;
+  omniSecrets?: OmniSecretService;
 }
 
 const buildStreamingSymbols = (allowlisted: TradingSymbol[]): TradingSymbol[] => {
@@ -38,6 +40,7 @@ const buildStreamingSymbols = (allowlisted: TradingSymbol[]): TradingSymbol[] =>
 export const createMarketInfrastructure = async ({
   logger,
   marketMetadata,
+  omniSecrets,
 }: CreateMarketInfrastructureOptions): Promise<MarketInfrastructure> => {
   if (env.apex.allowInMemoryMarketData) {
     logger.warn(
@@ -48,8 +51,52 @@ export const createMarketInfrastructure = async ({
     };
   }
 
-  const credentials = env.apex.credentials;
-  if (!credentials) {
+  const resolvedCredentials = await (async () => {
+    const base = env.apex.credentials;
+
+    let apiKey = base?.apiKey;
+    let apiSecret = base?.apiSecret;
+    const passphrase = base?.passphrase;
+    let l2Seed = base?.l2Seed;
+
+    if (omniSecrets) {
+      const loadSecret = async (secretType: 'trading_api_key' | 'trading_client_secret' | 'zk_signing_seed') => {
+        try {
+          const result = await omniSecrets.getSecretValue(secretType);
+          return result.value;
+        } catch (error) {
+          logger.warn('omni.secret_fetch_failed', { secretType, err: error });
+          return null;
+        }
+      };
+
+      const [fetchedApiKey, fetchedApiSecret, fetchedSeed] = await Promise.all([
+        loadSecret('trading_api_key'),
+        loadSecret('trading_client_secret'),
+        loadSecret('zk_signing_seed'),
+      ]);
+
+      apiKey = fetchedApiKey ?? apiKey;
+      apiSecret = fetchedApiSecret ?? apiSecret;
+      l2Seed = fetchedSeed ?? l2Seed;
+    }
+
+    if (!apiKey || !apiSecret) {
+      return null;
+    }
+
+    return {
+      apiKey,
+      apiSecret,
+      passphrase,
+      environment: base?.environment ?? 'prod',
+      restUrl: base?.restUrl,
+      wsUrl: base?.wsUrl,
+      l2Seed,
+    };
+  })();
+
+  if (!resolvedCredentials) {
     logger.warn(
       'ApeX Omni credentials missing – using in-memory market data (APEX_ALLOW_IN_MEMORY_MARKET_DATA=true)',
     );
@@ -60,12 +107,12 @@ export const createMarketInfrastructure = async ({
 
   const ringBuffer = createRingBuffer();
   const client = createApeXOmniClient({
-    apiKey: credentials.apiKey,
-    apiSecret: credentials.apiSecret,
-    passphrase: credentials.passphrase,
-    environment: credentials.environment,
-    restBaseUrl: credentials.restUrl,
-    wsBaseUrl: credentials.wsUrl,
+    apiKey: resolvedCredentials.apiKey,
+    apiSecret: resolvedCredentials.apiSecret,
+    passphrase: resolvedCredentials.passphrase,
+    environment: resolvedCredentials.environment,
+    restBaseUrl: resolvedCredentials.restUrl,
+    wsBaseUrl: resolvedCredentials.wsUrl,
   });
 
   const allowlisted = await marketMetadata.listAllowlistedSymbols();
