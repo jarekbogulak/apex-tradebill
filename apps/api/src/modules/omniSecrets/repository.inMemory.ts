@@ -53,6 +53,22 @@ const buildSeedCatalog = (): OmniSecretMetadata[] => {
       createdAt: now,
       updatedAt: now,
     },
+    {
+      secretType: 'zk_signing_seed',
+      environment: 'production',
+      gcpSecretId: 'projects/local-dev/secrets/apex-omni-zk-signing-seed',
+      gcpVersionAlias: 'latest',
+      status: 'active',
+      rotationDueAt: now,
+      lastRotatedAt: null,
+      lastValidatedAt: null,
+      owner: 'Security Engineering',
+      breakGlassEnabledUntil: null,
+      cacheSource: 'gsm',
+      cacheVersion: 'latest',
+      createdAt: now,
+      updatedAt: now,
+    },
   ];
 };
 

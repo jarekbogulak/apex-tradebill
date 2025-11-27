@@ -33,6 +33,11 @@ const seedCatalog = (): SeedSecretDescriptor[] => {
       owner: 'Platform Reliability',
       gcpSecretId: `projects/${projectId}/secrets/apex-omni-webhook-shared-secret`,
     },
+    {
+      secretType: 'zk_signing_seed',
+      owner: 'Security Engineering',
+      gcpSecretId: `projects/${projectId}/secrets/apex-omni-zk-signing-seed`,
+    },
   ];
 };
 

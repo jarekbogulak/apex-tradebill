@@ -4,6 +4,7 @@ export const OMNI_SECRET_TYPES = [
   'trading_api_key',
   'trading_client_secret',
   'webhook_shared_secret',
+  'zk_signing_seed',
 ] as const;
 
 export const OmniEnvironmentSchema = z.enum(['production']);

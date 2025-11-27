@@ -1,6 +1,6 @@
 import type { Timeframe } from '@apex-tradebill/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -41,7 +41,7 @@ const toFriendlySettingsError = (message: string): string => {
 
 export default function SettingsScreen() {
   const theme = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const styles = StyleSheet.create(createStyles(theme));
   const queryClient = useQueryClient();
   const settings = useSettingsStore();
   const setSettings = useSettingsStore((state) => state.setSettings);
@@ -217,91 +217,90 @@ export default function SettingsScreen() {
   );
 }
 
-const createStyles = (theme: Theme) =>
-  StyleSheet.create({
-    container: {
-      padding: theme.spacing.lg,
-      gap: theme.spacing.lg,
-      backgroundColor: theme.colors.surfaceAlt,
-      flexGrow: 1,
-    },
-    title: {
-      fontSize: 20,
-      fontWeight: '700',
-      color: theme.colors.textPrimary,
-    },
-    field: {
-      gap: theme.spacing.xs,
-    },
-    label: {
-      color: theme.colors.textSecondary,
-      fontSize: 14,
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      borderRadius: theme.radii.sm,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.md,
-      fontSize: 16,
-      color: theme.colors.textPrimary,
-      backgroundColor: theme.colors.surface,
-    },
-    timeframeGroup: {
-      flexDirection: 'row',
-      gap: theme.spacing.sm,
-    },
-    timeframeOption: {
-      flexGrow: 1,
-      paddingVertical: theme.spacing.md,
-      borderRadius: theme.radii.sm,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: theme.colors.surface,
-    },
-    timeframeOptionActive: {
-      backgroundColor: theme.colors.accent,
-      borderColor: theme.colors.accent,
-    },
-    timeframeOptionLabel: {
-      color: theme.colors.textPrimary,
-      fontSize: 14,
-      fontWeight: '600',
-    },
-    timeframeOptionLabelActive: {
-      color: theme.colors.textInverted,
-    },
-    button: {
-      backgroundColor: theme.colors.accent,
-      paddingVertical: theme.spacing.lg,
-      borderRadius: theme.radii.md,
-      alignItems: 'center',
-    },
-    buttonLabel: {
-      color: theme.colors.textInverted,
-      fontSize: 16,
-      fontWeight: '600',
-    },
-    statusContainer: {
-      borderRadius: theme.radii.md,
-      padding: theme.spacing.md,
-      marginTop: theme.spacing.sm,
-    },
-    statusSuccess: {
-      backgroundColor: theme.colors.successSurface,
-    },
-    statusError: {
-      backgroundColor: theme.colors.errorSurface,
-    },
-    statusMessage: {
-      fontSize: 14,
-    },
-    statusSuccessText: {
-      color: theme.colors.success,
-    },
-    statusErrorText: {
-      color: theme.colors.error,
-    },
-  });
+const createStyles = (theme: Theme) => ({
+  container: {
+    padding: theme.spacing.lg,
+    gap: theme.spacing.lg,
+    backgroundColor: theme.colors.surfaceAlt,
+    flexGrow: 1,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: theme.colors.textPrimary,
+  },
+  field: {
+    gap: theme.spacing.xs,
+  },
+  label: {
+    color: theme.colors.textSecondary,
+    fontSize: 14,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radii.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
+    fontSize: 16,
+    color: theme.colors.textPrimary,
+    backgroundColor: theme.colors.surface,
+  },
+  timeframeGroup: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  timeframeOption: {
+    flexGrow: 1,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radii.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surface,
+  },
+  timeframeOptionActive: {
+    backgroundColor: theme.colors.accent,
+    borderColor: theme.colors.accent,
+  },
+  timeframeOptionLabel: {
+    color: theme.colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  timeframeOptionLabelActive: {
+    color: theme.colors.textInverted,
+  },
+  button: {
+    backgroundColor: theme.colors.accent,
+    paddingVertical: theme.spacing.lg,
+    borderRadius: theme.radii.md,
+    alignItems: 'center',
+  },
+  buttonLabel: {
+    color: theme.colors.textInverted,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  statusContainer: {
+    borderRadius: theme.radii.md,
+    padding: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+  },
+  statusSuccess: {
+    backgroundColor: theme.colors.successSurface,
+  },
+  statusError: {
+    backgroundColor: theme.colors.errorSurface,
+  },
+  statusMessage: {
+    fontSize: 14,
+  },
+  statusSuccessText: {
+    color: theme.colors.success,
+  },
+  statusErrorText: {
+    color: theme.colors.error,
+  },
+});

@@ -79,9 +79,26 @@ export const buildServer = async (): Promise<FastifyInstance> => {
     );
   }
 
+  const redactedLogPaths = [
+    'req.headers.apex-api-key',
+    'req.headers.apex-signature',
+    'req.headers.apex-passphrase',
+    'req.headers.apex-omni-api-key',
+    'req.headers.apex-omni-api-secret',
+    'req.headers.apex-omni-api-passphrase',
+    'body.apexOmni.apiSecret',
+    'body.apexOmni.apiKey',
+    'body.apexOmni.passphrase',
+    'body.apexOmni.l2Seed',
+  ];
+
   const app = Fastify({
     logger: {
       level: env.server.logLevel,
+      redact: {
+        paths: redactedLogPaths,
+        remove: true,
+      },
     },
   });
   const appLogger = createAppLoggerFacade(app.log);
@@ -115,6 +132,7 @@ export const buildServer = async (): Promise<FastifyInstance> => {
       warn: appLogger.warn,
     },
     marketMetadata: marketMetadataService,
+    omniSecrets: app.omniSecrets,
   });
   if (infrastructure.streaming && infrastructure.ringBuffer) {
     await app.register(marketStreamPlugin, {
