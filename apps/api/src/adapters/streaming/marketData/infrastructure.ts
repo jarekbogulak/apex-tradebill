@@ -56,11 +56,17 @@ export const createMarketInfrastructure = async ({
 
     let apiKey = base?.apiKey;
     let apiSecret = base?.apiSecret;
-    const passphrase = base?.passphrase;
+    let passphrase = base?.passphrase;
     let l2Seed = base?.l2Seed;
 
     if (omniSecrets) {
-      const loadSecret = async (secretType: 'trading_api_key' | 'trading_client_secret' | 'zk_signing_seed') => {
+      const loadSecret = async (
+        secretType:
+          | 'trading_api_key'
+          | 'trading_client_secret'
+          | 'trading_api_passphrase'
+          | 'zk_signing_seed',
+      ) => {
         try {
           const result = await omniSecrets.getSecretValue(secretType);
           return result.value;
@@ -70,14 +76,16 @@ export const createMarketInfrastructure = async ({
         }
       };
 
-      const [fetchedApiKey, fetchedApiSecret, fetchedSeed] = await Promise.all([
+      const [fetchedApiKey, fetchedApiSecret, fetchedPassphrase, fetchedSeed] = await Promise.all([
         loadSecret('trading_api_key'),
         loadSecret('trading_client_secret'),
+        loadSecret('trading_api_passphrase'),
         loadSecret('zk_signing_seed'),
       ]);
 
       apiKey = fetchedApiKey ?? apiKey;
       apiSecret = fetchedApiSecret ?? apiSecret;
+      passphrase = fetchedPassphrase ?? passphrase;
       l2Seed = fetchedSeed ?? l2Seed;
     }
 

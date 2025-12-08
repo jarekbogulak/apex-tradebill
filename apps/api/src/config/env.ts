@@ -326,9 +326,9 @@ const buildEnv = (): AppEnv => {
     );
   }
 
-  if (!apexCredentials && !resolvedAllowInMemoryMarketData) {
+    if (!apexCredentials && !resolvedAllowInMemoryMarketData && !parsed.gcpProjectId) {
     throw new ConfigError(
-      'ApeX Omni credentials are missing. Provide APEX_OMNI_* values or enable APEX_ALLOW_IN_MEMORY_MARKET_DATA=true.',
+        'ApeX Omni credentials are missing. Provide APEX_OMNI_* values, enable APEX_ALLOW_IN_MEMORY_MARKET_DATA=true, or configure GCP_PROJECT_ID for Secret Manager.',
     );
   }
 

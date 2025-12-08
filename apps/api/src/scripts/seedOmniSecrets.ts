@@ -29,6 +29,11 @@ const seedCatalog = (): SeedSecretDescriptor[] => {
       gcpSecretId: `projects/${projectId}/secrets/apex-omni-trading-client-secret`,
     },
     {
+      secretType: 'trading_api_passphrase',
+      owner: 'Security Engineering',
+      gcpSecretId: `projects/${projectId}/secrets/apex-omni-trading-api-passphrase`,
+    },
+    {
       secretType: 'webhook_shared_secret',
       owner: 'Platform Reliability',
       gcpSecretId: `projects/${projectId}/secrets/apex-omni-webhook-shared-secret`,

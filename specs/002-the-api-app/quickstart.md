@@ -19,10 +19,10 @@
 
 4. **Validate operator workflow**
    ```bash
-   curl -H "Authorization: Bearer <ops-token>" \
-        https://localhost:3333/ops/apex-omni/secrets/status
-   ```
-   - Expect 200 with metadata for `trading_api_key`, `trading_client_secret`, `webhook_shared_secret` and cache age <300 seconds.
+  curl -H "Authorization: Bearer <ops-token>" \
+       https://localhost:3333/ops/apex-omni/secrets/status
+  ```
+   - Expect 200 with metadata for `trading_api_key`, `trading_client_secret`, `trading_api_passphrase`, `webhook_shared_secret` and cache age <300 seconds.
 
 5. **Test rotation preview**
    ```bash

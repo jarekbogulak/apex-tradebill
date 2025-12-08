@@ -29,7 +29,7 @@ A platform security owner needs all production Apex Omni integration secrets man
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
-- **FR-001**: System MUST centralize all production Apex Omni credentials (API keys, client secrets, webhook secrets) within Google Secret Manager and prohibit storing them in code, local config files, or unencrypted env vars.
+- **FR-001**: System MUST centralize all production Apex Omni credentials (API keys, client secrets, API passphrases, webhook secrets) within Google Secret Manager and prohibit storing them in code, local config files, or unencrypted env vars.
 - **FR-002**: System MUST enforce that only authenticated, authorized service identities and designated operators can create, read, update, or delete Apex Omni secrets.
 - **FR-003**: System MUST provide a documented workflow for operators to add or exceptionally rotate Apex Omni secrets (expected <=1 rotation per year unless a security event occurs), including validation that the new value works before it becomes active.
 - **FR-004**: System MUST ensure the API service reads secrets directly from Google Secret Manager (or a secure cache backed by it) at startup and refreshes on rotation without requiring a redeploy for credential updates.
@@ -43,7 +43,7 @@ A platform security owner needs all production Apex Omni integration secrets man
 - **FR-012**: System MUST allow the production API service to start when a secret is missing but automatically disable Omni-dependent features, respond with explicit unavailability errors, and continue alerting operators until Google Secret Manager is repopulated.
 
 ### Key Entities *(include if feature involves data)*
-- **Apex Omni Secret Record**: Represents a single Omni credential from the predefined catalog with metadata such as environment (production only for GSM), secret type (API key, webhook secret), owner, last rotated date, and access permissions.
+- **Apex Omni Secret Record**: Represents a single Omni credential from the predefined catalog with metadata such as environment (production only for GSM), secret type (API key, client secret, API passphrase, webhook secret), owner, last rotated date, and access permissions.
 - **Secret Access Event**: Captures each attempt to read or modify Apex Omni secrets, noting the requesting identity, timestamp, operation, and result for compliance and anomaly detection.
 
 ## Review & Acceptance Checklist

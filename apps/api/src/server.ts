@@ -120,6 +120,7 @@ export const buildServer = async (): Promise<FastifyInstance> => {
     issuer: env.auth.issuer,
     audience: env.auth.audience,
     allowGuest,
+    unauthenticatedPaths: ['/v1/auth/device/register'],
   });
 
   await app.register(observabilityPlugin);

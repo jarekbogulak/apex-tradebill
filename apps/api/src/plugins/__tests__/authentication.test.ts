@@ -178,4 +178,60 @@ describe('authenticationPlugin', () => {
 
     await app.close();
   });
+
+  it('bypasses authentication for whitelisted paths even when guests are disabled', async () => {
+    const app = fastify({ logger: false });
+    await authenticationPlugin(app, {
+      secret: 'secret',
+      issuer: 'apex',
+      audience: 'mobile',
+      allowGuest: false,
+      unauthenticatedPaths: ['/v1/auth/device/register'],
+    });
+    app.post('/v1/auth/device/register', async (request) => {
+      return {
+        userId: request.auth?.userId,
+        token: request.auth?.token,
+        claims: request.auth?.claims,
+      };
+    });
+
+    const response = await app.inject({ method: 'POST', url: '/v1/auth/device/register' });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      userId: DEFAULT_USER_ID,
+      token: 'guest',
+      claims: {},
+    });
+
+    await app.close();
+  });
+
+  it('still enforces authentication for non-whitelisted paths', async () => {
+    const app = fastify({ logger: false });
+    await authenticationPlugin(app, {
+      secret: 'secret',
+      issuer: 'apex',
+      audience: 'mobile',
+      allowGuest: false,
+      unauthenticatedPaths: ['/v1/auth/device/register'],
+    });
+    app.get('/protected', async (request) => {
+      return {
+        userId: request.auth?.userId,
+        token: request.auth?.token,
+      };
+    });
+
+    const response = await app.inject({ method: 'GET', url: '/protected' });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.json()).toEqual({
+      code: 'UNAUTHENTICATED',
+      message: 'Authorization header missing',
+    });
+
+    await app.close();
+  });
 });

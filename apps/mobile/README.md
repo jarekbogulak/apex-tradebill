@@ -25,7 +25,9 @@ cp apps/mobile/.env.example apps/mobile/.env.development
 Key variables (all public):
 
 - `EXPO_PUBLIC_APP_ENV` – `development` | `preview` | `production`; used for display/analytics only.
-- `EXPO_PUBLIC_API_URL` – base URL for the TradeBill API (defaults to `http://127.0.0.1:4000`).
+- `EXPO_PUBLIC_API_TARGET` – `local` (default) or `prod`. Picks the API preset (local dev vs. Cloud Run prod). You can still override with `EXPO_PUBLIC_API_URL`.
+- `EXPO_PUBLIC_API_PROD_URL` – optional override for the production API; defaults to the Cloud Run endpoint.
+- `EXPO_PUBLIC_API_URL` – base URL for the TradeBill API (defaults to `http://127.0.0.1:4000`); used as override for any target.
 - `EXPO_PUBLIC_API_WS_URL` – optional override for WebSocket connections; falls back to `EXPO_PUBLIC_API_URL`.
 - `EXPO_PUBLIC_APEX_ENVIRONMENT` – `prod` (default) or `testnet`; chooses which public ApeX endpoints to use.
 - `EXPO_PUBLIC_APEX_*` – optional overrides for REST/WebSocket endpoints. Defaults point to the standard prod/testnet clusters. Do not place private ApeX credentials or any non-public secrets here.

@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const OMNI_SECRET_TYPES = [
   'trading_api_key',
   'trading_client_secret',
+  'trading_api_passphrase',
   'webhook_shared_secret',
   'zk_signing_seed',
 ] as const;
