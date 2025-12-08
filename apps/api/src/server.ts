@@ -1,37 +1,37 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import { pathToFileURL } from 'node:url';
-import { createMarketMetadataService } from './domain/markets/marketMetadataService.js';
-import { createSwappableTradeCalculationRepository } from './domain/trade-calculation/trade-calculation.entity.js';
-import getSymbolRoute from './adapters/http/fastify/markets/getSymbol.js';
-import postPreviewRoute from './adapters/http/fastify/trades/postPreview.js';
-import postExecuteRoute from './adapters/http/fastify/trades/postExecute.js';
-import getHistoryRoute from './adapters/http/fastify/trades/getHistory.js';
-import postHistoryImportRoute from './adapters/http/fastify/trades/postHistoryImport.js';
-import getSettingsRoute from './adapters/http/fastify/settings/getSettings.js';
-import patchSettingsRoute from './adapters/http/fastify/settings/patchSettings.js';
-import getEquityRoute from './adapters/http/fastify/accounts/getEquity.js';
-import marketDataStreamRoute from './adapters/http/fastify/stream/marketData.js';
+import { createMarketMetadataService } from '@api/domain/markets/marketMetadataService.js';
+import { createSwappableTradeCalculationRepository } from '@api/domain/trade-calculation/trade-calculation.entity.js';
+import getSymbolRoute from '@api/adapters/http/fastify/markets/getSymbol.js';
+import postPreviewRoute from '@api/adapters/http/fastify/trades/postPreview.js';
+import postExecuteRoute from '@api/adapters/http/fastify/trades/postExecute.js';
+import getHistoryRoute from '@api/adapters/http/fastify/trades/getHistory.js';
+import postHistoryImportRoute from '@api/adapters/http/fastify/trades/postHistoryImport.js';
+import getSettingsRoute from '@api/adapters/http/fastify/settings/getSettings.js';
+import patchSettingsRoute from '@api/adapters/http/fastify/settings/patchSettings.js';
+import getEquityRoute from '@api/adapters/http/fastify/accounts/getEquity.js';
+import marketDataStreamRoute from '@api/adapters/http/fastify/stream/marketData.js';
 import postDeviceRegisterRoute, {
   type DeviceAuthServiceRef,
-} from './adapters/http/fastify/auth/postDeviceRegister.js';
-import { DEFAULT_USER_ID } from './adapters/http/fastify/shared/http.js';
-import authenticationPlugin from './plugins/authentication.js';
-import observabilityPlugin from './plugins/observability.js';
-import omniSecretsPlugin from './plugins/omniSecrets.js';
-import errorHandlerPlugin from './plugins/errorHandler.js';
-import marketStreamPlugin from './plugins/marketStream.js';
-import { rebuildEnv, env, ConfigError } from './config/env.js';
-import { createDeviceAuthService } from './adapters/security/deviceAuthService.js';
-import { createMarketInfrastructure } from './adapters/streaming/marketData/infrastructure.js';
-import { resolveTradeCalculationRepository } from './adapters/persistence/trade-calculations/resolveTradeCalculationRepository.js';
-import { scheduleDatabaseRecovery } from './adapters/persistence/providers/postgres/recovery.js';
-import { createJobScheduler, type TradeHistoryPruneJobHandle } from './adapters/jobs/scheduler.js';
+} from '@api/adapters/http/fastify/auth/postDeviceRegister.js';
+import { DEFAULT_USER_ID } from '@api/adapters/http/fastify/shared/http.js';
+import authenticationPlugin from '@api/plugins/authentication.js';
+import observabilityPlugin from '@api/plugins/observability.js';
+import omniSecretsPlugin from '@api/plugins/omniSecrets.js';
+import errorHandlerPlugin from '@api/plugins/errorHandler.js';
+import marketStreamPlugin from '@api/plugins/marketStream.js';
+import { rebuildEnv, env, ConfigError } from '@api/config/env.js';
+import { createDeviceAuthService } from '@api/adapters/security/deviceAuthService.js';
+import { createMarketInfrastructure } from '@api/adapters/streaming/marketData/infrastructure.js';
+import { resolveTradeCalculationRepository } from '@api/adapters/persistence/trade-calculations/resolveTradeCalculationRepository.js';
+import { scheduleDatabaseRecovery } from '@api/adapters/persistence/providers/postgres/recovery.js';
+import { createJobScheduler, type TradeHistoryPruneJobHandle } from '@api/adapters/jobs/scheduler.js';
 import {
   closeSharedDatabasePool,
   type DatabasePool,
-} from './adapters/persistence/providers/postgres/pool.js';
-import { buildAppDeps } from './config/appDeps.js';
-import { makePruneTradeHistory } from './domain/trading/pruneTradeHistory.usecase.js';
+} from '@api/adapters/persistence/providers/postgres/pool.js';
+import { buildAppDeps } from '@api/config/appDeps.js';
+import { makePruneTradeHistory } from '@api/domain/trading/pruneTradeHistory.usecase.js';
 
 type LogContext = Record<string, unknown>;
 
@@ -39,6 +39,14 @@ interface AppLoggerFacade {
   info(message: string, context?: LogContext): void;
   warn(message: string, context?: LogContext): void;
   error(message: string, context?: LogContext): void;
+}
+
+export interface BuildServerOverrides {
+  createDeviceAuthService?: typeof createDeviceAuthService;
+  createMarketInfrastructure?: typeof createMarketInfrastructure;
+  createJobScheduler?: typeof createJobScheduler;
+  omniSecretsPlugin?: typeof omniSecretsPlugin;
+  resolveTradeCalculationRepository?: typeof resolveTradeCalculationRepository;
 }
 
 const createAppLoggerFacade = (log: FastifyInstance['log']): AppLoggerFacade => ({
@@ -65,7 +73,9 @@ const createAppLoggerFacade = (log: FastifyInstance['log']): AppLoggerFacade => 
   },
 });
 
-export const buildServer = async (): Promise<FastifyInstance> => {
+export const buildServer = async (
+  overrides: BuildServerOverrides = {},
+): Promise<FastifyInstance> => {
   // Rebuild env in tests when overrides are applied
   if (process.env.NODE_ENV === 'test') {
     Object.assign(env, rebuildEnv());
@@ -114,6 +124,7 @@ export const buildServer = async (): Promise<FastifyInstance> => {
 
   const jwtSecret = env.auth.jwtSecret;
   const allowGuest = env.auth.allowGuest;
+  let activationSecret: string | null = env.apex.credentials?.apiSecret ?? null;
 
   await app.register(authenticationPlugin, {
     secret: jwtSecret,
@@ -124,10 +135,24 @@ export const buildServer = async (): Promise<FastifyInstance> => {
   });
 
   await app.register(observabilityPlugin);
-  await app.register(omniSecretsPlugin);
+  const resolveOmniSecretsPlugin = overrides.omniSecretsPlugin ?? omniSecretsPlugin;
+  await app.register(resolveOmniSecretsPlugin);
+  if (!activationSecret && app.omniSecrets) {
+    try {
+      const result = await app.omniSecrets.getSecretValue('trading_client_secret');
+      activationSecret = result.value;
+      app.log.info('Loaded activation secret from Omni Secrets (trading_client_secret)');
+    } catch (error) {
+      app.log.warn(
+        { err: error },
+        'Failed to load trading_client_secret from Omni Secrets; device activation remains disabled',
+      );
+    }
+  }
 
   const marketMetadataService = createMarketMetadataService();
-  const infrastructure = await createMarketInfrastructure({
+  const buildMarketInfrastructure = overrides.createMarketInfrastructure ?? createMarketInfrastructure;
+  const infrastructure = await buildMarketInfrastructure({
     logger: {
       info: appLogger.info,
       warn: appLogger.warn,
@@ -142,8 +167,10 @@ export const buildServer = async (): Promise<FastifyInstance> => {
       symbols: infrastructure.streaming.symbols,
     });
   }
+  const resolveTradeCalculations =
+    overrides.resolveTradeCalculationRepository ?? resolveTradeCalculationRepository;
   const { repository: tradeCalculationRepository, pool: tradeCalculationPool } =
-    await resolveTradeCalculationRepository({
+    await resolveTradeCalculations({
       logger: {
         info: appLogger.info,
         warn: appLogger.warn,
@@ -158,11 +185,11 @@ export const buildServer = async (): Promise<FastifyInstance> => {
     seedEquityUserId: DEFAULT_USER_ID,
   });
   const pruneTradeHistory = makePruneTradeHistory({ repository: tradeCalculations });
-  const jobScheduler = createJobScheduler({
+  const buildJobScheduler = overrides.createJobScheduler ?? createJobScheduler;
+  const jobScheduler = buildJobScheduler({
     logger: appLogger,
     registerShutdownHook,
   });
-  const activationSecret = env.apex.credentials?.apiSecret;
   const deviceAuthServiceRef: DeviceAuthServiceRef = {
     current: null,
   };
@@ -173,11 +200,14 @@ export const buildServer = async (): Promise<FastifyInstance> => {
       return;
     }
     if (!activationSecret) {
-      app.log.warn('APEX_OMNI_API_SECRET missing – device activation disabled');
+      app.log.warn(
+        'Device activation secret missing (APEX_OMNI_API_SECRET or trading_client_secret via Omni Secrets) – device activation disabled',
+      );
       deviceAuthServiceRef.current = null;
       return;
     }
-    deviceAuthServiceRef.current = createDeviceAuthService({
+    const buildDeviceAuthService = overrides.createDeviceAuthService ?? createDeviceAuthService;
+    deviceAuthServiceRef.current = buildDeviceAuthService({
       pool,
       activationSecret,
       jwtSecret,
