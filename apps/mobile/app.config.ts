@@ -48,8 +48,32 @@ const requireString = (key: string, fallback?: string): string => {
   return value;
 };
 
+const resolveApiTarget = (): 'local' | 'prod' => {
+  const target =
+    process.env.EXPO_PUBLIC_API_TARGET ?? process.env.EXPO_PUBLIC_APP_ENV ?? process.env.NODE_ENV;
+  const normalized = (target ?? '').toLowerCase();
+  if (normalized === 'prod' || normalized === 'production') {
+    return 'prod';
+  }
+  return 'local';
+};
+
 const resolveApiConfig = () => {
-  const baseUrl = sanitizeUrl(requireString('EXPO_PUBLIC_API_URL', 'http://localhost:4000'));
+  const apiTarget = resolveApiTarget();
+
+  const prodBaseUrl = sanitizeUrl(
+    requireString(
+      'EXPO_PUBLIC_API_PROD_URL',
+      'https://apex-tradebill-api-prod-224196875744.us-central1.run.app',
+    ),
+  );
+  const fallbackLocalBaseUrl = sanitizeUrl(
+    requireString('EXPO_PUBLIC_API_URL', 'http://127.0.0.1:4000'),
+  );
+  const baseUrl = sanitizeUrl(
+    process.env.EXPO_PUBLIC_API_URL ??
+      (apiTarget === 'prod' ? prodBaseUrl : fallbackLocalBaseUrl),
+  );
 
   const wsOverride = process.env.EXPO_PUBLIC_API_WS_URL;
   let wsBaseUrl: string;

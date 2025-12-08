@@ -25,6 +25,7 @@ export interface AuthenticationPluginOptions {
   audience?: string;
   clockToleranceMs?: number;
   allowGuest?: boolean;
+    unauthenticatedPaths?: Array<string | RegExp>;
 }
 
 export interface AuthContext {
@@ -123,7 +124,7 @@ const forbid = (reply: FastifyReply, message: string) => {
 
 export const authenticationPlugin: FastifyPluginAsync<AuthenticationPluginOptions> = async (
   app,
-  { secret, issuer, audience, clockToleranceMs = 5000, allowGuest = true },
+    { secret, issuer, audience, clockToleranceMs = 5000, allowGuest = true, unauthenticatedPaths },
 ) => {
   if (!secret) {
     throw new Error('Authentication secret must be provided');
@@ -131,7 +132,27 @@ export const authenticationPlugin: FastifyPluginAsync<AuthenticationPluginOption
 
   app.decorateRequest('auth', undefined as AuthContext | undefined);
 
+    const isWhitelisted = (path: string): boolean => {
+        if (!unauthenticatedPaths || unauthenticatedPaths.length === 0) {
+            return false;
+        }
+        return unauthenticatedPaths.some((pattern) =>
+            typeof pattern === 'string' ? pattern === path : pattern.test(path),
+        );
+    };
+
   app.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
+      const path = request.routeOptions.url ?? request.url;
+      if (path && isWhitelisted(path)) {
+          request.auth = {
+              userId: DEFAULT_USER_ID,
+              token: 'guest',
+              claims: {},
+          };
+          request.headers['x-user-id'] = DEFAULT_USER_ID;
+          return;
+      }
+
     const authorization = request.headers.authorization;
     if (!authorization) {
       if (allowGuest) {

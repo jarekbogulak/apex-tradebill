@@ -37,7 +37,12 @@ describe('GET /ops/apex-omni/secrets/status (contract)', () => {
         return entry.secretType;
       });
       expect(secretTypes).toEqual(
-        expect.arrayContaining(['trading_api_key', 'trading_client_secret', 'webhook_shared_secret']),
+        expect.arrayContaining([
+          'trading_api_key',
+          'trading_client_secret',
+          'trading_api_passphrase',
+          'webhook_shared_secret',
+        ]),
       );
 
       (response.body.data ?? []).forEach((entry: Record<string, unknown>) => {

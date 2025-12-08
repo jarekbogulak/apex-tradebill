@@ -10,7 +10,7 @@ Represents one production Apex Omni credential tracked by the API service.
 | Field | Type | Notes |
 | --- | --- | --- |
 | `id` | UUID | Primary key |
-| `secret_type` | ENUM(`trading_api_key`, `trading_client_secret`, `webhook_shared_secret`) | Unique together with `environment` |
+| `secret_type` | ENUM(`trading_api_key`, `trading_client_secret`, `trading_api_passphrase`, `webhook_shared_secret`) | Unique together with `environment` |
 | `environment` | ENUM(`production`) | GSM usage limited to production |
 | `gcp_secret_id` | STRING | Full resource name `projects/.../secrets/...` |
 | `gcp_version_alias` | STRING | Typically `latest`, but persisted to support pinning during rotations |
@@ -72,6 +72,6 @@ Ephemeral data held in memory (optionally exposed for diagnostics).
    - Every refresh logs an `OmniSecretAccessEvent` with `action='cache_refresh'`.
 
 ## Data Volume & Scale Assumptions
-- Secret catalog limited to 3 entries; metadata table holds ≤10 rows.
+- Secret catalog limited to 4 entries; metadata table holds ≤10 rows.
 - Access events expected at <10 per minute; table will retain 90 days of history before archival.
 - Audit queries can run synchronously without partitioning due to low volume.

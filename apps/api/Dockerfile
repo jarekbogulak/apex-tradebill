@@ -5,6 +5,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 FROM base AS deps
+ENV NODE_ENV=development
 RUN corepack enable pnpm && pnpm config set store-dir /pnpm/store
 COPY pnpm-lock.yaml package.json pnpm-workspace.yaml ./
 COPY apps/api/package.json apps/api/
@@ -20,11 +21,13 @@ COPY tsconfig.base.json ./
 COPY apps/api/tsconfig.json apps/api/
 COPY packages/types packages/types
 COPY packages/utils packages/utils
+COPY packages/tsconfig packages/tsconfig
+COPY configs configs
 COPY apps/api/src apps/api/src
-RUN pnpm --filter @apex-tradebill/api build
+RUN pnpm --filter @apex-tradebill/api... build
 
 FROM build AS prod-deps
-RUN pnpm prune --prod --filter @apex-tradebill/api...
+RUN pnpm install --prod --filter @apex-tradebill/api...
 
 FROM base AS runner
 WORKDIR /app
@@ -34,8 +37,14 @@ RUN corepack enable pnpm && pnpm config set store-dir /pnpm/store
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=prod-deps /pnpm/store /pnpm/store
+# Workspace packages needed at runtime
+COPY --from=build /app/packages/types /app/packages/types
+COPY --from=build /app/packages/utils /app/packages/utils
 COPY apps/api/package.json apps/api/
 COPY --from=build /app/apps/api/dist apps/api/dist
+# Provide runtime alias for @api/* path mappings
+RUN ln -sfn /app/apps/api/dist /app/node_modules/@api
+COPY configs configs
 # Non-root user for safety
 USER node
 CMD ["node", "apps/api/dist/server.js"]

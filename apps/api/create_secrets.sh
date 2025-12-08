@@ -32,6 +32,7 @@ echo ""
 echo "--- Creating Dynamic Omni Secrets ---"
 create_secret "apex-omni-trading-api-key" "managed-by=omni-secrets,owner=security-engineering"
 create_secret "apex-omni-trading-client-secret" "managed-by=omni-secrets,owner=security-engineering"
+create_secret "apex-omni-trading-api-passphrase" "managed-by=omni-secrets,owner=security-engineering"
 create_secret "apex-omni-webhook-shared-secret" "managed-by=omni-secrets,owner=platform-reliability"
 create_secret "apex-omni-zk-signing-seed" "managed-by=omni-secrets,owner=security-engineering"
 
@@ -41,7 +42,6 @@ echo "--- Creating Environment Secrets ---"
 # SUPABASE_DB_URL must stay as a GSM env var so the DB pool can bootstrap before Omni Secrets loads
 create_secret "apex-tradebill-prod-SUPABASE_DB_URL" "managed-by=env-vars"
 create_secret "apex-tradebill-prod-JWT_SECRET" "managed-by=env-vars"
-create_secret "apex-tradebill-prod-APEX_OMNI_API_PASSPHRASE" "managed-by=env-vars"
 create_secret "apex-tradebill-prod-OMNI_BREAKGLASS_PRIVATE_KEY" "managed-by=env-vars"
 create_secret "apex-tradebill-prod-OMNI_BREAKGLASS_PUBLIC_KEY" "managed-by=env-vars"
 

@@ -21,6 +21,7 @@ describe('POST /internal/apex-omni/secrets/cache/refresh (contract)', () => {
           refreshedSecretTypes: expect.arrayContaining([
             'trading_api_key',
             'trading_client_secret',
+            'trading_api_passphrase',
             'webhook_shared_secret',
           ]),
         }),
