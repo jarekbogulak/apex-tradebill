@@ -3,10 +3,17 @@ import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-nativ
 
 import { useTheme, type Theme } from '@apex-tradebill/ui';
 
+import { InlineErrorMessage } from '@/components/ui/InlineErrorMessage';
 import { createApiClient } from '@/src/services/apiClient';
 import { useAuthStore } from '@/src/state/authStore';
+import { formatFriendlyError, isApiError } from '@/src/utils/api-error';
 
 const apiClient = createApiClient();
+
+const ACTIVATION_ERROR_FALLBACK =
+  'Unable to activate this device right now. Please verify the code and try again.';
+const ACTIVATION_FORBIDDEN_MESSAGE =
+  'This device is not allowed to register. Please check the code or contact support.';
 
 interface DeviceActivationGateProps {
   children: ReactNode;
@@ -25,7 +32,7 @@ export const DeviceActivationGate = ({ children }: DeviceActivationGateProps) =>
 
   const [activationCode, setActivationCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (hydrated) {
@@ -64,7 +71,7 @@ export const DeviceActivationGate = ({ children }: DeviceActivationGateProps) =>
     }
 
     setSubmitting(true);
-    setError(null);
+    setErrorMessage(null);
 
     try {
       const result = await apiClient.registerDevice({
@@ -80,8 +87,12 @@ export const DeviceActivationGate = ({ children }: DeviceActivationGateProps) =>
       });
       setActivationCode('');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Registration failed';
-      setError(message);
+      if (isApiError(err) && err.status === 403) {
+        setErrorMessage(ACTIVATION_FORBIDDEN_MESSAGE);
+        return;
+      }
+
+      setErrorMessage(formatFriendlyError(err, ACTIVATION_ERROR_FALLBACK));
     } finally {
       setSubmitting(false);
     }
@@ -120,7 +131,12 @@ export const DeviceActivationGate = ({ children }: DeviceActivationGateProps) =>
           style={styles.input}
           editable={!submitting}
         />
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {errorMessage ? (
+          <InlineErrorMessage
+            message={errorMessage}
+            containerStyle={styles.errorContainer}
+          />
+        ) : null}
         <Pressable
           style={[
             styles.button,
@@ -204,9 +220,8 @@ const createStyles = (theme: Theme) => ({
     color: theme.colors.textPrimary,
     backgroundColor: theme.colors.surface,
   },
-  error: {
-    color: theme.colors.error,
-    fontSize: 13,
+  errorContainer: {
+    alignSelf: 'stretch' as const,
   },
   button: {
     paddingVertical: theme.spacing.md,

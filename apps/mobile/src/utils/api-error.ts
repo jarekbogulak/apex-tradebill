@@ -138,39 +138,50 @@ export const buildApiError = ({
   });
 };
 
+const looksLikeHtml = (value: string): boolean => /<\/?[a-z][\s\S]*>/i.test(value);
+
+const sanitizeUserFacingText = (value: string | null | undefined): string | null => {
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (includesNetworkToken(trimmed) || looksLikeHtml(trimmed)) {
+    return null;
+  }
+
+  return trimmed;
+};
+
 export const formatFriendlyError = (error: unknown, fallback: string): string => {
   if (!error) {
     return fallback;
   }
 
   if (isApiError(error)) {
-    const userFacingDetails = error.details.filter((detail) => !includesNetworkToken(detail));
+    const userFacingDetails = error.details
+      .map((detail) => sanitizeUserFacingText(detail))
+      .filter((detail): detail is string => Boolean(detail));
     if (userFacingDetails.length > 0) {
       return userFacingDetails.join('\n');
     }
 
-    const trimmedMessage = error.message.trim();
-    if (trimmedMessage) {
-      return includesNetworkToken(trimmedMessage) ? fallback : trimmedMessage;
-    }
-
-    return fallback;
+    const sanitizedMessage = sanitizeUserFacingText(error.message);
+    return sanitizedMessage ?? fallback;
   }
 
   if (typeof error === 'string') {
-    const trimmed = error.trim();
-    if (!trimmed) {
-      return fallback;
-    }
-    return includesNetworkToken(trimmed) ? fallback : trimmed;
+    const sanitizedMessage = sanitizeUserFacingText(error);
+    return sanitizedMessage ?? fallback;
   }
 
   if (error instanceof Error) {
-    const trimmed = error.message.trim();
-    if (!trimmed) {
-      return fallback;
-    }
-    return includesNetworkToken(trimmed) ? fallback : trimmed;
+    const sanitizedMessage = sanitizeUserFacingText(error.message);
+    return sanitizedMessage ?? fallback;
   }
 
   return fallback;
