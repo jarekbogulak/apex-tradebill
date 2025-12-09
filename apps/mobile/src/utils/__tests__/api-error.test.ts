@@ -77,4 +77,16 @@ describe('formatFriendlyError', () => {
 
     expect(message).toBe(FALLBACK);
   });
+
+  test('returns fallback when response body is HTML', () => {
+    const error = new ApiError({
+      status: 403,
+      message:
+        '<html><head> <meta http-equiv="content-type" content="text/html;charset=utf-8"> <title>403 Forbidden</title> </head> <body text=#000000 bgcolor=#ffffff> <h1>Error: Forbidden</h1> <h2>Your client does not have permission to get URL <code>/health</code> from this server.</h2> <h2></h2> </body></html>',
+    });
+
+    const message = formatFriendlyError(error, FALLBACK);
+
+    expect(message).toBe(FALLBACK);
+  });
 });
