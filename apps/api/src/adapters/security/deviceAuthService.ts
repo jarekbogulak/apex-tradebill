@@ -173,28 +173,38 @@ interface ActivationCodeRow extends QueryResultRow {
 interface RegistrationRow extends QueryResultRow {
   device_id: string;
   user_id: string;
-  registered_at: string;
-  last_seen_at: string;
+  registered_at: string | Date;
+  last_seen_at: string | Date;
 }
+
+const toIsoString = (value: string | null | Date): string | null => {
+  if (value == null) {
+    return null;
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  return value.toISOString();
+};
 
 const mapActivationRow = (row: ActivationCodeRow): ActivationCodeRecord =>
   createDeviceActivationCode({
     id: row.id,
     deviceId: row.device_id,
-    issuedAt: row.issued_at,
-    expiresAt: row.expires_at,
+    issuedAt: toIsoString(row.issued_at) ?? '',
+    expiresAt: toIsoString(row.expires_at) ?? '',
     signature: row.signature,
-    consumedAt: row.consumed_at,
+    consumedAt: toIsoString(row.consumed_at),
     consumedByDevice: row.consumed_by_device,
-    createdAt: row.created_at,
+    createdAt: toIsoString(row.created_at) ?? '',
   });
 
 const mapRegistrationRow = (row: RegistrationRow): DeviceRegistrationRecord =>
   createDeviceRegistration({
     deviceId: row.device_id,
     userId: row.user_id,
-    registeredAt: row.registered_at,
-    lastSeenAt: row.last_seen_at,
+    registeredAt: toIsoString(row.registered_at) ?? '',
+    lastSeenAt: toIsoString(row.last_seen_at) ?? '',
   });
 
 const createPgDeviceActivationRepository = (
