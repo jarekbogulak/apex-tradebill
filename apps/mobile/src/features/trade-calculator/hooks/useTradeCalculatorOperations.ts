@@ -25,6 +25,22 @@ const ACCOUNT_SIZE_REQUIRED_ERROR = 'Account size must be greater than zero';
 const PREVIEW_ERROR_FALLBACK =
   'Unable to preview this trade. Double-check the form inputs and try again.';
 const EXECUTE_ERROR_FALLBACK = 'Unable to execute this trade. Please try again in a moment.';
+const RISK_PERCENT_ERROR = 'Risk percent must be between 0 and 1. Update it in Settings.';
+const ATR_MULTIPLIER_ERROR = 'ATR multiplier must be between 0.5 and 3. Update it in Settings.';
+
+const decimalPattern = /^-?\d+(?:\.\d+)?$/;
+
+const normalizeDecimalString = (value: string | null | undefined): string => {
+  return (value ?? '').trim();
+};
+
+const parseDecimal = (value: string): number | null => {
+  if (!decimalPattern.test(value)) {
+    return null;
+  }
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+};
 
 const normalizeNullable = (value: string | null | undefined) => {
   if (value == null) {
@@ -45,6 +61,19 @@ export const prepareTradePayload = ({
   settingsAtrMultiplier: string;
 }): { payload: TradeInput | null; error: string | null } => {
   const { stopPrice: inputStopPrice, ...restInput } = input;
+
+  const normalizedRiskPercent = normalizeDecimalString(settingsRiskPercent);
+  const normalizedAtrMultiplier = normalizeDecimalString(settingsAtrMultiplier);
+
+  const parsedRiskPercent = parseDecimal(normalizedRiskPercent);
+  if (parsedRiskPercent == null || parsedRiskPercent <= 0 || parsedRiskPercent > 1) {
+    return { payload: null, error: RISK_PERCENT_ERROR };
+  }
+
+  const parsedAtrMultiplier = parseDecimal(normalizedAtrMultiplier);
+  if (parsedAtrMultiplier == null || parsedAtrMultiplier < 0.5 || parsedAtrMultiplier > 3) {
+    return { payload: null, error: ATR_MULTIPLIER_ERROR };
+  }
 
   const normalizedStop = normalizeNullable(inputStopPrice);
   const normalizedEntry = normalizeNullable(restInput.entryPrice);
@@ -67,8 +96,8 @@ export const prepareTradePayload = ({
     ...restInput,
     accountSize: normalizedAccountSize,
     entryPrice: normalizedEntry,
-    riskPercent: settingsRiskPercent,
-    atrMultiplier: settingsAtrMultiplier,
+    riskPercent: normalizedRiskPercent,
+    atrMultiplier: normalizedAtrMultiplier,
     ...(normalizedStop != null ? { stopPrice: normalizedStop } : {}),
   } as TradeInput;
 

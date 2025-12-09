@@ -18,11 +18,14 @@ const baseInput: TradeCalculatorInputState = {
   accountEquitySource: 'connected',
 };
 
-const buildPayload = (overrides: Partial<TradeCalculatorInputState> = {}) => {
+const buildPayload = (
+  overrides: Partial<TradeCalculatorInputState> = {},
+  options: { riskPercent?: string; atrMultiplier?: string } = {},
+) => {
   return prepareTradePayload({
     input: { ...baseInput, ...overrides },
-    settingsRiskPercent: '0.02',
-    settingsAtrMultiplier: '1.50',
+    settingsRiskPercent: options.riskPercent ?? '0.02',
+    settingsAtrMultiplier: options.atrMultiplier ?? '1.50',
   });
 };
 
@@ -50,5 +53,19 @@ describe('prepareTradePayload', () => {
 
     expect(result.payload).toBeNull();
     expect(result.error).toBe('Stop price is required when volatility stop is disabled');
+  });
+
+  test('returns error when risk percent is empty', () => {
+    const result = buildPayload({}, { riskPercent: '' });
+
+    expect(result.payload).toBeNull();
+    expect(result.error).toBe('Risk percent must be between 0 and 1. Update it in Settings.');
+  });
+
+  test('returns error when ATR multiplier is outside range', () => {
+    const result = buildPayload({}, { atrMultiplier: '3.5' });
+
+    expect(result.payload).toBeNull();
+    expect(result.error).toBe('ATR multiplier must be between 0.5 and 3. Update it in Settings.');
   });
 });
