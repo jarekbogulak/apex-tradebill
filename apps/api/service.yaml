@@ -14,7 +14,7 @@ spec:
     spec:
       serviceAccountName: apex-tradebill-api-sa
       containers:
-        - image: gcr.io/apex-tradebill-api-479611/apex-tradebill-api@sha256:08d28b9fdc6ff4e0cd18699e65e1ce1c976ee8b20b3d9e4d436429b6b2d2068a
+        - image: gcr.io/apex-tradebill-api-479611/apex-tradebill-api@sha256:77c013c27b2b33453e7779645243183060388598c7b129ac7103cc3994f471d6
           ports:
             - containerPort: 4000
           env:
