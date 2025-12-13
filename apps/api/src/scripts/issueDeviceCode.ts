@@ -98,9 +98,9 @@ const issueActivationCode = async ({
   deviceId: string;
   expiresInMinutes: number;
 }) => {
-  const secret = env.apex.credentials?.apiSecret;
+  const secret = env.auth.deviceActivationSecret;
   if (!secret) {
-    throw new Error('APEX_OMNI_API_SECRET is required to issue device codes.');
+    throw new Error('APEX_DEVICE_ACTIVATION_SECRET is required to issue device codes.');
   }
 
   const now = new Date();

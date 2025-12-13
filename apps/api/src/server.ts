@@ -96,10 +96,26 @@ export const buildServer = async (
     'req.headers.apex-omni-api-key',
     'req.headers.apex-omni-api-secret',
     'req.headers.apex-omni-api-passphrase',
+    'req.headers.authorization',
+    'req.headers.cookie',
+    'req.headers.omni-breakglass-token',
+    'req.headers.omni-ops-token',
     'body.apexOmni.apiSecret',
     'body.apexOmni.apiKey',
     'body.apexOmni.passphrase',
     'body.apexOmni.l2Seed',
+    '*.jwtSecret',
+    '*.breakglassPrivateKey',
+    '*.omniBreakglassPrivateKey',
+    '*.apiSecret',
+    '*.credentials.apiSecret',
+    '*.passphrase',
+    // Top-level redaction
+    'jwtSecret',
+    'breakglassPrivateKey',
+    'omniBreakglassPrivateKey',
+    'apiSecret',
+    'passphrase',
   ];
 
   const app = Fastify({
@@ -124,7 +140,7 @@ export const buildServer = async (
 
   const jwtSecret = env.auth.jwtSecret;
   const allowGuest = env.auth.allowGuest;
-  let activationSecret: string | null = env.apex.credentials?.apiSecret ?? null;
+  const activationSecret: string | null = env.auth.deviceActivationSecret;
 
   await app.register(authenticationPlugin, {
     secret: jwtSecret,
@@ -137,18 +153,6 @@ export const buildServer = async (
   await app.register(observabilityPlugin);
   const resolveOmniSecretsPlugin = overrides.omniSecretsPlugin ?? omniSecretsPlugin;
   await app.register(resolveOmniSecretsPlugin);
-  if (!activationSecret && app.omniSecrets) {
-    try {
-      const result = await app.omniSecrets.getSecretValue('trading_client_secret');
-      activationSecret = result.value;
-      app.log.info('Loaded activation secret from Omni Secrets (trading_client_secret)');
-    } catch (error) {
-      app.log.warn(
-        { err: error },
-        'Failed to load trading_client_secret from Omni Secrets; device activation remains disabled',
-      );
-    }
-  }
 
   const marketMetadataService = createMarketMetadataService();
   const buildMarketInfrastructure = overrides.createMarketInfrastructure ?? createMarketInfrastructure;
@@ -200,9 +204,7 @@ export const buildServer = async (
       return;
     }
     if (!activationSecret) {
-      app.log.warn(
-        'Device activation secret missing (APEX_OMNI_API_SECRET or trading_client_secret via Omni Secrets) – device activation disabled',
-      );
+      app.log.warn('Device activation secret missing (APEX_DEVICE_ACTIVATION_SECRET) – device activation disabled');
       deviceAuthServiceRef.current = null;
       return;
     }

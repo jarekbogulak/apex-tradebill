@@ -24,9 +24,7 @@ import type { CreateJobSchedulerOptions, JobScheduler } from '@api/adapters/jobs
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'testsecret-1234567890';
 process.env.APEX_FORCE_IN_MEMORY_DB = 'true';
-delete process.env.APEX_OMNI_API_SECRET;
-delete process.env.APEX_OMNI_API_KEY;
-delete process.env.APEX_OMNI_API_PASSPHRASE;
+process.env.APEX_DEVICE_ACTIVATION_SECRET = 'env-activation-secret';
 
 const registerDeviceMock = jest.fn();
 let lastActivationSecret: string | null = null;
@@ -37,12 +35,6 @@ const createDeviceAuthServiceStub: NonNullable<BuildServerOverrides['createDevic
   return { registerDevice: registerDeviceMock };
 };
 
-const omniSecretValue = {
-  secretType: 'trading_client_secret',
-  value: 'secret-from-omni',
-  version: 'v1',
-  source: 'test',
-};
 const getSecretValueMock = jest.fn();
 const omniSecretsPluginCallMock = jest.fn();
 const omniSecretsStub: OmniSecretService = {
@@ -139,8 +131,7 @@ describe('device activation secret bootstrap', () => {
     jest.clearAllMocks();
   });
 
-  it('pulls activation secret from Omni Secrets when env var is missing', async () => {
-    getSecretValueMock.mockResolvedValue(omniSecretValue);
+  it('uses the dedicated activation secret from env and does not call Omni Secrets', async () => {
     const app = await buildServer(buildOverrides());
 
     await app.ready();
@@ -159,20 +150,20 @@ describe('device activation secret bootstrap', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(lastActivationSecret).toBe('secret-from-omni');
+    expect(lastActivationSecret).toBe('env-activation-secret');
     expect(registerDeviceMock).toHaveBeenCalledWith(
       expect.objectContaining({
         deviceId: 'device-123',
         activationCode: 'ATC1.mock',
       }),
     );
-    expect(getSecretValueMock).toHaveBeenCalledWith('trading_client_secret');
+    expect(getSecretValueMock).not.toHaveBeenCalled();
 
     await app.close();
   });
 
-  it('returns 503 when Omni Secrets fails to supply the client secret', async () => {
-    getSecretValueMock.mockRejectedValue(new Error('gsm unavailable'));
+  it('falls back to the default dev activation secret and skips Omni Secrets when env var is unset', async () => {
+    delete process.env.APEX_DEVICE_ACTIVATION_SECRET;
     const app = await buildServer(buildOverrides());
 
     await app.ready();
@@ -185,9 +176,10 @@ describe('device activation secret bootstrap', () => {
       },
     });
 
-    expect(response.statusCode).toBe(503);
-    expect(registerDeviceMock).not.toHaveBeenCalled();
-    expect(lastActivationSecret).toBeNull();
+    expect(response.statusCode).toBe(200);
+    expect(lastActivationSecret).toBe('dev-device-activation-secret');
+    expect(registerDeviceMock).toHaveBeenCalled();
+    expect(getSecretValueMock).not.toHaveBeenCalled();
 
     await app.close();
   });

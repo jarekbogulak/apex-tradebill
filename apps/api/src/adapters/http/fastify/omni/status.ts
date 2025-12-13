@@ -1,18 +1,11 @@
-import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
-import { createErrorResponse, errorResponseSchema } from '../shared/http.js';
+import type { FastifyPluginAsync } from 'fastify';
+import { errorResponseSchema } from '../shared/http.js';
 import type { OmniSecretService } from '@api/modules/omniSecrets/service.js';
+import { ensureOperator } from './authz.js';
 
 interface OmniStatusRouteOptions {
   service: OmniSecretService;
 }
-
-const ensureAuthenticated = (request: FastifyRequest, reply: FastifyReply): boolean => {
-  if (!request.auth || request.auth.token === 'guest') {
-    void reply.status(401).send(createErrorResponse('UNAUTHENTICATED', 'Operator token required'));
-    return false;
-  }
-  return true;
-};
 
 export const omniStatusRoute: FastifyPluginAsync<OmniStatusRouteOptions> = async (
   app,
@@ -49,10 +42,11 @@ export const omniStatusRoute: FastifyPluginAsync<OmniStatusRouteOptions> = async
           },
         },
         401: errorResponseSchema,
+        403: errorResponseSchema,
       },
     },
   }, async (request, reply) => {
-    if (!ensureAuthenticated(request, reply)) {
+    if (!ensureOperator(request, reply)) {
       return reply;
     }
 

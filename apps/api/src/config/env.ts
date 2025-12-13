@@ -6,6 +6,8 @@ import { resolveApeXCredentials, type ApeXCredentials } from './apexConfig.js';
 
 const DEFAULT_JWT_ISSUER = 'apex-tradebill';
 const DEFAULT_JWT_AUDIENCE = 'apex-tradebill-clients';
+const DEFAULT_DEV_JWT_SECRET = 'dev-jwt-secret-change-me';
+const DEFAULT_DEV_DEVICE_ACTIVATION_SECRET = 'dev-device-activation-secret';
 
 const projectRoot = fileURLToPath(new URL('../..', import.meta.url));
 const ENV_FILES = ['.env', '.env.local'];
@@ -160,6 +162,7 @@ const envSchema = z.object({
   supabaseDbIdleTimeoutMs: z.number().int().positive(),
   supabaseDbApplication: z.string(),
   supabaseDbSsl: z.enum(['auto', 'disable', 'require']),
+  deviceActivationSecret: z.string().min(16, 'APEX_DEVICE_ACTIVATION_SECRET must be at least 16 characters long').optional(),
   gcpProjectId: z.string().min(1).optional(),
   omniBreakglassPublicKey: z.string().min(1).optional(),
   omniBreakglassPrivateKey: z.string().min(1).optional(),
@@ -196,6 +199,7 @@ const parseEnv = () => {
     supabaseDbIdleTimeoutMs: toInteger(process.env.SUPABASE_DB_IDLE_TIMEOUT_MS, 30_000),
     supabaseDbApplication: process.env.SUPABASE_DB_APPLICATION ?? 'apex-tradebill-api',
     supabaseDbSsl: normalizeSslMode(process.env.SUPABASE_DB_SSL),
+    deviceActivationSecret: process.env.APEX_DEVICE_ACTIVATION_SECRET,
     gcpProjectId: process.env.GCP_PROJECT_ID,
     omniBreakglassPublicKey: process.env.OMNI_BREAKGLASS_PUBLIC_KEY,
     omniBreakglassPrivateKey: process.env.OMNI_BREAKGLASS_PRIVATE_KEY,
@@ -233,6 +237,7 @@ export interface AuthConfig {
   issuer?: string;
   audience?: string;
   allowGuest: boolean;
+  deviceActivationSecret: string;
 }
 
 export interface ServerConfig {
@@ -269,19 +274,27 @@ const buildEnv = (): AppEnv => {
   const parsed = parseEnv();
   const apexCredentials = resolveApeXCredentials();
 
-  const resolvedJwtSecret = parsed.jwtSecret ?? apexCredentials?.apiSecret ?? null;
-  if (parsed.jwtSecret == null && apexCredentials?.apiSecret) {
-    console.warn('JWT_SECRET missing – falling back to APEX_OMNI_API_SECRET for JWT signing.');
-  }
+  const resolvedJwtSecret =
+    parsed.jwtSecret ?? (parsed.nodeEnv === 'production' ? null : DEFAULT_DEV_JWT_SECRET);
 
   if (!resolvedJwtSecret) {
     throw new ConfigError(
-      'JWT secret is missing. Set JWT_SECRET or ensure APEX_OMNI_API_SECRET is configured.',
+      'JWT secret is missing. Set JWT_SECRET (use GSM in production).',
     );
   }
 
   if (resolvedJwtSecret.length < 16) {
     throw new ConfigError('JWT secret must be at least 16 characters long.');
+  }
+
+  const resolvedDeviceActivationSecret =
+    parsed.deviceActivationSecret ??
+    (parsed.nodeEnv === 'production' ? null : DEFAULT_DEV_DEVICE_ACTIVATION_SECRET);
+
+  if (!resolvedDeviceActivationSecret) {
+    throw new ConfigError(
+      'APEX_DEVICE_ACTIVATION_SECRET is missing. Provision a dedicated device activation secret (GSM in production).',
+    );
   }
 
   const resolvedIssuer =
@@ -326,9 +339,9 @@ const buildEnv = (): AppEnv => {
     );
   }
 
-    if (!apexCredentials && !resolvedAllowInMemoryMarketData && !parsed.gcpProjectId) {
+  if (!apexCredentials && !resolvedAllowInMemoryMarketData && !parsed.gcpProjectId) {
     throw new ConfigError(
-        'ApeX Omni credentials are missing. Provide APEX_OMNI_* values, enable APEX_ALLOW_IN_MEMORY_MARKET_DATA=true, or configure GCP_PROJECT_ID for Secret Manager.',
+      'ApeX Omni credentials are missing. Provide APEX_OMNI_* values, enable APEX_ALLOW_IN_MEMORY_MARKET_DATA=true, or configure GCP_PROJECT_ID for Secret Manager.',
     );
   }
 
@@ -377,6 +390,7 @@ const buildEnv = (): AppEnv => {
       issuer: resolvedIssuer,
       audience: resolvedAudience,
       allowGuest: resolvedAllowGuest,
+      deviceActivationSecret: resolvedDeviceActivationSecret,
     },
     database: {
       url: databaseUrl,
