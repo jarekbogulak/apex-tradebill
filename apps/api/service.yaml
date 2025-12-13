@@ -61,8 +61,14 @@ spec:
                 secretKeyRef:
                   name: apex-tradebill-prod-JWT_SECRET
                   key: latest
+            # 3. Device activation secret
+            - name: APEX_DEVICE_ACTIVATION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: apex-tradebill-prod-DEVICE_ACTIVATION_SECRET
+                  key: latest
 
-            # 3. Omni Breakglass Keys (Curve25519 base64)
+            # 4. Omni Breakglass Keys (Curve25519 base64)
             - name: OMNI_BREAKGLASS_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:

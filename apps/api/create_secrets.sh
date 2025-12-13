@@ -42,6 +42,7 @@ echo "--- Creating Environment Secrets ---"
 # SUPABASE_DB_URL must stay as a GSM env var so the DB pool can bootstrap before Omni Secrets loads
 create_secret "apex-tradebill-prod-SUPABASE_DB_URL" "managed-by=env-vars"
 create_secret "apex-tradebill-prod-JWT_SECRET" "managed-by=env-vars"
+create_secret "apex-tradebill-prod-DEVICE_ACTIVATION_SECRET" "managed-by=env-vars"
 create_secret "apex-tradebill-prod-OMNI_BREAKGLASS_PRIVATE_KEY" "managed-by=env-vars"
 create_secret "apex-tradebill-prod-OMNI_BREAKGLASS_PUBLIC_KEY" "managed-by=env-vars"
 

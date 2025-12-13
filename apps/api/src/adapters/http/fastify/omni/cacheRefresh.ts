@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
-import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
-import { createErrorResponse, errorResponseSchema } from '../shared/http.js';
+import type { FastifyPluginAsync } from 'fastify';
+import { errorResponseSchema } from '../shared/http.js';
 import type { OmniSecretService } from '@api/modules/omniSecrets/service.js';
+import { ensureOperator } from './authz.js';
 
 interface CacheRefreshRouteOptions {
   service: OmniSecretService;
@@ -10,14 +11,6 @@ interface CacheRefreshRouteOptions {
 interface CacheRefreshBody {
   secretType?: string;
 }
-
-const ensureAuthenticated = (request: FastifyRequest, reply: FastifyReply): boolean => {
-  if (!request.auth || request.auth.token === 'guest') {
-    void reply.status(401).send(createErrorResponse('UNAUTHENTICATED', 'Service token required'));
-    return false;
-  }
-  return true;
-};
 
 export const omniCacheRefreshRoute: FastifyPluginAsync<CacheRefreshRouteOptions> = async (
   app,
@@ -50,11 +43,12 @@ export const omniCacheRefreshRoute: FastifyPluginAsync<CacheRefreshRouteOptions>
             },
           },
           401: errorResponseSchema,
+          403: errorResponseSchema,
         },
       },
     },
     async (request, reply) => {
-      if (!ensureAuthenticated(request, reply)) {
+      if (!ensureOperator(request, reply)) {
         return reply;
       }
 

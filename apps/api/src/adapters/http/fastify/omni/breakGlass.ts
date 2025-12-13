@@ -1,4 +1,4 @@
-import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyPluginAsync } from 'fastify';
 import { createErrorResponse, errorResponseSchema } from '../shared/http.js';
 import type { OmniSecretService } from '@api/modules/omniSecrets/service.js';
 import {
@@ -6,6 +6,7 @@ import {
   InvalidBreakGlassPayloadError,
   SecretUnavailableError,
 } from '@api/modules/omniSecrets/service.js';
+import { ensureOperator } from './authz.js';
 
 interface BreakGlassRouteOptions {
   service: OmniSecretService;
@@ -16,14 +17,6 @@ interface BreakGlassBody {
   ciphertext: string;
   expiresAt: string;
 }
-
-const ensureAuthenticated = (request: FastifyRequest, reply: FastifyReply): boolean => {
-  if (!request.auth || request.auth.token === 'guest') {
-    void reply.status(401).send(createErrorResponse('UNAUTHENTICATED', 'Operator token required'));
-    return false;
-  }
-  return true;
-};
 
 export const omniBreakGlassRoute: FastifyPluginAsync<BreakGlassRouteOptions> = async (
   app,
@@ -56,13 +49,14 @@ export const omniBreakGlassRoute: FastifyPluginAsync<BreakGlassRouteOptions> = a
             },
           },
           401: errorResponseSchema,
+          403: errorResponseSchema,
           422: errorResponseSchema,
           503: errorResponseSchema,
         },
       },
     },
     async (request, reply) => {
-      if (!ensureAuthenticated(request, reply)) {
+      if (!ensureOperator(request, reply)) {
         return reply;
       }
 

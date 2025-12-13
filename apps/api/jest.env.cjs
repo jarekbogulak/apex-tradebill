@@ -2,6 +2,10 @@ if (!process.env.JWT_SECRET) {
   process.env.JWT_SECRET = 'test-only-secret-change-me';
 }
 
+if (!process.env.APEX_DEVICE_ACTIVATION_SECRET) {
+  process.env.APEX_DEVICE_ACTIVATION_SECRET = 'test-device-activation-secret';
+}
+
 if (!process.env.APEX_ALLOW_IN_MEMORY_DB) {
   process.env.APEX_ALLOW_IN_MEMORY_DB = 'true';
 }
