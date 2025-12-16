@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 
 describe('Logger Redaction', () => {
-  let loggedMessages: unknown[] = [];
+  let loggedMessages: Record<string, unknown>[] = [];
 
   // Custom writable stream to capture logs
   const captureStream = {
@@ -85,7 +85,7 @@ describe('Logger Redaction', () => {
       instance.log.info({ ...sensitiveData }, 'Log with secrets');
 
       expect(loggedMessages.length).toBeGreaterThan(0);
-      const logEntry = loggedMessages[0];
+      const logEntry = loggedMessages[0] as Record<string, any>;
       
       expect(logEntry.userData).toBeDefined();
       expect(logEntry.userData.other).toBe('safe-value');
