@@ -1,0 +1,38 @@
+{
+  "cli": {
+    "version": ">= 14.0.0"
+  },
+  "build": {
+    "development": {
+      "channel": "development",
+      "distribution": "internal",
+      "developmentClient": true,
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "development",
+        "EXPO_PUBLIC_API_TARGET": "local",
+        "EXPO_PUBLIC_APEX_ENVIRONMENT": "testnet"
+      }
+    },
+    "preview": {
+      "channel": "preview",
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "preview",
+        "EXPO_PUBLIC_API_TARGET": "prod",
+        "EXPO_PUBLIC_APEX_ENVIRONMENT": "qa"
+      }
+    },
+    "production": {
+      "channel": "production",
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "production",
+        "EXPO_PUBLIC_API_TARGET": "prod",
+        "EXPO_PUBLIC_APEX_ENVIRONMENT": "prod"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

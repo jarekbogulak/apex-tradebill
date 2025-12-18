@@ -71,40 +71,41 @@ describe('Logger Redaction', () => {
 
       const sensitiveData = {
         userData: {
-            jwtSecret: 'super-secret-jwt',
-            breakglassPrivateKey: 'private-key-material',
-            other: 'safe-value'
+          jwtSecret: 'super-secret-jwt',
+          breakglassPrivateKey: 'private-key-material',
+          other: 'safe-value',
         },
         credentials: {
-            apiSecret: 'my-api-secret',
-            passphrase: 'my-passphrase'
+          apiSecret: 'my-api-secret',
+          passphrase: 'my-passphrase',
         },
-        omniBreakglassPrivateKey: 'raw-key'
+        omniBreakglassPrivateKey: 'raw-key',
       };
 
       instance.log.info({ ...sensitiveData }, 'Log with secrets');
 
       expect(loggedMessages.length).toBeGreaterThan(0);
-      const logEntry = loggedMessages[0] as Record<string, any>;
-      
+      const logEntry = loggedMessages[0] as {
+        userData?: {
+          jwtSecret?: unknown;
+          breakglassPrivateKey?: unknown;
+          other?: unknown;
+        };
+        credentials?: {
+          apiSecret?: unknown;
+          passphrase?: unknown;
+        };
+        omniBreakglassPrivateKey?: unknown;
+      };
+
       expect(logEntry.userData).toBeDefined();
-      expect(logEntry.userData.other).toBe('safe-value');
-      
+      expect(logEntry.userData?.other).toBe('safe-value');
+
       // Secrets should be missing
-      expect(logEntry.userData.jwtSecret).toBeUndefined();
-      expect(logEntry.userData.breakglassPrivateKey).toBeUndefined();
-      expect(logEntry.credentials.apiSecret).toBeUndefined();
-      expect(logEntry.credentials.passphrase).toBeUndefined();
-      // Wait, *.credentials.apiSecret means apiSecret INSIDE credentials.
-      // If we use wildcard, it should just remove the leaf.
-      
-      // Let's check specifics based on pino documentation
-      // *.apiSecret should remove apiSecret key anywhere at that level? No, * is one level wildcard.
-      // actually pino redaction syntax: 
-      // 'a.b.c' -> specific path
-      // '*.b.c' -> b.c property of ANY top level property
-      
-      // Checking our expectations against pino behavior.
+      expect(logEntry.userData?.jwtSecret).toBeUndefined();
+      expect(logEntry.userData?.breakglassPrivateKey).toBeUndefined();
+      expect(logEntry.credentials?.apiSecret).toBeUndefined();
+      expect(logEntry.credentials?.passphrase).toBeUndefined();
       expect(logEntry.omniBreakglassPrivateKey).toBeUndefined();
   });
 });
