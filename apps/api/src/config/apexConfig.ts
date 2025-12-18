@@ -43,27 +43,31 @@ export const resolveApeXCredentials = (
     return null;
   }
 
-  const explicitEnvironment = normalizeEnvironment(env.APEX_OMNI_ENVIRONMENT);
-  const detectedEnvironment =
-    explicitEnvironment === 'prod' &&
-    (Boolean(env.APEX_OMNI_TESTNET_REST_URL) || Boolean(env.APEX_OMNI_TESTNET_WS_URL))
-      ? 'qa'
-      : explicitEnvironment;
+  const environment = normalizeEnvironment(env.APEX_OMNI_ENVIRONMENT);
 
   const restUrl =
-    detectedEnvironment === 'qa'
+    environment === 'qa'
       ? pickFirstDefined(env, ['APEX_OMNI_TESTNET_REST_URL', 'APEX_OMNI_REST_URL'])
       : env.APEX_OMNI_REST_URL;
   const wsUrl =
-    detectedEnvironment === 'qa'
+    environment === 'qa'
       ? pickFirstDefined(env, ['APEX_OMNI_TESTNET_WS_URL', 'APEX_OMNI_WS_URL'])
       : env.APEX_OMNI_WS_URL;
+
+  if (
+    environment === 'prod' &&
+    (env.APEX_OMNI_TESTNET_REST_URL || env.APEX_OMNI_TESTNET_WS_URL)
+  ) {
+    console.warn(
+      'APEX_OMNI_TESTNET_* variables are set but ignored because APEX_OMNI_ENVIRONMENT=prod.',
+    );
+  }
 
   return {
     apiKey,
     apiSecret,
     passphrase: env.APEX_OMNI_API_PASSPHRASE,
-    environment: detectedEnvironment,
+    environment,
     restUrl,
     wsUrl,
     l2Seed: env.APEX_OMNI_L2_SEED,

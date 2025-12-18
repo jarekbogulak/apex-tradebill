@@ -2,6 +2,10 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 type AppEnvironment = 'development' | 'preview' | 'production';
 type ApexEnvironment = 'prod' | 'qa';
 
+const iosBundleIdentifier =
+  process.env.EXPO_IOS_BUNDLE_IDENTIFIER ?? 'com.apextradebill.mobile';
+const androidPackage = process.env.EXPO_ANDROID_PACKAGE ?? 'com.apextradebill.mobile';
+
 const isAppEnvironment = (value: string | undefined): value is AppEnvironment => {
   if (!value) {
     return false;
@@ -157,8 +161,10 @@ export default ({ config }: ConfigContext = {} as ConfigContext): ExpoConfig => 
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
+      bundleIdentifier: iosBundleIdentifier,
     },
     android: {
+      package: androidPackage,
       adaptiveIcon: {
         backgroundColor: '#E6F4FE',
         foregroundImage: './assets/images/android-icon-foreground.png',
@@ -190,6 +196,9 @@ export default ({ config }: ConfigContext = {} as ConfigContext): ExpoConfig => 
     experiments: {
       typedRoutes: true,
       reactCompiler: true,
+    },
+    runtimeVersion: {
+      policy: 'appVersion',
     },
     extra: {
       environment: appEnv,
