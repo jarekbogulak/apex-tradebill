@@ -103,16 +103,16 @@ const resolveApexEndpoints = () => {
   const explicitEnvironment = normalizeApexEnvironment(process.env.EXPO_PUBLIC_APEX_ENVIRONMENT);
 
   const prodRestUrl = sanitizeUrl(
-    requireString('EXPO_PUBLIC_APEX_REST_URL', 'https://api.pro.apex.exchange'),
+    requireString('EXPO_PUBLIC_APEX_REST_URL', 'https://omni.apex.exchange'),
   );
   const prodWsUrl = sanitizeUrl(
-    requireString('EXPO_PUBLIC_APEX_WS_URL', 'wss://stream.pro.apex.exchange'),
+    requireString('EXPO_PUBLIC_APEX_WS_URL', 'wss://quote.omni.apex.exchange'),
   );
 
   const testnetRestUrlRaw =
-    process.env.EXPO_PUBLIC_APEX_TESTNET_REST_URL ?? 'https://testnet.omni.apex.exchange/api/';
+    process.env.EXPO_PUBLIC_APEX_TESTNET_REST_URL ?? 'https://qa.omni.apex.exchange';
   const testnetWsUrlRaw =
-    process.env.EXPO_PUBLIC_APEX_TESTNET_WS_URL ?? 'wss://testnet.omni.apex.exchange/ws/v1';
+    process.env.EXPO_PUBLIC_APEX_TESTNET_WS_URL ?? 'wss://qa-quote.omni.apex.exchange';
 
   const testnetRestUrl = sanitizeUrl(testnetRestUrlRaw);
   const testnetWsUrl = sanitizeUrl(testnetWsUrlRaw);

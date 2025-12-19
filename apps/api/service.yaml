@@ -27,6 +27,10 @@ spec:
               value: "apex-tradebill-api-479611"
             - name: APEX_OMNI_ENVIRONMENT
               value: "prod"
+            - name: APEX_OMNI_REST_URL
+              value: "https://omni.apex.exchange"
+            - name: APEX_OMNI_WS_URL
+              value: "wss://quote.omni.apex.exchange"
             - name: OMNI_CACHE_TTL_SECONDS
               value: "300"
             - name: OMNI_ALLOW_LATEST_VERSION

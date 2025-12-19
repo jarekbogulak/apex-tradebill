@@ -13,7 +13,7 @@ export const defaultTestEnv = {
   APEX_OMNI_API_KEY: undefined,
   APEX_OMNI_API_SECRET: undefined,
   APEX_OMNI_API_PASSPHRASE: undefined,
-  APEX_OMNI_ENVIRONMENT: 'test',
+  APEX_OMNI_ENVIRONMENT: 'testnet',
   APEX_OMNI_REST_URL: undefined,
   APEX_OMNI_WS_URL: undefined,
   OMNI_CACHE_TTL_SECONDS: '300',
