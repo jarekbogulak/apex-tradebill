@@ -36,12 +36,12 @@ gcloud config set project apex-tradebill-api-479611
 
 ### 2. Build the Container Image
 
-The `Dockerfile` is located in `apps/api/Dockerfile`, but it requires the **monorepo root** as the build context to copy shared packages and workspace configuration.
+The `Dockerfile` is located in `apps/api/Dockerfile`, but it requires the **monorepo root** as the build context to copy shared packages and workspace configuration. Use the provided Cloud Build config so the correct Dockerfile is used.
 
 Run this command from the **root** of your repository:
 
 ```bash
-gcloud builds submit --tag gcr.io/apex-tradebill-api-479611/apex-tradebill-api:latest --file apps/api/Dockerfile .
+gcloud builds submit --config=cloudbuild.yaml .
 ```
 
 > **Note**: This command submits the build to Cloud Build. It will upload your source code, build the image, and push it to Google Container Registry (GCR).
