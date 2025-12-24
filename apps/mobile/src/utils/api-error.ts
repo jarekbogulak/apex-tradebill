@@ -163,6 +163,17 @@ export const formatFriendlyError = (error: unknown, fallback: string): string =>
   }
 
   if (isApiError(error)) {
+    if (error.code === 'MARKET_DATA_UNAVAILABLE') {
+      const message = sanitizeUserFacingText(error.message);
+      const detailLines = error.details
+        .map((detail) => sanitizeUserFacingText(detail))
+        .filter((detail): detail is string => Boolean(detail));
+      if (detailLines.length > 0) {
+        return detailLines.join('\n');
+      }
+      return message ?? fallback;
+    }
+
     const userFacingDetails = error.details
       .map((detail) => sanitizeUserFacingText(detail))
       .filter((detail): detail is string => Boolean(detail));

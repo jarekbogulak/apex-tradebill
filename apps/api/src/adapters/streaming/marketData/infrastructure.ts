@@ -1,4 +1,5 @@
 import type { Symbol as TradingSymbol } from '@apex-tradebill/types';
+import type { OmniSecretService } from '@api/modules/omniSecrets/service.js';
 import { createApeXOmniClient } from '../providers/apexOmni/client.js';
 import type { MarketDataPort, MarketMetadataPort } from '../../../domain/ports/tradebillPorts.js';
 import { env } from '../../../config/env.js';
@@ -7,7 +8,7 @@ import type { RingBuffer } from '../realtime/ringBuffer.js';
 import { createRingBufferMarketDataPort } from './ringBufferAdapter.js';
 import { createInMemoryMarketDataProvider } from './marketDataProvider.inMemory.js';
 import { DEFAULT_BASE_PRICES } from './defaults.js';
-import type { OmniSecretService } from '@api/modules/omniSecrets/service.js';
+import { MarketDataUnavailableError } from './errors.js';
 
 export interface MarketInfrastructure {
   marketData: MarketDataPort;
@@ -37,11 +38,33 @@ const buildStreamingSymbols = (allowlisted: TradingSymbol[]): TradingSymbol[] =>
   return Object.keys(DEFAULT_BASE_PRICES) as TradingSymbol[];
 };
 
+const createUnavailableMarketDataProvider = (
+  message: string,
+  details: string[] = [],
+): MarketDataPort => {
+  const error = new MarketDataUnavailableError(message, details);
+  return {
+    async getLatestSnapshot() {
+      throw error;
+    },
+    async getRecentCandles() {
+      throw error;
+    },
+  };
+};
+
 export const createMarketInfrastructure = async ({
   logger,
   marketMetadata,
   omniSecrets,
 }: CreateMarketInfrastructureOptions): Promise<MarketInfrastructure> => {
+  logger.info('market_infra.init', {
+    allowInMemoryMarketData: env.apex.allowInMemoryMarketData,
+    apexEnvironment: env.apex.credentials?.environment ?? 'unknown',
+    wsUrl: env.apex.credentials?.wsUrl ?? null,
+    restUrl: env.apex.credentials?.restUrl ?? null,
+  });
+
   if (env.apex.allowInMemoryMarketData) {
     logger.warn(
       'Using in-memory market data (APEX_ALLOW_IN_MEMORY_MARKET_DATA=true); Apex Omni streaming disabled for tests.',
@@ -69,9 +92,16 @@ export const createMarketInfrastructure = async ({
       ) => {
         try {
           const result = await omniSecrets.getSecretValue(secretType);
+          logger.info('market_infra.secret_resolved', {
+            secretType,
+            source: result?.source ?? null,
+          });
           return result.value;
         } catch (error) {
-          logger.warn('omni.secret_fetch_failed', { secretType, err: error });
+          logger.warn('omni.secret_fetch_failed', {
+            secretType,
+            err: error,
+          });
           return null;
         }
       };
@@ -105,11 +135,18 @@ export const createMarketInfrastructure = async ({
   })();
 
   if (!resolvedCredentials) {
-    logger.warn(
-      'ApeX Omni credentials missing – using in-memory market data (APEX_ALLOW_IN_MEMORY_MARKET_DATA=true)',
-    );
+    logger.warn('apex.omni.credentials_missing_market_data_unavailable', {
+      allowInMemoryMarketData: env.apex.allowInMemoryMarketData,
+      apexEnvironment: env.apex.credentials?.environment ?? 'unknown',
+    });
+    const message =
+      'Live market data unavailable: ApeX Omni credentials could not be resolved and synthetic data is disabled (APEX_ALLOW_IN_MEMORY_MARKET_DATA=false).';
+    const details = [
+      'Provide APEX_OMNI_API_KEY, APEX_OMNI_CLIENT_SECRET, and APEX_OMNI_API_PASSPHRASE (or enable Google Secret Manager) to restore live pricing.',
+      'Synthetic market data remains disabled; no prices will be returned until credentials are configured or APEX_ALLOW_IN_MEMORY_MARKET_DATA is enabled for non-production diagnostics.',
+    ];
     return {
-      marketData: createInMemoryMarketDataProvider(),
+      marketData: createUnavailableMarketDataProvider(message, details),
     };
   }
 
@@ -123,6 +160,12 @@ export const createMarketInfrastructure = async ({
     wsBaseUrl: resolvedCredentials.wsUrl,
   });
 
+  logger.info('market_infra.credentials_resolved', {
+    apexEnvironment: resolvedCredentials.environment,
+    restUrl: resolvedCredentials.restUrl ?? '(default)',
+    wsUrl: resolvedCredentials.wsUrl ?? '(default)',
+  });
+
   const allowlisted = await marketMetadata.listAllowlistedSymbols();
   const symbols = buildStreamingSymbols(allowlisted);
 
@@ -133,18 +176,36 @@ export const createMarketInfrastructure = async ({
       throw new Error(`Received empty snapshot for ${probeSymbol}`);
     }
   } catch (error) {
-    logger.warn('apex.omni.snapshot_failed_falling_back_to_in_memory_market_data', {
+    logger.warn('apex.omni.snapshot_failed_market_data_unavailable', {
       err: error,
       probeSymbol,
+      allowInMemoryMarketData: env.apex.allowInMemoryMarketData,
+      apexEnvironment: resolvedCredentials.environment,
+      wsUrl: resolvedCredentials.wsUrl ?? '(default)',
+      restUrl: resolvedCredentials.restUrl ?? '(default)',
     });
+    const message =
+      'Live market data unavailable: ApeX Omni snapshot probe failed and synthetic data is disabled (APEX_ALLOW_IN_MEMORY_MARKET_DATA=false).';
+    const details = [
+      `Probe symbol: ${probeSymbol}`,
+      'Verify ApeX Omni REST/WS connectivity and credentials; synthetic market data will not be used in this environment.',
+      'Inspect server logs for the underlying connection error and retry after resolving it.',
+    ];
     return {
-      marketData: createInMemoryMarketDataProvider(),
+      marketData: createUnavailableMarketDataProvider(message, details),
     };
   }
 
   const marketData = createRingBufferMarketDataPort({
     ringBuffer,
     client,
+  });
+
+  logger.info('market_infra.streaming_ready', {
+    apexEnvironment: resolvedCredentials.environment,
+    symbols: symbols.join(','),
+    wsUrl: resolvedCredentials.wsUrl ?? '(default)',
+    restUrl: resolvedCredentials.restUrl ?? '(default)',
   });
 
   return {

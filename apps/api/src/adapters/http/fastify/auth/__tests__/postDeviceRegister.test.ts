@@ -2,6 +2,9 @@ import Fastify from 'fastify';
 import postDeviceRegisterRoute, { type DeviceAuthServiceRef } from '../postDeviceRegister.js';
 import type { DeviceAuthService } from '../../../../security/deviceAuthService.js';
 
+// Allow a bit more time for Fastify app setup in CI.
+jest.setTimeout(10_000);
+
 describe('postDeviceRegisterRoute', () => {
   const toRef = (value: Partial<DeviceAuthService> | null): DeviceAuthServiceRef => ({
     current: value as DeviceAuthService | null,

@@ -2,6 +2,7 @@ import { TradeInputSchema } from '@apex-tradebill/types';
 import type { FastifyPluginAsync } from 'fastify';
 import { ZodError } from 'zod';
 import type { ExecuteTradeUseCase } from '@api/domain/trading/tradePreview.usecases.js';
+import { MarketDataUnavailableError } from '@api/adapters/streaming/marketData/errors.js';
 import {
   createErrorResponse,
   errorResponseSchema,
@@ -184,6 +185,7 @@ export const postExecuteRoute: FastifyPluginAsync<PostExecuteRouteOptions> = asy
           200: executeResponseSchema,
           400: errorResponseSchema,
           404: errorResponseSchema,
+          503: errorResponseSchema,
         },
       },
     },
@@ -210,6 +212,12 @@ export const postExecuteRoute: FastifyPluginAsync<PostExecuteRouteOptions> = asy
         if (error instanceof ZodError) {
           const details = error.errors.map((issue) => `${issue.path.join('.')} ${issue.message}`);
           return sendValidationError(reply, 'Trade input failed validation', details);
+        }
+
+        if (error instanceof MarketDataUnavailableError) {
+          return reply
+            .status(503)
+            .send(createErrorResponse('MARKET_DATA_UNAVAILABLE', error.message, error.details));
         }
 
         const message = error instanceof Error ? error.message : 'Unknown error';
