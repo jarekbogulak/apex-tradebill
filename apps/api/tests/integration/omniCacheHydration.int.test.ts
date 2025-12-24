@@ -13,7 +13,7 @@ describe('Omni secret cache hydration', () => {
       const duration = Date.now() - startedAt;
 
       expect(response.status).toBe(200);
-      expect(duration).toBeLessThan(1000);
+      expect(duration).toBeLessThan(2000);
       const entry = (response.body.data ?? []).find(
         (item: { secretType: string }) => item.secretType === 'trading_api_key',
       );

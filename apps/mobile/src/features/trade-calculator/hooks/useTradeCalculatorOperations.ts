@@ -14,7 +14,7 @@ import {
   type TradeCalculatorStatus,
 } from '@/src/state/tradeCalculatorStore';
 import type { ApiError } from '@/src/utils/api-error';
-import { formatFriendlyError } from '@/src/utils/api-error';
+import { formatFriendlyError, isApiError } from '@/src/utils/api-error';
 
 const apiClient = createApiClient();
 
@@ -158,6 +158,9 @@ export const useTradeCalculatorOperations = ({
     },
     onError: (error: ApiError) => {
       if (requestSourceRef.current === 'live') {
+        if (isApiError(error) && error.code === 'MARKET_DATA_UNAVAILABLE') {
+          setStatus('error', formatFriendlyError(error, PREVIEW_ERROR_FALLBACK));
+        }
         livePreviewActiveRef.current = false;
         return;
       }
