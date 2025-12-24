@@ -1,3 +1,4 @@
+import fp from 'fastify-plugin';
 import type { FastifyPluginAsync } from 'fastify';
 import type {
   SecretManagerServiceClient,
@@ -32,7 +33,7 @@ declare module 'fastify' {
   }
 }
 
-export const omniSecretsPlugin: FastifyPluginAsync = async (app) => {
+const omniSecretsPluginFn: FastifyPluginAsync = async (app) => {
   const forceInMemoryDb = process.env.APEX_FORCE_IN_MEMORY_DB === 'true';
   const useInMemoryRepo = (env.database.allowInMemory && !env.database.url) || forceInMemoryDb;
 
@@ -110,5 +111,9 @@ export const omniSecretsPlugin: FastifyPluginAsync = async (app) => {
     done();
   });
 };
+
+export const omniSecretsPlugin = fp(omniSecretsPluginFn, {
+  name: 'omni-secrets-plugin',
+});
 
 export default omniSecretsPlugin;
