@@ -92,16 +92,8 @@ export const createMarketInfrastructure = async ({
       ) => {
         try {
           const result = await omniSecrets.getSecretValue(secretType);
-          logger.info('market_infra.secret_resolved', {
-            secretType,
-            source: result?.source ?? null,
-          });
           return result.value;
         } catch (error) {
-          logger.warn('omni.secret_fetch_failed', {
-            secretType,
-            err: error,
-          });
           return null;
         }
       };
