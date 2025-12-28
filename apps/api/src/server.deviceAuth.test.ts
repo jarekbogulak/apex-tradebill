@@ -3,7 +3,7 @@
  *
  * We inject lightweight stubs to avoid DB/network access:
  * - Market data, trade calculations, and job scheduler are stubbed.
- * - Omni Secrets plugin is stubbed to supply (or fail to supply) the client secret.
+ * - Omni Secrets plugin is stubbed to verify it stays disabled when secrets are not configured.
  * - Device auth service factory is stubbed to capture the activation secret passed in.
  */
 import type { FastifyInstance as _FastifyInstance, FastifyPluginAsync } from 'fastify';
@@ -25,6 +25,12 @@ process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'testsecret-1234567890';
 process.env.APEX_FORCE_IN_MEMORY_DB = 'true';
 process.env.APEX_DEVICE_ACTIVATION_SECRET = 'env-activation-secret';
+
+const originalOmniEnv = {
+  GCP_PROJECT_ID: process.env.GCP_PROJECT_ID,
+  OMNI_BREAKGLASS_PUBLIC_KEY: process.env.OMNI_BREAKGLASS_PUBLIC_KEY,
+  OMNI_BREAKGLASS_PRIVATE_KEY: process.env.OMNI_BREAKGLASS_PRIVATE_KEY,
+};
 
 const registerDeviceMock = jest.fn();
 let lastActivationSecret: string | null = null;
@@ -92,7 +98,16 @@ const buildOverrides = (): BuildServerOverrides => ({
 });
 
 describe('device activation secret bootstrap', () => {
+  beforeAll(() => {
+    delete process.env.GCP_PROJECT_ID;
+    delete process.env.OMNI_BREAKGLASS_PUBLIC_KEY;
+    delete process.env.OMNI_BREAKGLASS_PRIVATE_KEY;
+  });
+
   beforeEach(() => {
+    delete process.env.GCP_PROJECT_ID;
+    delete process.env.OMNI_BREAKGLASS_PUBLIC_KEY;
+    delete process.env.OMNI_BREAKGLASS_PRIVATE_KEY;
     registerDeviceMock.mockReset();
     getSecretValueMock.mockReset();
     omniSecretsPluginCallMock.mockReset();
@@ -131,13 +146,30 @@ describe('device activation secret bootstrap', () => {
     jest.clearAllMocks();
   });
 
+  afterAll(() => {
+    if (originalOmniEnv.GCP_PROJECT_ID != null) {
+      process.env.GCP_PROJECT_ID = originalOmniEnv.GCP_PROJECT_ID;
+    } else {
+      delete process.env.GCP_PROJECT_ID;
+    }
+    if (originalOmniEnv.OMNI_BREAKGLASS_PUBLIC_KEY != null) {
+      process.env.OMNI_BREAKGLASS_PUBLIC_KEY = originalOmniEnv.OMNI_BREAKGLASS_PUBLIC_KEY;
+    } else {
+      delete process.env.OMNI_BREAKGLASS_PUBLIC_KEY;
+    }
+    if (originalOmniEnv.OMNI_BREAKGLASS_PRIVATE_KEY != null) {
+      process.env.OMNI_BREAKGLASS_PRIVATE_KEY = originalOmniEnv.OMNI_BREAKGLASS_PRIVATE_KEY;
+    } else {
+      delete process.env.OMNI_BREAKGLASS_PRIVATE_KEY;
+    }
+  });
+
   it('uses the dedicated activation secret from env and does not call Omni Secrets', async () => {
     const app = await buildServer(buildOverrides());
 
     await app.ready();
-    expect(omniSecretsPluginCallMock).toHaveBeenCalled();
-    expect(app.hasDecorator('omniSecrets')).toBe(true);
-    expect(app.omniSecrets).toBeDefined();
+    expect(omniSecretsPluginCallMock).not.toHaveBeenCalled();
+    expect(app.hasDecorator('omniSecrets')).toBe(false);
     expect(createMarketInfrastructureStub).toHaveBeenCalled();
     expect(resolveTradeCalculationRepositoryStub).toHaveBeenCalled();
     const response = await app.inject({
@@ -179,6 +211,7 @@ describe('device activation secret bootstrap', () => {
     expect(response.statusCode).toBe(200);
     expect(lastActivationSecret).toBe('dev-device-activation-secret');
     expect(registerDeviceMock).toHaveBeenCalled();
+    expect(omniSecretsPluginCallMock).not.toHaveBeenCalled();
     expect(getSecretValueMock).not.toHaveBeenCalled();
 
     await app.close();

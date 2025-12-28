@@ -152,7 +152,11 @@ export const buildServer = async (
 
   await app.register(observabilityPlugin);
   const resolveOmniSecretsPlugin = overrides.omniSecretsPlugin ?? omniSecretsPlugin;
-  await app.register(resolveOmniSecretsPlugin);
+  if (env.omniSecrets.enabled) {
+    await app.register(resolveOmniSecretsPlugin);
+  } else {
+    app.log.info({ reason: 'missing_config' }, 'omni.secrets.disabled');
+  }
 
   const marketMetadataService = createMarketMetadataService();
   const buildMarketInfrastructure = overrides.createMarketInfrastructure ?? createMarketInfrastructure;

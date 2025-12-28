@@ -1,4 +1,4 @@
-import { resolveApeXCredentials } from '../apexConfig.js';
+import { resolveApeXConnection, resolveApeXCredentials } from '../apexConfig.js';
 
 const baseEnv: NodeJS.ProcessEnv = {
   APEX_OMNI_API_KEY: 'key',
@@ -53,7 +53,12 @@ describe('resolveApeXCredentials', () => {
       APEX_OMNI_TESTNET_WS_URL: 'wss://qa-quote.omni.apex.exchange',
     });
 
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const resolved = resolveApeXCredentials(env);
+    expect(warnSpy).toHaveBeenCalledWith(
+      'APEX_OMNI_TESTNET_* variables are set but ignored because APEX_OMNI_ENVIRONMENT=prod.',
+    );
+    warnSpy.mockRestore();
     expect(resolved?.environment).toBe('prod');
     expect(resolved?.restUrl).toBe('https://omni.apex.exchange');
     expect(resolved?.wsUrl).toBe('wss://quote.omni.apex.exchange');
@@ -70,5 +75,22 @@ describe('resolveApeXCredentials', () => {
     expect(resolved?.environment).toBe('qa');
     expect(resolved?.restUrl).toBe('https://omni.apex.exchange');
     expect(resolved?.wsUrl).toBe('wss://quote.omni.apex.exchange');
+  });
+});
+
+describe('resolveApeXConnection', () => {
+  it('resolves endpoints even when credentials are missing', () => {
+    const env = buildEnv({
+      APEX_OMNI_API_KEY: undefined,
+      APEX_OMNI_API_SECRET: undefined,
+      APEX_OMNI_ENVIRONMENT: 'qa',
+      APEX_OMNI_TESTNET_REST_URL: 'https://testnet.omni.apex.exchange',
+      APEX_OMNI_TESTNET_WS_URL: 'wss://qa-quote.omni.apex.exchange',
+    });
+
+    const resolved = resolveApeXConnection(env);
+    expect(resolved.environment).toBe('qa');
+    expect(resolved.restUrl).toBe('https://testnet.omni.apex.exchange');
+    expect(resolved.wsUrl).toBe('wss://qa-quote.omni.apex.exchange');
   });
 });

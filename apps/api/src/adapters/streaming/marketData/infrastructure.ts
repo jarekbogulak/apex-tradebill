@@ -60,9 +60,9 @@ export const createMarketInfrastructure = async ({
 }: CreateMarketInfrastructureOptions): Promise<MarketInfrastructure> => {
   logger.info('market_infra.init', {
     allowInMemoryMarketData: env.apex.allowInMemoryMarketData,
-    apexEnvironment: env.apex.credentials?.environment ?? 'unknown',
-    wsUrl: env.apex.credentials?.wsUrl ?? null,
-    restUrl: env.apex.credentials?.restUrl ?? null,
+    apexEnvironment: env.apex.connection.environment,
+    wsUrl: env.apex.connection.wsUrl ?? null,
+    restUrl: env.apex.connection.restUrl ?? null,
   });
 
   if (env.apex.allowInMemoryMarketData) {
@@ -93,7 +93,7 @@ export const createMarketInfrastructure = async ({
         try {
           const result = await omniSecrets.getSecretValue(secretType);
           return result.value;
-        } catch (error) {
+        } catch {
           return null;
         }
       };
@@ -111,35 +111,19 @@ export const createMarketInfrastructure = async ({
       l2Seed = fetchedSeed ?? l2Seed;
     }
 
-    if (!apiKey || !apiSecret) {
-      return null;
-    }
-
     return {
       apiKey,
       apiSecret,
       passphrase,
-      environment: base?.environment ?? 'prod',
-      restUrl: base?.restUrl,
-      wsUrl: base?.wsUrl,
       l2Seed,
     };
   })();
 
-  if (!resolvedCredentials) {
-    logger.warn('apex.omni.credentials_missing_market_data_unavailable', {
-      allowInMemoryMarketData: env.apex.allowInMemoryMarketData,
-      apexEnvironment: env.apex.credentials?.environment ?? 'unknown',
+  const hasPrivateCredentials = Boolean(resolvedCredentials.apiKey && resolvedCredentials.apiSecret);
+  if (!hasPrivateCredentials) {
+    logger.info('apex.omni.public_only_mode', {
+      apexEnvironment: env.apex.connection.environment,
     });
-    const message =
-      'Live market data unavailable: ApeX Omni credentials could not be resolved and synthetic data is disabled (APEX_ALLOW_IN_MEMORY_MARKET_DATA=false).';
-    const details = [
-      'Provide APEX_OMNI_API_KEY, APEX_OMNI_CLIENT_SECRET, and APEX_OMNI_API_PASSPHRASE (or enable Google Secret Manager) to restore live pricing.',
-      'Synthetic market data remains disabled; no prices will be returned until credentials are configured or APEX_ALLOW_IN_MEMORY_MARKET_DATA is enabled for non-production diagnostics.',
-    ];
-    return {
-      marketData: createUnavailableMarketDataProvider(message, details),
-    };
   }
 
   const ringBuffer = createRingBuffer();
@@ -147,15 +131,16 @@ export const createMarketInfrastructure = async ({
     apiKey: resolvedCredentials.apiKey,
     apiSecret: resolvedCredentials.apiSecret,
     passphrase: resolvedCredentials.passphrase,
-    environment: resolvedCredentials.environment,
-    restBaseUrl: resolvedCredentials.restUrl,
-    wsBaseUrl: resolvedCredentials.wsUrl,
+    environment: env.apex.connection.environment,
+    restBaseUrl: env.apex.connection.restUrl,
+    wsBaseUrl: env.apex.connection.wsUrl,
   });
 
   logger.info('market_infra.credentials_resolved', {
-    apexEnvironment: resolvedCredentials.environment,
-    restUrl: resolvedCredentials.restUrl ?? '(default)',
-    wsUrl: resolvedCredentials.wsUrl ?? '(default)',
+    apexEnvironment: env.apex.connection.environment,
+    restUrl: env.apex.connection.restUrl ?? '(default)',
+    wsUrl: env.apex.connection.wsUrl ?? '(default)',
+    privateAuth: hasPrivateCredentials,
   });
 
   const allowlisted = await marketMetadata.listAllowlistedSymbols();
@@ -172,15 +157,15 @@ export const createMarketInfrastructure = async ({
       err: error,
       probeSymbol,
       allowInMemoryMarketData: env.apex.allowInMemoryMarketData,
-      apexEnvironment: resolvedCredentials.environment,
-      wsUrl: resolvedCredentials.wsUrl ?? '(default)',
-      restUrl: resolvedCredentials.restUrl ?? '(default)',
+      apexEnvironment: env.apex.connection.environment,
+      wsUrl: env.apex.connection.wsUrl ?? '(default)',
+      restUrl: env.apex.connection.restUrl ?? '(default)',
     });
     const message =
       'Live market data unavailable: ApeX Omni snapshot probe failed and synthetic data is disabled (APEX_ALLOW_IN_MEMORY_MARKET_DATA=false).';
     const details = [
       `Probe symbol: ${probeSymbol}`,
-      'Verify ApeX Omni REST/WS connectivity and credentials; synthetic market data will not be used in this environment.',
+      'Verify ApeX Omni REST/WS connectivity; private streams require configured Omni credentials.',
       'Inspect server logs for the underlying connection error and retry after resolving it.',
     ];
     return {
@@ -194,10 +179,10 @@ export const createMarketInfrastructure = async ({
   });
 
   logger.info('market_infra.streaming_ready', {
-    apexEnvironment: resolvedCredentials.environment,
+    apexEnvironment: env.apex.connection.environment,
     symbols: symbols.join(','),
-    wsUrl: resolvedCredentials.wsUrl ?? '(default)',
-    restUrl: resolvedCredentials.restUrl ?? '(default)',
+    wsUrl: env.apex.connection.wsUrl ?? '(default)',
+    restUrl: env.apex.connection.restUrl ?? '(default)',
   });
 
   return {

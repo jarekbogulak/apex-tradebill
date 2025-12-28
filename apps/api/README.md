@@ -29,11 +29,11 @@ Key values in `.env` (validated by `src/config/env.ts` at startup):
 - `JWT_SECRET`, `JWT_ISSUER`, `JWT_AUDIENCE` – required for signing/verifying API requests. If `JWT_SECRET` is omitted, the server reuses `APEX_OMNI_API_SECRET` (with a warning); `JWT_ISSUER` and `JWT_AUDIENCE` fall back to `apex-tradebill` / `apex-tradebill-clients` respectively.
 - `APEX_TRADEBILL_AUTH_ALLOW_GUEST` – allow unauthenticated read-only clients. Defaults to `true` outside production and `false` in production.
 - `APEX_ALLOW_IN_MEMORY_DB` – opt-in toggle for using the in-memory trade repository when Postgres is unavailable (defaults to `true` outside production).
-- `APEX_ALLOW_IN_MEMORY_MARKET_DATA` – opt-in toggle for synthetic market data when ApeX Omni credentials are missing (defaults to `true` outside production).
-- `APEX_OMNI_*` – credentials, REST, and WebSocket endpoints for ApeX Omni (`*_TESTNET_*` values support sandbox usage).
-- `GCP_PROJECT_ID` – production Google Cloud project hosting the `apex-omni-*` secrets. The API refuses to start in production without this value.
-- `OMNI_BREAKGLASS_PUBLIC_KEY` – base64-encoded Curve25519 public key used to encrypt break-glass payloads submitted by operators. Required in production.
-- `OMNI_BREAKGLASS_PRIVATE_KEY` – base64-encoded Curve25519 private key used by the API to decrypt break-glass payloads. Required in production.
+- `APEX_ALLOW_IN_MEMORY_MARKET_DATA` – opt-in toggle for synthetic market data (disables ApeX Omni public calls). Defaults to `true` outside production.
+- `APEX_OMNI_*` – credentials and endpoint overrides for ApeX Omni (`*_TESTNET_*` values support sandbox usage). Credentials are only required for private endpoints; public market data works without them.
+- `GCP_PROJECT_ID` – production Google Cloud project hosting the `apex-omni-*` secrets. Required only when enabling Omni secrets ops endpoints.
+- `OMNI_BREAKGLASS_PUBLIC_KEY` – base64-encoded Curve25519 public key used to encrypt break-glass payloads submitted by operators. Required only when Omni secrets ops endpoints are enabled.
+- `OMNI_BREAKGLASS_PRIVATE_KEY` – base64-encoded Curve25519 private key used by the API to decrypt break-glass payloads. Required only when Omni secrets ops endpoints are enabled.
 - `OMNI_CACHE_TTL_SECONDS` – cache duration for Google Secret Manager fetches (defaults to 300 seconds).
 - `OMNI_ALLOW_LATEST_VERSION` – when `false`, disallows the `latest` alias for GSM secrets and requires a pinned version; defaults to `true`.
 
@@ -41,7 +41,9 @@ Key values in `.env` (validated by `src/config/env.ts` at startup):
 
 - Grant the API service account `roles/secretmanager.secretAccessor` and any operator automation identity `roles/secretmanager.admin`.
 - Populate the `apex-omni-*` secrets in GSM before deploying the API.
-- If `GCP_PROJECT_ID` or `OMNI_BREAKGLASS_PUBLIC_KEY` is missing in production, `src/config/env.ts` throws a `ConfigError` and the server aborts startup so secrets are never read from unsafe sources.
+- Public-only mode: omit `APEX_OMNI_*` credentials (and GSM/break-glass config) to keep the API running against public Apex Omni endpoints only.
+- Omni secrets ops endpoints (`/ops/apex-omni/**`) are enabled only when GSM/break-glass configuration is present; public market data remains available regardless.
+- If Omni secrets ops endpoints are enabled in production and `GCP_PROJECT_ID` or break-glass keys are missing, `src/config/env.ts` throws a `ConfigError` and the server aborts startup so secrets are never read from unsafe sources.
 - When GSM is unreachable at runtime, the Omni routes degrade and emit alerts; after 30 minutes all break-glass payloads expire automatically.
 
 ### Security & CI checks

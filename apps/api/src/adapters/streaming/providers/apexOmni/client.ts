@@ -11,8 +11,8 @@ import { calculateAtr } from '../../../../domain/trading/atrCalculator.js';
 import type { MarketCandle } from '../../../../domain/ports/tradebillPorts.js';
 
 export interface ApeXOmniClientConfig {
-  apiKey: string;
-  apiSecret: string;
+  apiKey?: string;
+  apiSecret?: string;
   passphrase?: string;
   environment?: 'prod' | 'qa';
   restBaseUrl?: string;
@@ -295,6 +295,9 @@ export const createApeXOmniClient = ({
     onClose,
   }: MarketStreamConnectOptions): MarketStreamConnection => {
     const shouldUsePrivateAuth = Boolean(passphrase && apiKey && apiSecret);
+    const resolvedApiKey = apiKey ?? '';
+    const resolvedApiSecret = apiSecret ?? '';
+    const resolvedPassphrase = passphrase ?? '';
 
     const buildWsClient =
       wsClientFactory ??
@@ -305,9 +308,9 @@ export const createApeXOmniClient = ({
       endPoint: endpoint,
       publicUrl: publicWsUrl,
       privateUrl: privateWsUrl,
-      apiKey: shouldUsePrivateAuth ? apiKey : '',
-      passphrase: shouldUsePrivateAuth ? (passphrase ?? '') : '',
-      secret: shouldUsePrivateAuth ? apiSecret : '',
+      apiKey: shouldUsePrivateAuth ? resolvedApiKey : '',
+      passphrase: shouldUsePrivateAuth ? resolvedPassphrase : '',
+      secret: shouldUsePrivateAuth ? resolvedApiSecret : '',
       heartbeatInterval: wsHeartbeatIntervalMs,
       maxReconnectAttempts: wsMaxReconnectAttempts,
       debug: false,

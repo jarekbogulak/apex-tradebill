@@ -21,6 +21,12 @@ const pickFirstDefined = (env: NodeJS.ProcessEnv, keys: readonly string[]): stri
   return undefined;
 };
 
+export interface ApeXConnectionConfig {
+  environment: ApeXEnvironment;
+  restUrl?: string;
+  wsUrl?: string;
+}
+
 export interface ApeXCredentials {
   apiKey: string;
   apiSecret: string;
@@ -34,15 +40,9 @@ export interface ApeXCredentials {
   l2Seed?: string;
 }
 
-export const resolveApeXCredentials = (
+export const resolveApeXConnection = (
   env: NodeJS.ProcessEnv = process.env,
-): ApeXCredentials | null => {
-  const apiKey = env.APEX_OMNI_API_KEY;
-  const apiSecret = env.APEX_OMNI_API_SECRET;
-  if (!apiKey || !apiSecret) {
-    return null;
-  }
-
+): ApeXConnectionConfig => {
   const environment = normalizeEnvironment(env.APEX_OMNI_ENVIRONMENT);
 
   const restUrl =
@@ -64,12 +64,31 @@ export const resolveApeXCredentials = (
   }
 
   return {
-    apiKey,
-    apiSecret,
-    passphrase: env.APEX_OMNI_API_PASSPHRASE,
     environment,
     restUrl,
     wsUrl,
+  };
+};
+
+export const resolveApeXCredentials = (
+  env: NodeJS.ProcessEnv = process.env,
+  connection?: ApeXConnectionConfig,
+): ApeXCredentials | null => {
+  const apiKey = env.APEX_OMNI_API_KEY;
+  const apiSecret = env.APEX_OMNI_API_SECRET;
+  if (!apiKey || !apiSecret) {
+    return null;
+  }
+
+  const resolvedConnection = connection ?? resolveApeXConnection(env);
+
+  return {
+    apiKey,
+    apiSecret,
+    passphrase: env.APEX_OMNI_API_PASSPHRASE,
+    environment: resolvedConnection.environment,
+    restUrl: resolvedConnection.restUrl,
+    wsUrl: resolvedConnection.wsUrl,
     l2Seed: env.APEX_OMNI_L2_SEED,
   };
 };
