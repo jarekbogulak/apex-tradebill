@@ -2,7 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
-import { resolveApeXCredentials, type ApeXCredentials } from './apexConfig.js';
+import {
+  resolveApeXConnection,
+  resolveApeXCredentials,
+  type ApeXConnectionConfig,
+  type ApeXCredentials,
+} from './apexConfig.js';
 
 const DEFAULT_JWT_ISSUER = 'apex-tradebill';
 const DEFAULT_JWT_AUDIENCE = 'apex-tradebill-clients';
@@ -248,11 +253,13 @@ export interface ServerConfig {
 }
 
 export interface ApexConfig {
+  connection: ApeXConnectionConfig;
   credentials: ApeXCredentials | null;
   allowInMemoryMarketData: boolean;
 }
 
 export interface OmniSecretsConfig {
+  enabled: boolean;
   gcpProjectId: string | null;
   breakglassPublicKey: string | null;
   breakglassPrivateKey: string | null;
@@ -272,7 +279,8 @@ export interface AppEnv {
 
 const buildEnv = (): AppEnv => {
   const parsed = parseEnv();
-  const apexCredentials = resolveApeXCredentials();
+  const apexConnection = resolveApeXConnection();
+  const apexCredentials = resolveApeXCredentials(undefined, apexConnection);
 
   const resolvedJwtSecret =
     parsed.jwtSecret ?? (parsed.nodeEnv === 'production' ? null : DEFAULT_DEV_JWT_SECRET);
@@ -339,23 +347,20 @@ const buildEnv = (): AppEnv => {
     );
   }
 
-  if (!apexCredentials && !resolvedAllowInMemoryMarketData && !parsed.gcpProjectId) {
-    throw new ConfigError(
-      'ApeX Omni credentials are missing. Provide APEX_OMNI_* values, enable APEX_ALLOW_IN_MEMORY_MARKET_DATA=true, or configure GCP_PROJECT_ID for Secret Manager.',
-    );
-  }
-
   const resolvedCacheTtlSeconds = parsed.omniCacheTtlSeconds;
   const resolvedGcpProjectId = parsed.gcpProjectId ?? null;
   const resolvedBreakglassKey = parsed.omniBreakglassPublicKey ?? null;
   const resolvedBreakglassPrivateKey = parsed.omniBreakglassPrivateKey ?? null;
   const resolvedAllowLatestVersion = parsed.omniAllowLatestVersion ?? true;
+  const resolvedOmniSecretsEnabled = Boolean(
+    resolvedGcpProjectId || resolvedBreakglassKey || resolvedBreakglassPrivateKey,
+  );
   const omniEnvironment =
     parsed.nodeEnv === 'production' || process.env.APEX_OMNI_ENVIRONMENT === 'prod'
       ? 'production'
       : 'test';
 
-  if (parsed.nodeEnv === 'production') {
+  if (parsed.nodeEnv === 'production' && resolvedOmniSecretsEnabled) {
     if (!resolvedGcpProjectId) {
       throw new ConfigError('GCP_PROJECT_ID is required in production to access Google Secret Manager.');
     }
@@ -404,10 +409,12 @@ const buildEnv = (): AppEnv => {
       sslMode: parsed.supabaseDbSsl,
     },
     apex: {
+      connection: apexConnection,
       credentials: apexCredentials,
       allowInMemoryMarketData: resolvedAllowInMemoryMarketData,
     },
     omniSecrets: {
+      enabled: resolvedOmniSecretsEnabled,
       gcpProjectId: resolvedGcpProjectId,
       breakglassPublicKey: resolvedBreakglassKey,
       breakglassPrivateKey: resolvedBreakglassPrivateKey,
