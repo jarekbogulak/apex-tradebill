@@ -31,6 +31,24 @@ tests/        Cross-cutting suites (contract, latency, etc.)
 - Xcode and/or Android Studio for native simulators
 - Access to Apex Omni API credentials for production or testnet usage
 
+## Nix / direnv (optional)
+
+If you use Nix + direnv, this repo ships a lightweight flake-based dev shell by default:
+
+```bash
+direnv allow
+```
+
+For full Android + iOS tooling, run:
+
+```bash
+nix develop .#mobile
+```
+
+Or update `.envrc` to `use flake .#mobile`.
+
+Note: iOS device deployment via `ios-deploy` is intentionally omitted from the flake to avoid impure host dependencies on macOS. If you need it, add `ios-deploy` to `flake.nix` and allow `/Library/Apple/System/Library/PrivateFrameworks` in your Nix config.
+
 ## CI / Quality Gates
 
 - Run `pnpm install --frozen-lockfile` on Node.js 22 in CI (use `corepack` to pin).
